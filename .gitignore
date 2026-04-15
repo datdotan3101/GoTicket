@@ -1,0 +1,7 @@
+.vscode/ 
+CLEANCODE.md 
+GoTicket.md 
+GoTicket_Backend.md 
+GoTicket_Frontend.md 
+server/node_modules/ 
+server/.env
