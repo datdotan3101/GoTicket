@@ -4,7 +4,13 @@ import { sendError, sendSuccess } from "../../utils/response.js";
 import { leaguesService } from "./leagues.service.js";
 
 export const getLeagues = asyncHandler(async (req, res) => {
-  const data = await leaguesService.getAll();
+  const data = await leaguesService.getAll(req.query);
+  return sendSuccess(res, data);
+});
+
+export const getLeagueById = asyncHandler(async (req, res) => {
+  const data = await leaguesService.getById(Number(req.params.id));
+  if (!data) return sendError(res, "Không tìm thấy giải đấu.", HTTP_STATUS.NOT_FOUND);
   return sendSuccess(res, data);
 });
 

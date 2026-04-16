@@ -18,6 +18,8 @@ import leaguesRoutes from "./modules/leagues/leagues.routes.js";
 import stadiumsRoutes from "./modules/stadiums/stadiums.routes.js";
 import usersRoutes from "./modules/users/users.routes.js";
 import newsRoutes from "./modules/news/news.routes.js";
+import aiRoutes from "./modules/ai/ai.routes.js";
+import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
 
 const app = express();
 
@@ -56,6 +58,8 @@ app.use("/api/payments", paymentsRoutes);
 app.use("/api/checkin", checkinRoutes);
 app.use("/api/notifications", notificationsRoutes);
 app.use("/api/approvals", approvalsRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

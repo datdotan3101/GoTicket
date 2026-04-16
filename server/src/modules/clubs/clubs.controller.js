@@ -4,7 +4,13 @@ import { sendError, sendSuccess } from "../../utils/response.js";
 import { clubsService } from "./clubs.service.js";
 
 export const getClubs = asyncHandler(async (req, res) => {
-  const data = await clubsService.getAll();
+  const data = await clubsService.getAll(req.query);
+  return sendSuccess(res, data);
+});
+
+export const getClubById = asyncHandler(async (req, res) => {
+  const data = await clubsService.getById(Number(req.params.id));
+  if (!data) return sendError(res, "Không tìm thấy CLB.", HTTP_STATUS.NOT_FOUND);
   return sendSuccess(res, data);
 });
 
