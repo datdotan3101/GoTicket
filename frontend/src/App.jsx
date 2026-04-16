@@ -32,6 +32,12 @@ import MatchEditPage from './pages/manager/MatchEditPage'
 import StandConfigPage from './pages/manager/StandConfigPage'
 import MatchAnalyticsPage from './pages/manager/MatchAnalyticsPage'
 import ManagerNotificationsPage from './pages/manager/ManagerNotificationsPage'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import ApprovalsPage from './pages/admin/ApprovalsPage'
+import UserManagePage from './pages/admin/UserManagePage'
+import SportsManagePage from './pages/admin/SportsManagePage'
+import LeagueManagePage from './pages/admin/LeagueManagePage'
+import RevenueReportPage from './pages/admin/RevenueReportPage'
 
 export default function App() {
   return (
@@ -80,6 +86,15 @@ export default function App() {
             <Route path={APP_ROUTES.MANAGER_STAND_CONFIG} element={<StandConfigPage />} />
             <Route path={APP_ROUTES.MANAGER_ANALYTICS} element={<MatchAnalyticsPage />} />
             <Route path={APP_ROUTES.MANAGER_NOTIFICATIONS} element={<ManagerNotificationsPage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
+            <Route path={APP_ROUTES.ADMIN_DASHBOARD} element={<AdminDashboard />} />
+            <Route path={APP_ROUTES.ADMIN_APPROVALS} element={<ApprovalsPage />} />
+            <Route path={APP_ROUTES.ADMIN_USERS} element={<UserManagePage />} />
+            <Route path={APP_ROUTES.ADMIN_SPORTS} element={<SportsManagePage />} />
+            <Route path={APP_ROUTES.ADMIN_LEAGUES} element={<LeagueManagePage />} />
+            <Route path={APP_ROUTES.ADMIN_REVENUE_REPORT} element={<RevenueReportPage />} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

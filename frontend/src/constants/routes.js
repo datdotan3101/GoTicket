@@ -26,4 +26,10 @@ export const APP_ROUTES = {
   MANAGER_STAND_CONFIG: '/manager/matches/:matchId/stand-config',
   MANAGER_ANALYTICS: '/manager/matches/:matchId/analytics',
   MANAGER_NOTIFICATIONS: '/manager/notifications',
+  ADMIN_DASHBOARD: '/admin',
+  ADMIN_APPROVALS: '/admin/approvals',
+  ADMIN_USERS: '/admin/users',
+  ADMIN_SPORTS: '/admin/sports',
+  ADMIN_LEAGUES: '/admin/leagues',
+  ADMIN_REVENUE_REPORT: '/admin/revenue-report',
 }
