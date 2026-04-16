@@ -73,13 +73,15 @@ export const matchesService = {
   },
 
   async submitForApproval(id, userId) {
-    await query(
-      `UPDATE matches SET status = 'pending_review' WHERE id = $1;
-       INSERT INTO approvals (resource_type, resource_id, submitted_by, status)
-       VALUES ('match', $1, $2, 'pending')`,
-      [id, userId]
-    );
-    return { id, status: "pending_review" };
+    return withTransaction(async (tx) => {
+      await tx.query(`UPDATE matches SET status = 'pending_review' WHERE id = $1`, [id]);
+      await tx.query(
+        `INSERT INTO approvals (resource_type, resource_id, submitted_by, status)
+         VALUES ('match', $1, $2, 'pending')`,
+        [id, userId]
+      );
+      return { id, status: "pending_review" };
+    });
   },
 
   async configureStands(matchId, payload, user) {

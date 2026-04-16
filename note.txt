@@ -1,0 +1,7 @@
+lỗi đang gặp:
+
+- Manager: 
+    - Tạo vé xong thì 404. 
+    - Chưa click tạo nhưng đã tạo -> Click tạo xong mới xuất hiện xong database
+
+- Admin có thể tạo, sửa, xóa stadium, league
