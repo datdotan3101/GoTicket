@@ -14,7 +14,10 @@ export default function SportPage() {
       try {
         const response = await matchService.getAll({ sport_id: sportId, limit: 20 })
         const payload = unwrapData(response)
-        setMatches(payload?.data ?? payload ?? [])
+        let items = []
+        if (Array.isArray(payload)) items = payload
+        else if (payload && Array.isArray(payload.data)) items = payload.data
+        setMatches(items)
       } catch {
         setMatches([])
       }
@@ -27,7 +30,7 @@ export default function SportPage() {
     <section className="container page">
       <SportsBanner title={`Sport ${sportId}`} />
       <div className="cards-grid">
-        {matches.map((match) => <MatchCard key={match.id} match={match} />)}
+        {Array.isArray(matches) && matches.map((match) => <MatchCard key={match.id} match={match} />)}
       </div>
     </section>
   )

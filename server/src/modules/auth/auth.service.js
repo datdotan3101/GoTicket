@@ -31,16 +31,11 @@ export const authService = {
     const user = await withTransaction(async (tx) => {
       const inserted = await tx.query(
         `INSERT INTO users (email, password_hash, full_name, phone, role, is_active, is_approved)
-         VALUES ($1, $2, $3, $4, 'audience', true, false)
+         VALUES ($1, $2, $3, $4, 'audience', true, true)
          RETURNING id, email, full_name, role, club_id, is_approved`,
         [email, passwordHash, fullName, phone || null]
       );
       const createdUser = inserted.rows[0];
-      await tx.query(
-        `INSERT INTO approvals (resource_type, resource_id, submitted_by, status)
-         VALUES ('user_account', $1, $1, 'pending')`,
-        [createdUser.id]
-      );
       return createdUser;
     });
 

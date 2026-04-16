@@ -17,9 +17,6 @@ export const useAuthStore = create((set) => ({
   token: localStorage.getItem(TOKEN_KEY),
   user: getStoredUser(),
   isHydrated: true,
-  get isAuthenticated() {
-    return Boolean(this.token)
-  },
   login: ({ token, user }) => {
     localStorage.setItem(TOKEN_KEY, token)
     localStorage.setItem(USER_KEY, JSON.stringify(user))
