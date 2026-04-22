@@ -4,13 +4,23 @@ import toast from 'react-hot-toast'
 import { APP_ROUTES } from '../../constants/routes'
 import { authService } from '../../services/authService'
 import { useAuth } from '../../hooks/useAuth'
+import { useEffect } from 'react'
+import { getRedirectPath } from '../../utils/authUtils'
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { login } = useAuth()
+  const { login, isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+
+  // Auto-redirect if already authenticated and has staff domain
+  useEffect(() => {
+    if (isAuthenticated && user?.email?.endsWith('@goticket.vn')) {
+      const targetPath = getRedirectPath(user)
+      navigate(targetPath, { replace: true })
+    }
+  }, [isAuthenticated, user, navigate])
 
   const onChange = (event) => {
     const { name, value } = event.target
@@ -24,9 +34,14 @@ export default function LoginPage() {
     try {
       const response = await authService.login(form)
       const payload = response.data?.data ?? response.data
-      login({ token: payload.accessToken, user: payload.user })
+      const user = payload.user
+      login({ token: payload.accessToken, user })
       toast.success('Login successful.')
-      navigate(location.state?.from?.pathname ?? APP_ROUTES.HOME, { replace: true })
+      
+      const defaultPath = location.state?.from?.pathname ?? APP_ROUTES.HOME
+      const targetPath = getRedirectPath(user, defaultPath)
+      
+      navigate(targetPath, { replace: true })
     } catch (error) {
       toast.error(error.response?.data?.message ?? 'Login failed.')
     } finally {
