@@ -60,7 +60,7 @@ export default function Navbar() {
             </div>
           ) : (
             <>
-              <NavLink to={APP_ROUTES.LOGIN} className="nav-link mr-4">Login</NavLink>
+              <NavLink to={APP_ROUTES.LOGIN} className="btn-outline" style={{ marginRight: '12px' }}>Login</NavLink>
               <NavLink to={APP_ROUTES.REGISTER} className="btn-solid dark">Register</NavLink>
             </>
           )}

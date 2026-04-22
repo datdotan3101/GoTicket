@@ -1,5 +1,6 @@
 import { query } from "../../config/db.js";
 import { getPagination, buildPaginatedResponse } from "../../utils/pagination.js";
+import { AppError } from "../../utils/AppError.js";
 
 export const leaguesService = {
   /**
@@ -68,10 +69,18 @@ export const leaguesService = {
    */
   async create(payload, userId) {
     const result = await query(
-      `INSERT INTO leagues (name, sport_id, season, logo_url, created_by, is_active)
-       VALUES ($1, $2, $3, $4, $5, true)
+      `INSERT INTO leagues (name, sport_id, season, logo_url, start_date, end_date, created_by, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, true)
        RETURNING *`,
-      [payload.name, payload.sportId || null, payload.season || null, payload.logoUrl || null, userId]
+      [
+        payload.name,
+        payload.sportId || null,
+        payload.season || null,
+        payload.logoUrl || null,
+        payload.startDate || null,
+        payload.endDate || null,
+        userId,
+      ]
     );
     return result.rows[0];
   },
@@ -82,14 +91,25 @@ export const leaguesService = {
   async update(id, payload) {
     const result = await query(
       `UPDATE leagues
-       SET name      = COALESCE($2, name),
-           sport_id  = COALESCE($3, sport_id),
-           season    = COALESCE($4, season),
-           logo_url  = COALESCE($5, logo_url),
-           is_active = COALESCE($6, is_active)
+       SET name       = COALESCE($2, name),
+           sport_id   = COALESCE($3, sport_id),
+           season     = COALESCE($4, season),
+           logo_url   = COALESCE($5, logo_url),
+           is_active  = COALESCE($6, is_active),
+           start_date = COALESCE($7, start_date),
+           end_date   = COALESCE($8, end_date)
        WHERE id = $1
        RETURNING *`,
-      [id, payload.name || null, payload.sportId || null, payload.season || null, payload.logoUrl || null, payload.isActive ?? null]
+      [
+        id,
+        payload.name || null,
+        payload.sportId || null,
+        payload.season || null,
+        payload.logoUrl || null,
+        payload.isActive ?? null,
+        payload.startDate || null,
+        payload.endDate || null,
+      ]
     );
     return result.rows[0] || null;
   },
@@ -98,6 +118,11 @@ export const leaguesService = {
    * Xoá giải đấu (admin only).
    */
   async remove(id) {
+    // Check for associated matches
+    const matchesCount = await query("SELECT COUNT(*) FROM matches WHERE league_id = $1", [id]);
+    if (parseInt(matchesCount.rows[0].count) > 0) {
+      throw new AppError("Không thể xóa giải đấu vì có các trận đấu đang tham chiếu tới nó.", 400);
+    }
     const result = await query("DELETE FROM leagues WHERE id = $1 RETURNING id", [id]);
     return result.rowCount > 0;
   }
