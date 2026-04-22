@@ -32,7 +32,7 @@ export const generateStands = (totalCapacity, vipCapacity, prices) => {
       name,
       rows,
       seatsPerRow,
-      totalSeats,
+      totalSeats: standTotal,
       price: Number(prices[name] || 0)
     };
   });

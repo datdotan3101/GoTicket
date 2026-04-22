@@ -10,12 +10,16 @@ const StandSectorGrid = ({ standName, totalSeats, prefix, rows, cols }) => {
   const blocks = rows * cols
   if (blocks === 0) return null
   const seatsPerBlock = Math.floor(totalSeats / blocks)
+  const remainder = totalSeats % blocks
   
   const cells = []
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const num = r * cols + c + 1
-      cells.push(`${prefix}${num}`)
+      cells.push({
+        id: `${prefix}${num}`,
+        seats: seatsPerBlock + (num <= remainder ? 1 : 0)
+      })
     }
   }
 
@@ -23,10 +27,10 @@ const StandSectorGrid = ({ standName, totalSeats, prefix, rows, cols }) => {
     <div className={`stand-sector-wrapper stand-${standName.toLowerCase()}`}>
       <div className="stand-sector-title">STAND {standName} - {totalSeats} Seats</div>
       <div className="stand-sector-grid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
-        {cells.map(id => (
-          <div key={id} className="sector-cell">
-            <span className="sector-id">{id}</span>
-            <span className="sector-seats">{seatsPerBlock}</span>
+        {cells.map(cell => (
+          <div key={cell.id} className="sector-cell">
+            <span className="sector-id">{cell.id}</span>
+            <span className="sector-seats">{cell.seats}</span>
           </div>
         ))}
       </div>

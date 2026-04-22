@@ -24,7 +24,7 @@ export const generateStandsPreview = (totalCapacity, vipCapacity) => {
 
     return {
       name,
-      total_seats: generatedTotal,
+      total_seats: standTotal,
       rows,
       seats_per_row: seatsPerRow,
     }

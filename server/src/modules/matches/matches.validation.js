@@ -44,8 +44,13 @@ export const configStandsRules = [
   body("totalCapacity")
     .notEmpty().withMessage("totalCapacity là bắt buộc.")
     .isInt({ min: 100, max: 100000 }).withMessage("Tổng ghế phải từ 100 đến 100,000."),
+  body("vipCapacity")
+    .optional()
+    .isInt({ min: 0 }).withMessage("Số lượng ghế VIP không hợp lệ."),
   body("prices")
     .notEmpty().withMessage("prices là bắt buộc."),
+  body("prices.VIP")
+    .isFloat({ min: 0 }).withMessage("Giá ghế VIP phải >= 0."),
   body("prices.A")
     .isFloat({ min: 0 }).withMessage("Giá khán đài A phải >= 0."),
   body("prices.B")

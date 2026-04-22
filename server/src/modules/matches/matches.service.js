@@ -139,6 +139,7 @@ export const matchesService = {
     const stands = generateStands(payload.totalCapacity, payload.vipCapacity, payload.prices);
     return withTransaction(async (tx) => {
       const run = (text, params) => tx.query(text, params);
+      await run("DELETE FROM seats WHERE match_id = $1", [matchId]);
       await run("DELETE FROM stands WHERE match_id = $1", [matchId]);
 
       for (const stand of stands) {
@@ -153,17 +154,18 @@ export const matchesService = {
         const seatValues = [];
         const placeholders = [];
         let index = 1;
-        for (let row = 1; row <= stand.rows; row += 1) {
-          for (let seat = 1; seat <= stand.seatsPerRow; seat += 1) {
-            if (seatValues.length / 5 >= stand.totalSeats) break;
-            seatValues.push(standId, matchId, row, seat, `${stand.name}-${row}-${seat}`);
-            placeholders.push(`($${index}, $${index + 1}, $${index + 2}, $${index + 3}, $${index + 4})`);
-            index += 5;
+        let generatedCount = 0;
+        for (let row = 1; row <= stand.rows && generatedCount < stand.totalSeats; row += 1) {
+          for (let seat = 1; seat <= stand.seatsPerRow && generatedCount < stand.totalSeats; seat += 1) {
+            seatValues.push(standId, matchId, row, seat, `${stand.name}-${row}-${seat}`, 'available');
+            placeholders.push(`($${index}, $${index + 1}, $${index + 2}, $${index + 3}, $${index + 4}, $${index + 5})`);
+            index += 6;
+            generatedCount += 1;
           }
         }
         if (seatValues.length > 0) {
           await run(
-            `INSERT INTO seats (stand_id, match_id, row_number, seat_number, seat_label)
+            `INSERT INTO seats (stand_id, match_id, row_number, seat_number, seat_label, status)
              VALUES ${placeholders.join(", ")}`,
             seatValues
           );

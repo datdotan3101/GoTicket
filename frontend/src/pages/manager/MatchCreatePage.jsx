@@ -20,7 +20,8 @@ const initialForm = {
 
 const initialStandConfig = {
   totalCapacity: '',
-  prices: { A: '', B: '', C: '', D: '' }
+  vipCapacity: '100',
+  prices: { VIP: '', A: '', B: '', C: '', D: '' }
 }
 
 export default function MatchCreatePage() {
@@ -51,10 +52,53 @@ export default function MatchCreatePage() {
     load()
   }, [])
 
-  const nextStep = () => setStep((s) => s + 1)
+  const validateStep = (currentStep) => {
+    if (currentStep === 1) {
+      if (!form.homeTeam) return 'Home team is required.'
+      if (!form.awayTeam) return 'Away team is required.'
+      if (!form.matchDate) return 'Match date and time is required.'
+      if (!form.stadiumId) return 'Please select a stadium.'
+      if (!form.leagueId) return 'Please select a league.'
+    }
+    if (currentStep === 2) {
+      const total = Number(standConfig.totalCapacity)
+      const vip = Number(standConfig.vipCapacity)
+
+      if (!standConfig.totalCapacity || total <= 0) return 'Total capacity must be a positive number.'
+      if (standConfig.vipCapacity === '' || vip < 0) return 'VIP capacity is required.'
+      if (vip > total) return 'VIP capacity cannot exceed total capacity.'
+      
+      const missingPrice = STAND_NAMES.find(name => !standConfig.prices[name] || Number(standConfig.prices[name]) < 0)
+      if (missingPrice) return `Price for Stand ${missingPrice} is required and cannot be negative.`
+    }
+    return null
+  }
+
+  const nextStep = () => {
+    const error = validateStep(step)
+    if (error) {
+      toast.error(error)
+      return
+    }
+    setStep((s) => s + 1)
+  }
+
   const prevStep = () => setStep((s) => s - 1)
 
   const handleCreate = async () => {
+    const step1Error = validateStep(1)
+    if (step1Error) {
+      setStep(1)
+      toast.error(step1Error)
+      return
+    }
+    const step2Error = validateStep(2)
+    if (step2Error) {
+      setStep(2)
+      toast.error(step2Error)
+      return
+    }
+
     setIsSubmitting(true)
     try {
       // Step 1: Create Match
@@ -70,11 +114,13 @@ export default function MatchCreatePage() {
       // Step 2: Configure Stands
       const standsPayload = {
         totalCapacity: Number(standConfig.totalCapacity),
+        vipCapacity: Number(standConfig.vipCapacity || 0),
         prices: {
-          A: Number(standConfig.prices.A),
-          B: Number(standConfig.prices.B),
-          C: Number(standConfig.prices.C),
-          D: Number(standConfig.prices.D),
+          VIP: Number(standConfig.prices.VIP || 0),
+          A: Number(standConfig.prices.A || 0),
+          B: Number(standConfig.prices.B || 0),
+          C: Number(standConfig.prices.C || 0),
+          D: Number(standConfig.prices.D || 0),
         }
       }
       await matchService.configureStands(matchId, standsPayload)
@@ -220,9 +266,13 @@ export default function MatchCreatePage() {
           <div className="mc-form-step">
             <div className="mc-section-title">STAND CAPACITIES & PRICING</div>
             <div className="mc-pricing-grid">
-              <div className="mc-pricing-card full">
+              <div className="mc-pricing-card">
                 <label>Total Stadium Capacity</label>
                 <input type="number" min="100" className="mc-nice-input" placeholder="e.g. 50000" value={standConfig.totalCapacity} onChange={(e) => setStandConfig(p => ({...p, totalCapacity: e.target.value}))} />
+              </div>
+              <div className="mc-pricing-card">
+                <label>VIP Seats Count</label>
+                <input type="number" min="0" className="mc-nice-input" placeholder="e.g. 100" value={standConfig.vipCapacity} onChange={(e) => setStandConfig(p => ({...p, vipCapacity: e.target.value}))} />
               </div>
               {STAND_NAMES.map((name) => (
                 <div key={name} className="mc-pricing-card">
@@ -245,7 +295,8 @@ export default function MatchCreatePage() {
               </div>
               <div className="mc-review-block">
                 <h3>Capacity & Pricing</h3>
-                <p><strong>Total Capacity:</strong> {standConfig.totalCapacity || '0'}</p>
+                <p><strong>Total Capacity:</strong> {standConfig.totalCapacity || '0'} (VIP: {standConfig.vipCapacity || '0'})</p>
+                <p><strong>VIP Price:</strong> {standConfig.prices.VIP || '0'} VND</p>
                 <p><strong>Stand A:</strong> {standConfig.prices.A || '0'} VND | <strong>Stand B:</strong> {standConfig.prices.B || '0'} VND</p>
                 <p><strong>Stand C:</strong> {standConfig.prices.C || '0'} VND | <strong>Stand D:</strong> {standConfig.prices.D || '0'} VND</p>
               </div>

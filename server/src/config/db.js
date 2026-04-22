@@ -24,6 +24,7 @@ export const withTransaction = async (handler) => {
     return result;
   } catch (error) {
     await client.query("ROLLBACK");
+    console.error("Transaction Error:", error);
     throw error;
   } finally {
     client.release();
