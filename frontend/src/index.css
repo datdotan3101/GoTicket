@@ -27,6 +27,12 @@ textarea { width: 100%; font-family: inherit; }
 .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; }
 .card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; display: grid; gap: 8px; }
 .badge-hot { color: #b45309; font-weight: 600; }
+.badge { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; display: inline-block; }
+.badge.published { background: #dcfce7; color: #166534; }
+.badge.approved { background: #dbeafe; color: #1e40af; }
+.badge.pending_review { background: #fef9c3; color: #854d0e; }
+.badge.rejected { background: #fee2e2; color: #991b1b; }
+.badge.draft { background: #f3f4f6; color: #374151; }
 .row-gap { display: flex; flex-wrap: wrap; gap: 8px; }
 .sports-banner { background: linear-gradient(90deg, #1d4ed8, #2563eb); color: #fff; border-radius: 10px; padding: 14px; }
 .legend-wrap { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }

@@ -29,6 +29,7 @@ export default function AdminDashboard() {
         <Link className="link-button" to={APP_ROUTES.ADMIN_USERS}>Users</Link>
         <Link className="link-button" to={APP_ROUTES.ADMIN_SPORTS}>Sports</Link>
         <Link className="link-button" to={APP_ROUTES.ADMIN_LEAGUES}>Leagues</Link>
+        <Link className="link-button" to={APP_ROUTES.ADMIN_MATCHES}>Approved Matches</Link>
         <Link className="link-button" to={APP_ROUTES.ADMIN_REVENUE_REPORT}>Revenue report</Link>
       </div>
 

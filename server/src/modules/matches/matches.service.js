@@ -14,8 +14,15 @@ export const matchesService = {
     const where = [];
 
     if (filters.status) {
-      values.push(filters.status);
-      where.push(`m.status = $${values.length}`);
+      const statuses = filters.status.split(",");
+      if (statuses.length === 1) {
+        values.push(statuses[0]);
+        where.push(`m.status = $${values.length}`);
+      } else {
+        const placeholders = statuses.map((_, i) => `$${values.length + i + 1}`);
+        values.push(...statuses);
+        where.push(`m.status IN (${placeholders.join(", ")})`);
+      }
     }
     if (filters.league_id) {
       values.push(filters.league_id);
