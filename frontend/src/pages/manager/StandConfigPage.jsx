@@ -6,28 +6,60 @@ import { STAND_NAMES } from '../../constants/standRatios'
 import { matchService } from '../../services/matchService'
 import { generateStandsPreview } from '../../utils/standGenerator'
 
+const StandSectorGrid = ({ standName, totalSeats, prefix, rows, cols }) => {
+  const blocks = rows * cols
+  if (blocks === 0) return null
+  const seatsPerBlock = Math.floor(totalSeats / blocks)
+  
+  const cells = []
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const num = r * cols + c + 1
+      cells.push(`${prefix}${num}`)
+    }
+  }
+
+  return (
+    <div className={`stand-sector-wrapper stand-${standName.toLowerCase()}`}>
+      <div className="stand-sector-title">STAND {standName} - {totalSeats} Seats</div>
+      <div className="stand-sector-grid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+        {cells.map(id => (
+          <div key={id} className="sector-cell">
+            <span className="sector-id">{id}</span>
+            <span className="sector-seats">{seatsPerBlock}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 const StadiumMap = ({ stands }) => {
   const getStandData = (name) => stands.find(s => s.name === name) || { total_seats: 0 }
 
   return (
     <div className="stadium-visual-container">
       <div className="stadium-map">
-        {/* Khán đài A (Left) */}
-        <div className="stand-block stand-a">
-          <span className="stand-name">STAND A</span>
-          <span className="stand-seats">{getStandData('A').total_seats} Seats</span>
-        </div>
+        
+        {/* Left Stand (C) */}
+        <StandSectorGrid standName="C" totalSeats={getStandData('C').total_seats} prefix="C" rows={5} cols={2} />
 
-        {/* Center area with Pitch and VIP */}
         <div className="stadium-center-column">
-          {/* Khán đài VIP (Top Center) */}
-          <div className="stand-block stand-vip">
-            <span className="stand-name">VIP AREA</span>
-            <span className="stand-seats">{getStandData('VIP').total_seats} Seats</span>
+          {/* Top Stand (A) and VIP - Same Row */}
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-end' }}>
+            <StandSectorGrid standName="A" totalSeats={getStandData('A').total_seats} prefix="A" rows={3} cols={6} />
+            
+            <div className="stand-sector-wrapper stand-vip">
+              <div className="stand-sector-title" style={{ color: '#818cf8' }}>VIP AREA</div>
+              <div className="sector-cell" style={{ background: 'rgba(79, 70, 229, 0.2)', border: '1px solid #4f46e5' }}>
+                <span className="sector-id" style={{ color: '#fff' }}>VIP</span>
+                <span className="sector-seats" style={{ color: '#fff' }}>{getStandData('VIP').total_seats} Seats</span>
+              </div>
+            </div>
           </div>
 
           {/* The Pitch */}
-          <div className="football-pitch">
+          <div className="football-pitch" style={{ margin: '20px 0' }}>
             <div className="pitch-outline">
               <div className="center-circle"></div>
               <div className="penalty-area left"></div>
@@ -35,25 +67,15 @@ const StadiumMap = ({ stands }) => {
             </div>
           </div>
 
-          {/* Khán đài B (Bottom Center) */}
-          <div className="stand-block stand-b">
-            <span className="stand-name">STAND B</span>
-            <span className="stand-seats">{getStandData('B').total_seats} Seats</span>
-          </div>
+          {/* Bottom Stand (B) */}
+          <StandSectorGrid standName="B" totalSeats={getStandData('B').total_seats} prefix="B" rows={3} cols={6} />
         </div>
 
-        {/* Khán đài C & D (Corners or Sides - mapping to user request) */}
-        {/* We'll put C on the Right and D can be a corner or split */}
+        {/* Right Stand (D) */}
         <div className="stadium-side-column">
-           <div className="stand-block stand-c">
-            <span className="stand-name">STAND C</span>
-            <span className="stand-seats">{getStandData('C').total_seats} Seats</span>
-          </div>
-          <div className="stand-block stand-d">
-            <span className="stand-name">STAND D</span>
-            <span className="stand-seats">{getStandData('D').total_seats} Seats</span>
-          </div>
+          <StandSectorGrid standName="D" totalSeats={getStandData('D').total_seats} prefix="D" rows={5} cols={2} />
         </div>
+
       </div>
     </div>
   )
