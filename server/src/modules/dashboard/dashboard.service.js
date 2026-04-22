@@ -126,17 +126,20 @@ export const dashboardService = {
         SELECT
           m.id AS match_id,
           m.home_team, m.away_team, m.match_date, m.status,
+          m.stadium_id, m.ticket_sale_open_at, m.description,
+          s.name AS stadium_name, s.city AS stadium_city,
           COALESCE(SUM(p.amount), 0)::numeric AS revenue,
           COUNT(t.id)::int AS tickets_sold,
           COALESCE(total.total_seats, 0)::int AS total_seats
         FROM matches m
+        LEFT JOIN stadiums s ON s.id = m.stadium_id
         LEFT JOIN tickets t ON t.match_id = m.id AND t.status IN ('paid', 'checked_in')
         LEFT JOIN payments p ON p.ticket_id = t.id AND p.status = 'succeeded'
         LEFT JOIN (
           SELECT match_id, COUNT(*)::int AS total_seats FROM seats GROUP BY match_id
         ) total ON total.match_id = m.id
         WHERE m.club_id = $1
-        GROUP BY m.id, m.home_team, m.away_team, m.match_date, m.status, total.total_seats
+        GROUP BY m.id, m.home_team, m.away_team, m.match_date, m.status, m.stadium_id, m.ticket_sale_open_at, m.description, s.name, s.city, total.total_seats
         ORDER BY m.match_date DESC
       `, [clubId])
     ]);

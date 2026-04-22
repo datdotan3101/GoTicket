@@ -5,4 +5,4 @@ export const STAND_RATIOS = {
   D: 0.2
 };
 
-export const STAND_NAMES = ["A", "B", "C", "D"];
+export const STAND_NAMES = ["VIP", "A", "B", "C", "D"];

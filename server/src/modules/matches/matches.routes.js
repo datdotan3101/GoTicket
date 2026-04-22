@@ -10,7 +10,8 @@ import {
   getMatchSeats,
   getMatches,
   previewStands,
-  submitMatch
+  submitMatch,
+  updateMatch
 } from "./matches.controller.js";
 import { configStandsRules, createMatchRules } from "./matches.validation.js";
 
@@ -115,6 +116,38 @@ router.get("/:id/seats", getMatchSeats);
  *         description: "Invalid data"
  */
 router.post("/", auth, requireRoles(ROLES.MANAGER), runValidation(createMatchRules), createMatch);
+
+/**
+ * @swagger
+ * /api/matches/{id}:
+ *   put:
+ *     summary: "Update match details (manager — own club)"
+ *     tags: [Matches]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               homeTeam: { type: string }
+ *               awayTeam: { type: string }
+ *               matchDate: { type: string, format: date-time }
+ *               stadiumId: { type: integer }
+ *               ticketSaleOpenAt: { type: string, format: date-time }
+ *               description: { type: string }
+ *     responses:
+ *       200:
+ *         description: "Updated successfully"
+ *       404:
+ *         description: "Not found"
+ * */
+router.put("/:id", auth, requireRoles(ROLES.MANAGER), updateMatch);
 
 /**
  * @swagger

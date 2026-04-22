@@ -32,13 +32,18 @@ export const createMatch = asyncHandler(async (req, res) => {
   return sendSuccess(res, data, HTTP_STATUS.CREATED);
 });
 
+export const updateMatch = asyncHandler(async (req, res) => {
+  const data = await matchesService.update(Number(req.params.id), req.body, req.user);
+  return sendSuccess(res, data);
+});
+
 export const submitMatch = asyncHandler(async (req, res) => {
   const data = await matchesService.submitForApproval(Number(req.params.id), req.user.id);
   return sendSuccess(res, data);
 });
 
 export const previewStands = asyncHandler(async (req, res) => {
-  const data = generateStands(req.body.totalCapacity, req.body.prices);
+  const data = generateStands(req.body.totalCapacity, req.body.vipCapacity, req.body.prices);
   return sendSuccess(res, data);
 });
 

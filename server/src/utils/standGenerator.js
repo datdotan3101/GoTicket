@@ -6,15 +6,27 @@ const getRowsAndSeatsPerRow = (seatCount) => {
   return { rows, seatsPerRow };
 };
 
-export const generateStands = (totalCapacity, prices) => {
-  let remaining = Number(totalCapacity);
+export const generateStands = (totalCapacity, vipCapacity, prices) => {
+  const total = Number(totalCapacity);
+  const vip = Number(vipCapacity || 0);
+  const normalTotal = Math.max(0, total - vip);
+  
+  let remainingNormal = normalTotal;
+  const normalStands = ["A", "B", "C", "D"];
 
-  return STAND_NAMES.map((name, index) => {
-    const isLast = index === STAND_NAMES.length - 1;
-    const baseSeats = isLast ? remaining : Math.floor(totalCapacity * STAND_RATIOS[name]);
-    const { rows, seatsPerRow } = getRowsAndSeatsPerRow(baseSeats);
+  return STAND_NAMES.map((name) => {
+    let standTotal = 0;
+    
+    if (name === "VIP") {
+      standTotal = vip;
+    } else {
+      const isLastNormal = name === "D";
+      standTotal = isLastNormal ? remainingNormal : Math.floor(normalTotal * STAND_RATIOS[name]);
+      remainingNormal -= standTotal;
+    }
+
+    const { rows, seatsPerRow } = getRowsAndSeatsPerRow(standTotal);
     const totalSeats = rows * seatsPerRow;
-    remaining -= totalSeats;
 
     return {
       name,

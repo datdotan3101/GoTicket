@@ -1,19 +1,26 @@
 import { STAND_NAMES, STAND_RATIOS } from '../constants/standRatios'
 
-export const generateStandsPreview = (totalCapacity) => {
+export const generateStandsPreview = (totalCapacity, vipCapacity) => {
   const total = Number(totalCapacity)
+  const vip = Number(vipCapacity || 0)
   if (!Number.isFinite(total) || total <= 0) return []
 
-  let remaining = total
+  const normalTotal = Math.max(0, total - vip)
+  let remainingNormal = normalTotal
 
-  return STAND_NAMES.map((name, index) => {
-    const isLast = index === STAND_NAMES.length - 1
-    const standTotal = isLast ? remaining : Math.floor(total * STAND_RATIOS[name])
+  return STAND_NAMES.map((name) => {
+    let standTotal = 0
+    if (name === 'VIP') {
+      standTotal = vip
+    } else {
+      const isLastNormal = name === 'D'
+      standTotal = isLastNormal ? remainingNormal : Math.floor(normalTotal * STAND_RATIOS[name])
+      remainingNormal -= standTotal
+    }
+
     const rows = Math.max(1, Math.round(Math.sqrt(standTotal / 2)))
     const seatsPerRow = Math.max(1, Math.ceil(standTotal / rows))
     const generatedTotal = rows * seatsPerRow
-
-    remaining -= generatedTotal
 
     return {
       name,

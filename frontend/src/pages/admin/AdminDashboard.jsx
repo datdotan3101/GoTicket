@@ -170,7 +170,7 @@ export default function AdminDashboard() {
       <div className="cards-grid" style={{ gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '40px' }}>
         <div className="card" style={{ padding: '24px', borderRadius: '20px', border: 'none', background: '#fff', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
           <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '24px' }}>Revenue Trend (Last 30 Days)</h3>
-          <div style={{ width: '100%', height: '300px' }}>
+          <div style={{ width: '100%', height: '300px', minWidth: 0 }}>
             <ResponsiveContainer>
               <LineChart data={revenueTrend}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -184,7 +184,7 @@ export default function AdminDashboard() {
         </div>
         <div className="card" style={{ padding: '24px', borderRadius: '20px', border: 'none', background: '#fff', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
           <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '24px' }}>Revenue by Sport</h3>
-          <div style={{ width: '100%', height: '300px' }}>
+          <div style={{ width: '100%', height: '300px', minWidth: 0 }}>
             <ResponsiveContainer>
               <PieChart>
                 <Pie data={bySport} dataKey="revenue" nameKey="sport_name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5}>

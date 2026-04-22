@@ -71,6 +71,38 @@ export const matchesService = {
     return result.rows[0];
   },
 
+  async update(id, payload, user) {
+    const match = await this.getById(id);
+    if (!match) {
+      throw new Error("Không tìm thấy trận đấu.");
+    }
+    if (!canAccessMatchByClub(user, match)) {
+      throw new Error("Bạn không có quyền chỉnh sửa trận đấu của CLB khác.");
+    }
+
+    const result = await query(
+      `UPDATE matches
+       SET home_team = COALESCE($2, home_team),
+           away_team = COALESCE($3, away_team),
+           match_date = COALESCE($4, match_date),
+           stadium_id = COALESCE($5, stadium_id),
+           ticket_sale_open_at = COALESCE($6, ticket_sale_open_at),
+           description = COALESCE($7, description)
+       WHERE id = $1
+       RETURNING *`,
+      [
+        id,
+        payload.homeTeam || null,
+        payload.awayTeam || null,
+        payload.matchDate || null,
+        payload.stadiumId || null,
+        payload.ticketSaleOpenAt || null,
+        payload.description || null
+      ]
+    );
+    return result.rows[0];
+  },
+
   async getSeatsByMatchId(matchId) {
     const result = await query(
       `SELECT s.id, s.stand_id, s.row_number, s.seat_number, s.seat_label, s.status, st.name AS stand_name, st.price
@@ -104,7 +136,7 @@ export const matchesService = {
       throw new Error("Bạn không có quyền thao tác trận đấu của CLB khác.");
     }
 
-    const stands = generateStands(payload.totalCapacity, payload.prices);
+    const stands = generateStands(payload.totalCapacity, payload.vipCapacity, payload.prices);
     return withTransaction(async (tx) => {
       const run = (text, params) => tx.query(text, params);
       await run("DELETE FROM stands WHERE match_id = $1", [matchId]);
