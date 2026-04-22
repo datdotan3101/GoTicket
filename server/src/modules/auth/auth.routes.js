@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { auth } from "../../middlewares/auth.js";
 import { runValidation } from "../../middlewares/validate.js";
-import { login, me, onboarding, register } from "./auth.controller.js";
+import { login, me, onboarding, register, updateProfile, changePassword, deleteAccount } from "./auth.controller.js";
 import { loginRules, onboardingRules, registerRules } from "./auth.validation.js";
 
 const router = Router();
@@ -119,5 +119,63 @@ router.get("/me", auth, me);
  *         description: "Updated successfully"
  */
 router.post("/onboarding", auth, runValidation(onboardingRules), onboarding);
+
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   put:
+ *     summary: "Update current user's profile (name, email)"
+ *     tags: [Auth]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fullName: { type: string }
+ *               email: { type: string, format: email }
+ *     responses:
+ *       200:
+ *         description: "Updated successfully"
+ *       400:
+ *         description: "Email already taken"
+ */
+router.put("/profile", auth, updateProfile);
+
+/**
+ * @swagger
+ * /api/auth/change-password:
+ *   put:
+ *     summary: "Change password (requires current password)"
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [currentPassword, newPassword]
+ *             properties:
+ *               currentPassword: { type: string }
+ *               newPassword: { type: string, minLength: 6 }
+ *     responses:
+ *       200:
+ *         description: "Password changed successfully"
+ *       400:
+ *         description: "Current password is incorrect or validation failed"
+ */
+router.put("/change-password", auth, changePassword);
+
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   delete:
+ *     summary: "Delete current user's account"
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: "Account deleted successfully"
+ */
+router.delete("/profile", auth, deleteAccount);
 
 export default router;

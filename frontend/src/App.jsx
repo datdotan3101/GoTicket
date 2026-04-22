@@ -15,6 +15,7 @@ const LoginPage = lazy(() => import('./pages/public/LoginPage'))
 const RegisterPage = lazy(() => import('./pages/public/RegisterPage'))
 const OnboardingPage = lazy(() => import('./pages/onboarding/OnboardingPage'))
 const DashboardPage = lazy(() => import('./pages/shared/DashboardPage'))
+const ProfilePage = lazy(() => import('./pages/shared/ProfilePage'))
 const ForbiddenPage = lazy(() => import('./pages/shared/ForbiddenPage'))
 const NotFoundPage = lazy(() => import('./pages/shared/NotFoundPage'))
 const SportPage = lazy(() => import('./pages/public/SportPage'))
@@ -66,6 +67,7 @@ export default function App() {
             <Route element={<ProtectedRoute allowedRoles={PRIVATE_ROLES} />}>
               <Route path={APP_ROUTES.ONBOARDING} element={<OnboardingPage />} />
               <Route path={APP_ROUTES.DASHBOARD} element={<DashboardPage />} />
+              <Route path={APP_ROUTES.PROFILE} element={<ProfilePage />} />
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={[ROLES.AUDIENCE]} />}>

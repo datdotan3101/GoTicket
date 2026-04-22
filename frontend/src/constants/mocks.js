@@ -1,6 +1,7 @@
 export const MOCK_TICKETS = [
   {
     id: 'mock-1',
+    ticket_code: 'MOCK-001',
     home_team: 'Manchester United',
     away_team: 'Liverpool',
     match_date: '2026-05-10T20:00:00Z',
@@ -8,12 +9,14 @@ export const MOCK_TICKETS = [
     stadium_address: 'Sir Matt Busby Way',
     stadium_city: 'Manchester',
     stand_name: 'A',
-    seat_label: 'A-12',
+    seat_labels: 'A-12',
+    quantity: 1,
     status: 'paid',
     qr_token: 'mock-qr-token-1234567890abcdef',
   },
   {
     id: 'mock-2',
+    ticket_code: 'MOCK-002',
     home_team: 'Vietnam',
     away_team: 'Thailand',
     match_date: '2026-06-15T19:00:00Z',

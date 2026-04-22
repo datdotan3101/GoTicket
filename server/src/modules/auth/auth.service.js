@@ -85,5 +85,81 @@ export const authService = {
       [primarySportId || null, secondarySportId || null, userId]
     );
     return result.rows[0];
+  },
+
+  /**
+   * Cập nhật thông tin cá nhân (full_name, email).
+   */
+  async updateProfile(userId, payload) {
+    const { fullName, email } = payload;
+
+    // Kiểm tra email có bị dùng bởi user khác không
+    if (email) {
+      const existed = await query(
+        "SELECT id FROM users WHERE email = $1 AND id != $2",
+        [email, userId]
+      );
+      if (existed.rowCount > 0) {
+        throw new Error("Email này đã được sử dụng bởi tài khoản khác.");
+      }
+    }
+
+    const result = await query(
+      `UPDATE users
+       SET full_name = COALESCE($1, full_name),
+           email = COALESCE($2, email),
+           updated_at = NOW()
+       WHERE id = $3
+       RETURNING id, email, full_name, role, club_id, is_approved`,
+      [fullName || null, email || null, userId]
+    );
+    if (result.rowCount === 0) throw new Error("Không tìm thấy người dùng.");
+    return result.rows[0];
+  },
+
+  /**
+   * Đổi mật khẩu — phải nhập đúng mật khẩu cũ.
+   */
+  async changePassword(userId, payload) {
+    const { currentPassword, newPassword } = payload;
+
+    const result = await query(
+      "SELECT id, password_hash FROM users WHERE id = $1",
+      [userId]
+    );
+    if (result.rowCount === 0) throw new Error("Không tìm thấy người dùng.");
+
+    const user = result.rows[0];
+    const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!isMatch) {
+      throw new Error("Mật khẩu hiện tại không đúng.");
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await query(
+      "UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2",
+      [newHash, userId]
+    );
+    return { success: true };
+  },
+
+  /**
+   * Xoá tài khoản (của chính user).
+   * Cố gắng xoá cứng, nếu vướng khoá ngoại thì xoá mềm (deactivate).
+   */
+  async deleteAccount(userId) {
+    try {
+      await query("DELETE FROM users WHERE id = $1", [userId]);
+      return { success: true };
+    } catch (error) {
+      // Fallback: Soft delete by setting is_active = false and obfuscating email
+      // to allow the user to potentially register again with the same email if they wanted,
+      // though typically we just deactivate.
+      await query(
+        "UPDATE users SET is_active = false, email = email || '_deleted_' || id, updated_at = NOW() WHERE id = $1",
+        [userId]
+      );
+      return { success: true };
+    }
   }
 };

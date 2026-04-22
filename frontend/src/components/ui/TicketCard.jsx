@@ -3,7 +3,7 @@ import { formatDateTime } from '../../utils/formatDate'
 import { APP_ROUTES } from '../../constants/routes'
 
 export default function TicketCard({ ticket }) {
-  const detailUrl = APP_ROUTES.TICKET_DETAIL.replace(':ticketId', ticket.id)
+  const detailUrl = APP_ROUTES.TICKET_DETAIL.replace(':ticketId', ticket.ticket_code)
 
   return (
     <Link to={detailUrl} className="block no-underline">
@@ -18,8 +18,12 @@ export default function TicketCard({ ticket }) {
             <span className="font-black text-gray-900">{ticket.stand_name}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-gray-500 uppercase tracking-wider font-bold">Loại vé</span>
-            <span className="font-bold text-blue-600">Vé xem bóng đá</span>
+            <span className="text-gray-500 uppercase tracking-wider font-bold">Ghế</span>
+            <span className="font-bold text-gray-900">{ticket.seat_labels}</span>
+          </div>
+          <div className="flex justify-between text-xs">
+            <span className="text-gray-500 uppercase tracking-wider font-bold">Số lượng</span>
+            <span className="font-bold text-gray-900">{ticket.quantity}</span>
           </div>
         </div>
       </article>

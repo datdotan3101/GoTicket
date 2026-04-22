@@ -20,3 +20,12 @@ export const stripeWebhook = asyncHandler(async (req, res) => {
   const data = await paymentsService.handleWebhook(req.body, signature);
   return sendSuccess(res, data);
 });
+
+export const confirmPayment = asyncHandler(async (req, res) => {
+  const { paymentIntentId } = req.body;
+  if (!paymentIntentId) {
+    return sendError(res, "Thiếu paymentIntentId.", HTTP_STATUS.BAD_REQUEST);
+  }
+  const data = await paymentsService.confirmLocalPayment(paymentIntentId);
+  return sendSuccess(res, data);
+});

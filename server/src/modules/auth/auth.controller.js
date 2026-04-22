@@ -34,3 +34,25 @@ export const onboarding = asyncHandler(async (req, res) => {
   const data = await authService.onboarding(req.user.id, req.body);
   return sendSuccess(res, data);
 });
+
+export const updateProfile = asyncHandler(async (req, res) => {
+  const data = await authService.updateProfile(req.user.id, req.body);
+  return sendSuccess(res, data);
+});
+
+export const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return sendError(res, "Vui lòng nhập đủ mật khẩu hiện tại và mật khẩu mới.", HTTP_STATUS.BAD_REQUEST);
+  }
+  if (newPassword.length < 6) {
+    return sendError(res, "Mật khẩu mới phải có ít nhất 6 ký tự.", HTTP_STATUS.BAD_REQUEST);
+  }
+  const data = await authService.changePassword(req.user.id, req.body);
+  return sendSuccess(res, data);
+});
+
+export const deleteAccount = asyncHandler(async (req, res) => {
+  const data = await authService.deleteAccount(req.user.id);
+  return sendSuccess(res, data);
+});

@@ -1,28 +1,33 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import QRCode from 'react-qr-code'
+import QRCodeLib from 'react-qr-code'
+import { toPng } from 'html-to-image'
 import { ticketService } from '../../services/ticketService'
 import { unwrapData } from '../../utils/apiData'
 import { formatDateTime } from '../../utils/formatDate'
+import { formatVND } from '../../utils/formatCurrency'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import { APP_ROUTES } from '../../constants/routes'
 import { MOCK_TICKETS } from '../../constants/mocks'
+import { ArrowLeft, Download, MapPin, Building2 } from 'lucide-react'
+import toast from 'react-hot-toast'
+
+const QRCodeComponent = typeof QRCodeLib === 'object' && QRCodeLib.default ? QRCodeLib.default : (QRCodeLib.QRCode || QRCodeLib);
 
 export default function TicketDetailPage() {
   const { ticketId } = useParams()
   const [ticket, setTicket] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const ticketRef = useRef(null)
 
   useEffect(() => {
     const fetchTicketDetail = async () => {
       try {
         setIsLoading(true)
-        // For now, we'll find the ticket from the list of 'my tickets'
-        // In a real app, we'd have a getTicketById endpoint
         const response = await ticketService.getMyTickets()
         const fetchedTickets = unwrapData(response) ?? []
         const allTickets = [...MOCK_TICKETS, ...fetchedTickets]
-        const found = allTickets.find(t => String(t.id) === String(ticketId))
+        const found = allTickets.find(t => String(t.ticket_code) === String(ticketId))
         setTicket(found)
       } catch (error) {
         console.error('Failed to fetch ticket detail:', error)
@@ -34,104 +39,177 @@ export default function TicketDetailPage() {
     fetchTicketDetail()
   }, [ticketId])
 
-  if (isLoading) return <LoadingSpinner text="Đang tải thông tin vé..." />
+  const handleDownloadImage = async () => {
+    if (!ticketRef.current) return
+
+    try {
+      const el = ticketRef.current
+      const dataUrl = await toPng(el, {
+        cacheBust: true,
+        backgroundColor: '#f1f5f9',
+        pixelRatio: 2,
+        width: el.offsetWidth,
+        height: el.offsetHeight,
+        style: {
+          margin: '0',
+          transform: 'none',
+        }
+      })
+      
+      const link = document.createElement('a')
+      link.download = `GoTicket_${ticket.ticket_code}.png`
+      link.href = dataUrl
+      link.click()
+      toast.success('Ticket saved successfully!')
+    } catch (err) {
+      console.error('Download error:', err)
+      toast.error('Failed to save ticket image. Please try again.')
+    }
+  }
+
+  if (isLoading) return <LoadingSpinner text="Loading ticket details..." />
 
   if (!ticket) {
     return (
       <div className="container page text-center py-20">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Không tìm thấy vé</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Ticket not found</h2>
         <Link to={APP_ROUTES.MY_TICKETS} className="text-blue-600 hover:underline">
-          Quay lại danh sách vé của tôi
+          Back to My Tickets
         </Link>
       </div>
     )
   }
 
+  const matchTime = formatDateTime(ticket.match_date, 'HH:mm')
+  const matchDate = formatDateTime(ticket.match_date, 'dd/MM/yyyy')
+
   return (
-    <section className="container page py-10">
-      <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col md:flex-row">
-        {/* Left Side: QR & Seat Info */}
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-800 p-8 text-white flex flex-col items-center justify-center md:w-2/5">
-          <div className="bg-white p-4 rounded-2xl mb-6 shadow-lg">
-            <QRCode
-              value={ticket.qr_token || `ticket-${ticket.id}`}
-              size={180}
-              level="H"
-              style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-            />
+    <section className="container page ticket-detail-page py-10">
+      
+      {/* Header Actions */}
+      <div className="flex justify-between items-center mb-8 max-w-5xl mx-auto print:hidden">
+        <Link to={APP_ROUTES.MY_TICKETS} className="flex items-center gap-2 text-gray-600 hover:text-blue-600 font-medium transition-colors">
+          <ArrowLeft size={20} />
+          <span>Back</span>
+        </Link>
+        <button 
+          onClick={handleDownloadImage} 
+          className="save-image-btn"
+        >
+          <Download size={18} />
+          <span>Save as Image</span>
+        </button>
+      </div>
+
+      {/* Realistic Ticket Design */}
+      <div className="realistic-ticket-wrapper max-w-5xl mx-auto" ref={ticketRef}>
+        <div className="realistic-ticket">
+          
+          {/* Left Side: Main Ticket Info */}
+          <div className="ticket-left">
+            <div className="ticket-header-top">
+              <span className="event-name">GOTICKET</span>
+              <span className="event-subtitle">PREMIUM SPORTS TICKETING SYSTEM</span>
+            </div>
+
+            <div className="ticket-body-main">
+              <div className="category-badge">MEN'S FOOTBALL</div>
+              
+              <div className="match-teams">
+                <h1 className="team-name">{ticket.home_team}</h1>
+                <span className="vs">VS</span>
+                <h1 className="team-name">{ticket.away_team}</h1>
+              </div>
+
+              <div className="match-time-info">
+                {matchTime} on {matchDate}
+              </div>
+
+              <div className="stadium-info">
+                <div className="info-item">
+                  <Building2 size={14} /> {ticket.stadium_name} Stadium
+                </div>
+                <div className="info-item">
+                  <MapPin size={14} /> {ticket.stadium_address}, {ticket.stadium_city}
+                </div>
+              </div>
+            </div>
+
+            <div className="ticket-footer-row">
+              <div className="footer-cell">
+                <span className="cell-label">STAND</span>
+                <span className="cell-value">{ticket.stand_name}</span>
+              </div>
+              <div className="footer-cell">
+                <span className="cell-label">QUANTITY</span>
+                <span className="cell-value">{ticket.quantity}</span>
+              </div>
+              <div className="footer-cell flex-2">
+                <span className="cell-label">SEATS</span>
+                <span className="cell-value seats-text">{ticket.seat_labels}</span>
+              </div>
+              <div className="footer-cell price-cell">
+                <span className="cell-label">PRICE</span>
+                <span className="cell-value price-text">
+                  {ticket.price ? formatVND(ticket.price * ticket.quantity) : '500,000 VND'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Separator */}
+          <div className="ticket-separator">
+            <div className="hole top"></div>
+            <div className="dashed-line"></div>
+            <div className="hole bottom"></div>
+          </div>
+
+          {/* Right Side: Control Stub & QR */}
+          <div className="ticket-right">
+            
+            <div className="qr-container">
+              <div className="qr-box">
+                <QRCodeComponent
+                  value={ticket.qr_token || `ticket-group-${ticket.ticket_code}`}
+                  size={120}
+                  level="H"
+                  style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                />
+              </div>
+              <p className="qr-help-text">Scan QR at the gate</p>
+            </div>
+
+              <div className="control-details">
+                <div className="detail-row">
+                  <span className="d-label">TICKET CODE:</span>
+                  <span className="d-value code-highlight">{ticket.ticket_code}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="d-label">DATE:</span>
+                  <span className="d-value">{matchDate}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="d-label">STATUS:</span>
+                  <span className={`d-value status-badge ${ticket.status}`}>
+                    {ticket.status === 'paid' ? 'UNUSED' : 
+                     ticket.status === 'checked_in' ? 'USED' : 
+                     ticket.status === 'pending' ? 'UNUSED' : 'CANCELLED'}
+                  </span>
+                </div>
+                <div className="ticket-disclaimer">
+                  * Ticket value expires after the match ends.
+                </div>
+              </div>
           </div>
           
-          <div className="text-center space-y-4 w-full">
-            <div className="border-t border-white/20 pt-4">
-              <p className="text-blue-200 text-xs uppercase tracking-widest mb-1">Khán đài</p>
-              <p className="text-3xl font-black">{ticket.stand_name || 'A'}</p>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 border-t border-white/20 pt-4">
-              <div>
-                <p className="text-blue-200 text-xs uppercase tracking-widest mb-1">Cửa</p>
-                <p className="text-xl font-bold">{ticket.gate || ticket.stand_name || 'A'}</p>
-              </div>
-              <div>
-                <p className="text-blue-200 text-xs uppercase tracking-widest mb-1">Loại vé</p>
-                <p className="text-xl font-bold">Phổ thông</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side: Match Info */}
-        <div className="p-8 flex-1 flex flex-col">
-          <div className="flex justify-between items-start mb-6">
-            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold uppercase tracking-wide">
-              {ticket.status === 'paid' ? 'Đã thanh toán' : 'Đang xử lý'}
-            </span>
-            <p className="text-gray-400 text-xs font-mono">#{ticket.id}</p>
-          </div>
-
-          <div className="mb-8">
-            <h1 className="text-2xl font-black text-gray-900 leading-tight mb-2">
-              {ticket.home_team} <span className="text-blue-600">vs</span> {ticket.away_team}
-            </h1>
-            <p className="text-gray-500 font-medium flex items-center gap-2">
-              📅 {formatDateTime(ticket.match_date)}
-            </p>
-          </div>
-
-          <div className="space-y-4 mb-auto">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">🏟️</span>
-              <div>
-                <p className="font-bold text-gray-800">{ticket.stadium_name}</p>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  {ticket.stadium_address}, {ticket.stadium_city}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-10 border-t border-dashed border-gray-200 pt-6 flex flex-col gap-3">
-            <button 
-              className="w-full py-4 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg active:scale-95"
-              onClick={() => window.print()}
-            >
-              Tải vé PDF / In vé
-            </button>
-            <Link 
-              to={APP_ROUTES.MY_TICKETS}
-              className="text-center text-sm text-gray-500 hover:text-blue-600 py-2 transition-colors"
-            >
-              Quay lại danh sách vé của tôi
-            </Link>
-          </div>
         </div>
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          nav, footer, .container.page > *:not(.max-w-2xl), button, a { display: none !important; }
-          .max-w-2xl { margin: 0 auto !important; box-shadow: none !important; border: 1px solid #eee !important; width: 100% !important; max-width: 100% !important; }
-          .page { padding: 0 !important; }
+          body * { visibility: hidden; }
+          .realistic-ticket-wrapper, .realistic-ticket-wrapper * { visibility: visible; }
+          .realistic-ticket-wrapper { position: absolute; left: 0; top: 0; width: 100%; transform: scale(0.9); transform-origin: top left; }
         }
       `}} />
     </section>

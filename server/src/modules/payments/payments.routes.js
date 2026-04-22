@@ -2,7 +2,7 @@ import { Router } from "express";
 import { ROLES } from "../../constants/roles.js";
 import { auth } from "../../middlewares/auth.js";
 import { requireRoles } from "../../middlewares/roles.js";
-import { createPaymentIntent, stripeWebhook } from "./payments.controller.js";
+import { createPaymentIntent, stripeWebhook, confirmPayment } from "./payments.controller.js";
 
 const router = Router();
 
@@ -79,5 +79,6 @@ router.post("/create-intent", auth, requireRoles(ROLES.AUDIENCE), createPaymentI
  *         description: "Invalid Stripe signature"
  */
 router.post("/webhook", stripeWebhook);
+router.post("/confirm", auth, requireRoles(ROLES.AUDIENCE), confirmPayment);
 
 export default router;

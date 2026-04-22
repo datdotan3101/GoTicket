@@ -53,6 +53,7 @@ export default function Navbar() {
                   {user?.role === ROLES.EDITOR && <Link to={APP_ROUTES.EDITOR_DASHBOARD}>Editor Portal</Link>}
                   {user?.role === ROLES.MANAGER && <Link to={APP_ROUTES.MANAGER_DASHBOARD}>Manager Portal</Link>}
                   {user?.role === ROLES.ADMIN && <Link to={APP_ROUTES.ADMIN_DASHBOARD}>Admin Portal</Link>}
+                  <Link to={APP_ROUTES.PROFILE}>My Profile</Link>
                   <Link to={APP_ROUTES.MY_TICKETS}>My Tickets</Link>
                   <button type="button" onClick={handleLogout}>Đăng xuất</button>
                 </div>

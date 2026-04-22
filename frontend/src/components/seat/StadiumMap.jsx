@@ -13,7 +13,7 @@ const STAND_COLORS = {
   default:  { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.1)', glow: 'none' },
 }
 
-function StandSectorGrid({ standName, standData, interactive, selected, onSelect, rows = 3, cols = 6 }) {
+function StandSectorGrid({ standName, standData, interactive, selected, onSelect, rows = 3, cols = 6, direction = 'up', layout = 'horizontal' }) {
   const totalSeats = standData?.total_seats || 0
   const availableSeats = standData?.available_seats ?? totalSeats
   const isSoldOut = interactive && availableSeats === 0
@@ -24,13 +24,50 @@ function StandSectorGrid({ standName, standData, interactive, selected, onSelect
   const remainder = blocks > 0 ? totalSeats % blocks : 0
 
   const cells = []
-  for (let r = 0; r < rows; r++) {
+  
+  if (layout === 'vertical') {
+    // Column-major orientation: Floors are Columns, Labels are Headers
+    // Header Row
     for (let c = 0; c < cols; c++) {
-      const num = r * cols + c + 1
       cells.push({
-        id: `${standName}${num}`,
-        seats: seatsPerBlock + (num <= remainder ? 1 : 0),
+        isLabel: true,
+        label: `Floor ${c + 1}`,
+        key: `floor-${c + 1}`,
+        isHeader: true
       })
+    }
+    // Data Rows
+    for (let r = 0; r < rows; r++) {
+      const floorIndex = direction === 'down' ? r : (rows - 1 - r);
+      for (let c = 0; c < cols; c++) {
+        const num = c * rows + floorIndex + 1;
+        cells.push({
+          isLabel: false,
+          id: `${standName}${num}`,
+          seats: seatsPerBlock + (num <= remainder ? 1 : 0),
+          key: `${standName}${num}`
+        })
+      }
+    }
+  } else {
+    // Row-major orientation: Floors are Rows (Default for A and B)
+    for (let r = 0; r < rows; r++) {
+      const floorNum = direction === 'down' ? (r + 1) : (rows - r)
+      cells.push({
+        isLabel: true,
+        label: `Floor ${floorNum}`,
+        key: `floor-${floorNum}`
+      })
+      const sectorOffset = (floorNum - 1) * cols
+      for (let c = 0; c < cols; c++) {
+        const num = sectorOffset + c + 1
+        cells.push({
+          isLabel: false,
+          id: `${standName}${num}`,
+          seats: seatsPerBlock + (num <= remainder ? 1 : 0),
+          key: `${standName}${num}`
+        })
+      }
     }
   }
 
@@ -69,18 +106,26 @@ function StandSectorGrid({ standName, standData, interactive, selected, onSelect
       </div>
       <div className="stand-sector-grid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
         {cells.map((cell) => (
-          <div
-            key={cell.id}
-            className="sector-cell"
-            style={{
-              background: isSelected ? 'rgba(99,102,241,0.2)' : undefined,
-              borderColor: isSelected ? 'rgba(99,102,241,0.5)' : undefined,
-              pointerEvents: 'none',
-            }}
-          >
-            <span className="sector-id">{cell.id}</span>
-            <span className="sector-seats">{cell.seats}</span>
-          </div>
+          cell.isLabel ? (
+            <div key={cell.key} className={cell.isHeader ? "floor-header-cell" : "floor-row-label"}>
+              {!cell.isHeader && <div className="floor-row-line" />}
+              <span>{cell.label}</span>
+              {!cell.isHeader && <div className="floor-row-line" />}
+            </div>
+          ) : (
+            <div
+              key={cell.key}
+              className="sector-cell"
+              style={{
+                background: isSelected ? 'rgba(99,102,241,0.2)' : undefined,
+                borderColor: isSelected ? 'rgba(99,102,241,0.5)' : undefined,
+                pointerEvents: 'none',
+              }}
+            >
+              <span className="sector-id">{cell.id}</span>
+              <span className="sector-seats">{cell.seats}</span>
+            </div>
+          )
         ))}
       </div>
     </div>
@@ -149,6 +194,7 @@ export default function StadiumMap({ stands = [], selectedStandId, onSelectStand
           onSelect={onSelectStand}
           rows={5}
           cols={2}
+          layout="vertical"
         />
 
         {/* Center column */}
@@ -163,6 +209,7 @@ export default function StadiumMap({ stands = [], selectedStandId, onSelectStand
               onSelect={onSelectStand}
               rows={3}
               cols={6}
+              direction="up"
             />
             <VipBlock
               standData={getStand('VIP')}
@@ -190,6 +237,7 @@ export default function StadiumMap({ stands = [], selectedStandId, onSelectStand
             onSelect={onSelectStand}
             rows={3}
             cols={6}
+            direction="down"
           />
         </div>
 
@@ -203,6 +251,7 @@ export default function StadiumMap({ stands = [], selectedStandId, onSelectStand
             onSelect={onSelectStand}
             rows={5}
             cols={2}
+            layout="vertical"
           />
         </div>
       </div>

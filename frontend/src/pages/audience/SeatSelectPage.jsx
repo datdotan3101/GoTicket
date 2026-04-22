@@ -39,7 +39,7 @@ export default function SeatSelectPage() {
     if (!stand || stand.available_seats === 0) return
     setSelectedStand(stand)
     if (quantity > stand.available_seats) {
-      setQuantity(Math.min(stand.available_seats, 4))
+      setQuantity(Math.min(stand.available_seats, 6))
     }
   }
 
@@ -206,8 +206,8 @@ export default function SeatSelectPage() {
                         {quantity}
                       </span>
                       <button
-                        onClick={() => setQuantity((q) => Math.min(4, selectedStand.available_seats, q + 1))}
-                        disabled={quantity >= 4 || quantity >= selectedStand.available_seats}
+                        onClick={() => setQuantity((q) => Math.min(6, selectedStand.available_seats, q + 1))}
+                        disabled={quantity >= 6 || quantity >= selectedStand.available_seats}
                         style={{
                           width: '48px', height: '48px', border: 'none', background: '#f8fafc',
                           fontWeight: 900, fontSize: '1.25rem',
@@ -218,7 +218,7 @@ export default function SeatSelectPage() {
                       >+</button>
                     </div>
                     <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '8px', textAlign: 'center', fontStyle: 'italic' }}>
-                      * Tối đa 4 vé mỗi lần đặt
+                      * Tối đa 6 vé mỗi lần đặt
                     </p>
                   </div>
 

@@ -4,6 +4,7 @@ export const APP_ROUTES = {
   REGISTER: '/register',
   ONBOARDING: '/onboarding',
   DASHBOARD: '/dashboard',
+  PROFILE: '/profile',
   FORBIDDEN: '/forbidden',
   SPORTS: '/sports/:sportId',
   MATCH_DETAIL: '/matches/:matchId',

@@ -23,9 +23,11 @@ export default function MyTicketsPage() {
   }, [])
 
   return (
-    <section className="container page">
-      <h1>My tickets</h1>
-      <div className="cards-grid">
+    <section className="container page py-10">
+      <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-8 uppercase tracking-tight border-b border-slate-200 pb-4">
+        My Tickets
+      </h1>
+      <div className="cards-grid mt-6">
         {tickets.map((ticket) => <TicketCard key={ticket.id} ticket={ticket} />)}
       </div>
       {tickets.length === 0 && <p>No tickets.</p>}

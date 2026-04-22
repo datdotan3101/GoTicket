@@ -49,6 +49,22 @@ const handlePaymentSucceeded = async (intent) => {
       [intent.id]
     );
 
+    const firstTicketResult = await run(
+      "SELECT id, match_id, ticket_code FROM tickets WHERE id = $1",
+      [ticketIds[0]]
+    );
+    const { ticket_code: ticketCode, match_id: matchId } = firstTicketResult.rows[0];
+
+    const qrToken = jwt.sign(
+      {
+        ticketCode,
+        userId,
+        matchId
+      },
+      process.env.QR_JWT_SECRET || process.env.JWT_SECRET,
+      { expiresIn: "30d" }
+    );
+
     for (const ticketId of ticketIds) {
       const ticketResult = await run(
         "SELECT id, match_id, seat_id, user_id, status FROM tickets WHERE id = $1 AND user_id = $2 FOR UPDATE",
@@ -60,17 +76,6 @@ const handlePaymentSucceeded = async (intent) => {
       // Skip nếu vé đã được xử lý (idempotency)
       if (ticket.status !== TICKET_STATUS.PENDING) continue;
 
-      const qrToken = jwt.sign(
-        {
-          ticketId: ticket.id,
-          matchId: ticket.match_id,
-          seatId: ticket.seat_id,
-          userId: ticket.user_id
-        },
-        process.env.QR_JWT_SECRET || process.env.JWT_SECRET,
-        { expiresIn: "30d" }
-      );
-
       await run("UPDATE tickets SET status = $1, qr_token = $2 WHERE id = $3", [
         TICKET_STATUS.PAID,
         qrToken,
@@ -78,7 +83,7 @@ const handlePaymentSucceeded = async (intent) => {
       ]);
 
       // Emit seat update realtime
-      emitToMatch(ticket.match_id, "seat:paid", {
+      emitToMatch(ticket.match_id, "seat:booked", {
         matchId: ticket.match_id,
         seatId: ticket.seat_id,
         ticketId: ticket.id,
@@ -155,5 +160,14 @@ export const paymentsService = {
     }
 
     return { received: true };
+  },
+
+  async confirmLocalPayment(paymentIntentId) {
+    const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    if (intent.status === "succeeded") {
+      await handlePaymentSucceeded(intent);
+      return { success: true };
+    }
+    return { success: false, status: intent.status };
   }
 };
