@@ -7,6 +7,7 @@ import { APP_ROUTES } from './constants/routes'
 import { PRIVATE_ROLES, ROLES } from './constants/roles'
 import LoadingSpinner from './components/ui/LoadingSpinner'
 import AIChatBubble from './components/ai/AIChatBubble'
+import AdminLayout from './components/layout/AdminLayout'
 
 // Lazy load pages for Route-level code splitting
 const HomePage = lazy(() => import('./pages/public/HomePage'))
@@ -98,13 +99,15 @@ export default function App() {
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
-              <Route path={APP_ROUTES.ADMIN_DASHBOARD} element={<AdminDashboard />} />
-              <Route path={APP_ROUTES.ADMIN_APPROVALS} element={<ApprovalsPage />} />
-              <Route path={APP_ROUTES.ADMIN_USERS} element={<UserManagePage />} />
-              <Route path={APP_ROUTES.ADMIN_SPORTS} element={<SportsManagePage />} />
-              <Route path={APP_ROUTES.ADMIN_LEAGUES} element={<LeagueManagePage />} />
-              <Route path={APP_ROUTES.ADMIN_MATCHES} element={<ApprovedMatchesPage />} />
-              <Route path={APP_ROUTES.ADMIN_REVENUE_REPORT} element={<RevenueReportPage />} />
+              <Route element={<AdminLayout />}>
+                <Route path={APP_ROUTES.ADMIN_DASHBOARD} element={<AdminDashboard />} />
+                <Route path={APP_ROUTES.ADMIN_APPROVALS} element={<ApprovalsPage />} />
+                <Route path={APP_ROUTES.ADMIN_USERS} element={<UserManagePage />} />
+                <Route path={APP_ROUTES.ADMIN_SPORTS} element={<SportsManagePage />} />
+                <Route path={APP_ROUTES.ADMIN_LEAGUES} element={<LeagueManagePage />} />
+                <Route path={APP_ROUTES.ADMIN_MATCHES} element={<ApprovedMatchesPage />} />
+                <Route path={APP_ROUTES.ADMIN_REVENUE_REPORT} element={<RevenueReportPage />} />
+              </Route>
             </Route>
 
             <Route path="*" element={<NotFoundPage />} />

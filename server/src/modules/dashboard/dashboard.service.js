@@ -9,13 +9,14 @@ export const dashboardService = {
    * - Last 30 days revenue trend (by day)
    */
   async getAdminRevenue() {
-    const [summary, bySport, topMatches, trend] = await Promise.all([
-      // Tổng quan
+    const [summary, bySport, topClubs, trend, operations, growth] = await Promise.all([
+      // TẦNG 1: Tổng quan (KPI)
       query(`
         SELECT
           COALESCE(SUM(p.amount), 0)::numeric AS total_revenue,
           COUNT(DISTINCT t.id)::int AS total_tickets,
-          COUNT(DISTINCT t.match_id)::int AS total_matches_with_sales,
+          (SELECT COUNT(*)::int FROM matches WHERE status = 'published') AS total_open_matches,
+          (SELECT COUNT(*)::int FROM seats) AS total_system_seats,
           COUNT(DISTINCT t.user_id)::int AS total_buyers
         FROM tickets t
         JOIN payments p ON p.ticket_id = t.id
@@ -23,58 +24,80 @@ export const dashboardService = {
           AND p.status = 'succeeded'
       `),
 
-      // Doanh thu theo môn thể thao
+      // TẦNG 3: Doanh thu theo môn thể thao (Cho Pie Chart)
       query(`
         SELECT
-          s.id AS sport_id, s.name AS sport_name,
-          COALESCE(SUM(p.amount), 0)::numeric AS revenue,
-          COUNT(t.id)::int AS tickets
+          s.name AS sport_name,
+          COALESCE(SUM(p.amount), 0)::numeric AS revenue
         FROM sports s
         LEFT JOIN leagues l ON l.sport_id = s.id
         LEFT JOIN matches m ON m.league_id = l.id
         LEFT JOIN tickets t ON t.match_id = m.id AND t.status IN ('paid', 'checked_in')
         LEFT JOIN payments p ON p.ticket_id = t.id AND p.status = 'succeeded'
         GROUP BY s.id, s.name
+        HAVING COALESCE(SUM(p.amount), 0) > 0
         ORDER BY revenue DESC
       `),
 
-      // Top 5 matches theo doanh thu
+      // TẦNG 2: Top 5 CLB doanh thu cao nhất
       query(`
         SELECT
-          m.id, m.home_team, m.away_team, m.match_date,
+          c.id, c.name,
           COALESCE(SUM(p.amount), 0)::numeric AS revenue,
           COUNT(t.id)::int AS tickets_sold,
-          COALESCE(total.total_seats, 0)::int AS total_seats
-        FROM matches m
+          (SELECT COUNT(*)::int FROM matches WHERE club_id = c.id) AS matches_count,
+          COALESCE(
+            COUNT(t.id)::numeric / NULLIF((SELECT COUNT(*) FROM seats s JOIN matches m2 ON m2.id = s.match_id WHERE m2.club_id = c.id), 0) * 100, 
+            0
+          )::numeric AS fill_rate,
+          (SELECT full_name FROM users WHERE club_id = c.id AND role = 'manager' LIMIT 1) AS manager_name
+        FROM clubs c
+        LEFT JOIN matches m ON m.club_id = c.id
         LEFT JOIN tickets t ON t.match_id = m.id AND t.status IN ('paid', 'checked_in')
         LEFT JOIN payments p ON p.ticket_id = t.id AND p.status = 'succeeded'
-        LEFT JOIN (
-          SELECT match_id, COUNT(*)::int AS total_seats FROM seats GROUP BY match_id
-        ) total ON total.match_id = m.id
-        GROUP BY m.id, m.home_team, m.away_team, m.match_date, total.total_seats
+        GROUP BY c.id, c.name
         ORDER BY revenue DESC
         LIMIT 5
       `),
 
-      // Trend 30 ngày gần nhất (by day)
+      // TẦNG 3: Trend 30 ngày (Cho Line Chart)
       query(`
         SELECT
           DATE(p.paid_at) AS day,
-          COALESCE(SUM(p.amount), 0)::numeric AS revenue,
-          COUNT(p.id)::int AS transactions
+          COALESCE(SUM(p.amount), 0)::numeric AS revenue
         FROM payments p
         WHERE p.status = 'succeeded'
           AND p.paid_at >= NOW() - INTERVAL '30 days'
         GROUP BY DATE(p.paid_at)
         ORDER BY day ASC
+      `),
+
+      // TẦNG 4: Trạng thái vận hành
+      query(`
+        SELECT 
+          id, home_team, away_team, match_date, status,
+          (SELECT COUNT(*) FROM tickets WHERE match_id = m.id AND status IN ('paid', 'checked_in'))::int AS sold,
+          (SELECT COUNT(*) FROM seats WHERE match_id = m.id)::int AS total_seats
+        FROM matches m
+        WHERE status IN ('published', 'approved', 'canceled')
+        ORDER BY match_date ASC
+      `),
+
+      // Growth comparison (So với hôm qua)
+      query(`
+        SELECT
+          (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE status = 'succeeded' AND DATE(paid_at) = CURRENT_DATE)::numeric AS today_revenue,
+          (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE status = 'succeeded' AND DATE(paid_at) = CURRENT_DATE - 1)::numeric AS yesterday_revenue
       `)
     ]);
 
     return {
       summary: summary.rows[0],
       bySport: bySport.rows,
-      topMatches: topMatches.rows,
-      revenueTrend: trend.rows
+      topClubs: topClubs.rows,
+      revenueTrend: trend.rows,
+      operations: operations.rows,
+      growth: growth.rows[0]
     };
   },
 

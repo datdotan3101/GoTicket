@@ -19,11 +19,14 @@ import stadiumsRoutes from "./modules/stadiums/stadiums.routes.js";
 import usersRoutes from "./modules/users/users.routes.js";
 import newsRoutes from "./modules/news/news.routes.js";
 import aiRoutes from "./modules/ai/ai.routes.js";
+import uploadRoutes from "./modules/upload/upload.routes.js";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: false, // Allow loading images from different origins if needed
+}));
 app.use(
   cors({
     origin: process.env.CLIENT_URL || true
@@ -31,6 +34,7 @@ app.use(
 );
 app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
 app.use(express.json({ limit: "2mb" }));
+app.use("/uploads", express.static("public/uploads"));
 
 /**
  * @swagger
@@ -60,6 +64,7 @@ app.use("/api/notifications", notificationsRoutes);
 app.use("/api/approvals", approvalsRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/upload", uploadRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
