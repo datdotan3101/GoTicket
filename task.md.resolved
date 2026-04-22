@@ -1,0 +1,26 @@
+# Checker QR Scan & Tickets Enhancements
+
+- [ ] **1. Database Schema Updates**
+  - [ ] Add `ticket_code` column to `tickets` table (e.g., `VARCHAR(10)`) in migrations.
+
+- [ ] **2. Backend: Ticket Generation**
+  - [ ] Update `tickets.service.js` to generate a random 5-char `ticket_code` upon ticket creation.
+  - [ ] Store `ticket_code` in DB and include it in the QR JWT payload.
+
+- [ ] **3. Backend: Checkin Service & Controller**
+  - [ ] Implement `POST /api/checkin/scan` endpoint.
+  - [ ] Create `checkin.service.js` with `verifyTicket(payload)` to check if ticket is already used or expired.
+  - [ ] Check match date to determine expiration.
+
+- [ ] **4. Frontend: My Tickets Page & Modal**
+  - [ ] Update `MyTicketsPage.jsx` to show ticket cards with basic info and 5-char code.
+  - [ ] Create `TicketDetailModal.jsx` to display match details, QR code, and 5-char code when clicked.
+
+- [ ] **5. Frontend: QR Scan Page**
+  - [ ] Update `QRScanPage.jsx` to integrate `html5-qrcode` or simply use a mock/manual entry for testing.
+  - [ ] Add manual entry fallback.
+  - [ ] Handle UI states: successful check-in, already used, expired.
+
+- [ ] **6. Clean Backend Validation & Security**
+  - [ ] Ensure routes are protected by `CHECKER` roles.
+  - [ ] Integrate Swagger docs for new checkin endpoint.

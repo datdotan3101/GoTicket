@@ -15,135 +15,157 @@ import EmptyState from '../../components/ui/EmptyState'
 export default function SeatSelectPage() {
   const { matchId } = useParams()
   const navigate = useNavigate()
-  const socketRef = useSocket({ enabled: true })
-  const [seats, setSeats] = useState([])
+  const [stands, setStands] = useState([])
+  const [selectedStand, setSelectedStand] = useState(null)
+  const [quantity, setQuantity] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
-  const selectedSeats = useSeatStore((state) => state.selectedSeats)
-  const setSelectedSeats = useSeatStore((state) => state.setSelectedSeats)
-  const clearSeats = useSeatStore((state) => state.clearSeats)
 
   useEffect(() => {
-    clearSeats()
-  }, [clearSeats, matchId])
-
-  useEffect(() => {
-    const fetchSeats = async () => {
+    const fetchAvailability = async () => {
       try {
         setIsLoading(true)
         setError(null)
-        const response = await matchService.getSeats(matchId)
-        setSeats(unwrapData(response) ?? [])
+        const response = await matchService.getAvailability(matchId)
+        setStands(unwrapData(response) ?? [])
       } catch (err) {
-        setError(err.response?.data?.message || 'Không thể tải sơ đồ ghế')
-        setSeats([])
+        setError(err.response?.data?.message || 'Không thể tải thông tin khán đài')
+        setStands([])
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchSeats()
+    fetchAvailability()
   }, [matchId])
 
-  useEffect(() => {
-    const socket = socketRef.current
-    if (!socket) return undefined
-
-    socket.emit('join:match', Number(matchId))
-
-    const onSeatBooked = ({ seatId }) => {
-      setSeats((prev) => prev.map((seat) => (seat.id === seatId ? { ...seat, status: 'booked' } : seat)))
-      setSelectedSeats((prev) => prev.filter((seat) => seat.id !== seatId))
+  const handleSelectStand = (stand) => {
+    if (stand.available_seats === 0) return
+    setSelectedStand(stand)
+    if (quantity > stand.available_seats) {
+      setQuantity(stand.available_seats > 4 ? 4 : stand.available_seats)
     }
-
-    socket.on('seat:booked', onSeatBooked)
-    socket.on('seat:paid', onSeatBooked)
-
-    return () => {
-      socket.off('seat:booked', onSeatBooked)
-      socket.off('seat:paid', onSeatBooked)
-    }
-  }, [matchId, setSelectedSeats, socketRef])
-
-  const toggleSeat = (seat) => {
-    const exists = selectedSeats.some((item) => item.id === seat.id)
-    const next = exists ? selectedSeats.filter((item) => item.id !== seat.id) : [...selectedSeats, seat]
-    setSelectedSeats(next)
   }
 
-  const selectedTotal = useMemo(
-    () => selectedSeats.reduce((sum, seat) => sum + Number(seat.price || 0), 0),
-    [selectedSeats],
-  )
-
   const continueCheckout = () => {
-    const validation = validateSelectedSeats(selectedSeats)
-    if (!validation.valid) {
-      toast.error(validation.message)
+    if (!selectedStand) {
+      toast.error('Vui lòng chọn khán đài')
       return
     }
 
     navigate('/audience/checkout', {
       state: {
         matchId: Number(matchId),
-        seatIds: selectedSeats.map((seat) => seat.id),
-        seats: selectedSeats,
+        standId: selectedStand.id,
+        quantity: Number(quantity),
+        standName: selectedStand.name,
+        price: selectedStand.price,
       },
     })
   }
 
   return (
-    <section className="container page" aria-label="Lựa chọn ghế ngồi">
-      <h1 className="text-2xl font-bold mb-4">Lựa chọn ghế ngồi</h1>
-      
-      {isLoading && <LoadingSpinner text="Đang tải sơ đồ ghế..." />}
+    <section className="container page py-10" aria-label="Lựa chọn chỗ ngồi">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-black text-gray-900 mb-2">Chọn Khán đài</h1>
+        <p className="text-gray-500 mb-8">Vui lòng chọn khán đài và số lượng vé bạn muốn mua.</p>
+        
+        {isLoading && <LoadingSpinner text="Đang kiểm tra chỗ trống..." />}
 
-      {error && !isLoading && (
-        <ErrorState
-          title="Lỗi tải dữ liệu"
-          message={error}
-          onRetry={() => window.location.reload()}
-        />
-      )}
+        {error && !isLoading && (
+          <ErrorState
+            title="Lỗi tải dữ liệu"
+            message={error}
+            onRetry={() => window.location.reload()}
+          />
+        )}
 
-      {!isLoading && !error && seats.length === 0 && (
-        <EmptyState title="Sơ đồ trống" message="Chưa có thông tin ghế ngồi cho trận đấu này." icon="🏟️" />
-      )}
+        {!isLoading && !error && stands.length === 0 && (
+          <EmptyState title="Hết vé" message="Rất tiếc, trận đấu này đã hết vé ở tất cả các khán đài." icon="🏟️" />
+        )}
 
-      {!isLoading && !error && seats.length > 0 && (
-        <div className="flex flex-col gap-6">
-          <SeatLegend />
-          <div aria-live="polite" className="sr-only">
-             Đã chọn {selectedSeats.length} ghế.
+        {!isLoading && !error && stands.length > 0 && (
+          <div className="grid gap-8 md:grid-cols-3">
+            {/* Stand List */}
+            <div className="md:col-span-2 space-y-4">
+              {stands.map((stand) => {
+                const isSoldOut = stand.available_seats === 0
+                const isSelected = selectedStand?.id === stand.id
+                
+                return (
+                  <button
+                    key={stand.id}
+                    disabled={isSoldOut}
+                    onClick={() => handleSelectStand(stand)}
+                    className={`w-full flex items-center justify-between p-6 rounded-2xl border-2 transition-all text-left ${
+                      isSelected 
+                        ? 'border-blue-600 bg-blue-50/50 ring-4 ring-blue-100' 
+                        : isSoldOut 
+                          ? 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed' 
+                          : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-1">Khán đài {stand.name}</h3>
+                      <p className={`text-sm font-medium ${isSoldOut ? 'text-red-500' : 'text-blue-600'}`}>
+                        {isSoldOut ? 'Hết vé (Sold out)' : `${stand.available_seats.toLocaleString()} chỗ trống`}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-black text-gray-900">
+                        {Number(stand.price).toLocaleString('vi-VN')}đ
+                      </p>
+                      <p className="text-xs text-gray-400">mỗi vé</p>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Selection Summary */}
+            <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm h-fit sticky top-24">
+              <h4 className="text-lg font-bold text-gray-900 mb-6">Chi tiết đặt vé</h4>
+              
+              <div className="space-y-6">
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Số lượng vé</label>
+                  <div className="flex items-center gap-4">
+                    <button 
+                      className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 disabled:opacity-30"
+                      onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                      disabled={quantity <= 1}
+                    >-</button>
+                    <span className="text-xl font-bold w-4 text-center">{quantity}</span>
+                    <button 
+                      className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 disabled:opacity-30"
+                      onClick={() => setQuantity(q => Math.min(selectedStand?.available_seats || 4, 4, q + 1))}
+                      disabled={quantity >= 4 || quantity >= (selectedStand?.available_seats || 1)}
+                    >+</button>
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-2 italic">* Tối đa 4 vé mỗi lần đặt</p>
+                </div>
+
+                <div className="pt-6 border-t border-gray-100">
+                  <div className="flex justify-between items-end mb-6">
+                    <p className="text-gray-500 font-medium">Tổng cộng</p>
+                    <p className="text-2xl font-black text-blue-700">
+                      {((selectedStand?.price || 0) * quantity).toLocaleString('vi-VN')}đ
+                    </p>
+                  </div>
+
+                  <button 
+                    onClick={continueCheckout}
+                    disabled={!selectedStand}
+                    className="w-full py-4 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg disabled:bg-gray-200 disabled:shadow-none active:scale-95"
+                  >
+                    Tiếp theo
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-          <SeatMap seats={seats} selectedSeats={selectedSeats} onToggleSeat={toggleSeat} />
-          
-          <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg flex items-center justify-between">
-             <div className="text-lg">
-                <span className="text-gray-500">Số lượng:</span> <strong className="text-blue-700">{selectedSeats.length} ghế</strong>
-             </div>
-             <div className="text-lg">
-                <span className="text-gray-500">Tạm tính:</span> <strong className="text-green-700">{selectedTotal.toLocaleString('vi-VN')} VND</strong>
-             </div>
-          </div>
-
-          <div className="flex gap-4">
-            <Link className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition-colors" to={`/matches/${matchId}`}>
-              Quay lại trận đấu
-            </Link>
-            <button 
-              type="button" 
-              onClick={continueCheckout}
-              disabled={selectedSeats.length === 0}
-              className={`flex-1 px-6 py-3 rounded-lg font-bold transition-colors ${
-                selectedSeats.length === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-            >
-              Tiến hành thanh toán
-            </button>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </section>
   )
 }

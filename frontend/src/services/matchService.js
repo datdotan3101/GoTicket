@@ -4,6 +4,7 @@ export const matchService = {
   getAll: (params) => api.get('/matches', { params }),
   getById: (id) => api.get(`/matches/${id}`),
   getSeats: (id) => api.get(`/matches/${id}/seats`),
+  getAvailability: (id) => api.get(`/matches/${id}/availability`),
   create: (payload) => api.post('/matches', payload),
   update: (id, payload) => api.put(`/matches/${id}`, payload),
   submit: (id) => api.post(`/matches/${id}/submit`),

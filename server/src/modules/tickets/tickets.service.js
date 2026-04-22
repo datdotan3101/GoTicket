@@ -15,29 +15,33 @@ const getSeatRowsForBooking = async (runner, matchId, seatIds) => {
 };
 
 export const ticketsService = {
-  async bookTickets({ matchId, seatIds, userId }) {
-    if (!Array.isArray(seatIds) || seatIds.length === 0) {
-      throw new Error("Bạn phải chọn ít nhất 1 ghế.");
+  async bookTickets({ matchId, standId, quantity, userId }) {
+    if (!standId || !quantity || quantity <= 0) {
+      throw new Error("Thông tin đặt vé không hợp lệ.");
     }
 
     const bookedTickets = await withTransaction(async (tx) => {
       const run = (text, params) => tx.query(text, params);
-      const seats = await getSeatRowsForBooking(run, matchId, seatIds);
-      if (seats.length !== seatIds.length) {
-        throw new Error("Một số ghế không tồn tại.");
+      
+      // Tìm các ghế còn trống trong khán đài được chọn
+      const seatResult = await run(
+        `SELECT id, seat_label
+         FROM seats
+         WHERE match_id = $1 AND stand_id = $2 AND status = 'available'
+         ORDER BY id ASC
+         LIMIT $3
+         FOR UPDATE SKIP LOCKED`,
+        [matchId, standId, quantity]
+      );
+
+      const seats = seatResult.rows;
+      if (seats.length < quantity) {
+        throw new Error("Rất tiếc, khán đài này không còn đủ số lượng ghế bạn yêu cầu.");
       }
 
-      const unavailable = seats.find((seat) => seat.status !== "available");
-      if (unavailable) {
-        throw new Error("Một số ghế đã được đặt.");
-      }
-
-      const seatValidation = validateSeatSelection(seats);
-      if (!seatValidation.valid) {
-        throw new Error(seatValidation.message);
-      }
-
+      const seatIds = seats.map(s => s.id);
       const ticketIds = [];
+      
       for (const seat of seats) {
         const ticketResult = await run(
           `INSERT INTO tickets (user_id, match_id, seat_id, status)
@@ -51,9 +55,10 @@ export const ticketsService = {
       await run(
         `UPDATE seats
          SET status = 'booked'
-         WHERE match_id = $1 AND id = ANY($2::bigint[])`,
-        [matchId, seatIds]
+         WHERE id = ANY($1::bigint[])`,
+        [seatIds]
       );
+      
       return ticketIds;
     });
 
@@ -73,12 +78,18 @@ export const ticketsService = {
     const result = await query(
       `SELECT t.*,
               s.seat_label,
+              st.name as stand_name,
+              std.name as stadium_name,
+              std.city as stadium_city,
+              std.address as stadium_address,
               m.home_team,
               m.away_team,
               m.match_date
        FROM tickets t
        JOIN seats s ON s.id = t.seat_id
+       JOIN stands st ON st.id = s.stand_id
        JOIN matches m ON m.id = t.match_id
+       JOIN stadiums std ON std.id = m.stadium_id
        WHERE t.user_id = $1
        ORDER BY t.created_at DESC`,
       [userId]

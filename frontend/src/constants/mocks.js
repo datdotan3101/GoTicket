@@ -1,0 +1,28 @@
+export const MOCK_TICKETS = [
+  {
+    id: 'mock-1',
+    home_team: 'Manchester United',
+    away_team: 'Liverpool',
+    match_date: '2026-05-10T20:00:00Z',
+    stadium_name: 'Stretford End Stadium',
+    stadium_address: 'Sir Matt Busby Way',
+    stadium_city: 'Manchester',
+    stand_name: 'A',
+    seat_label: 'A-12',
+    status: 'paid',
+    qr_token: 'mock-qr-token-1234567890abcdef',
+  },
+  {
+    id: 'mock-2',
+    home_team: 'Vietnam',
+    away_team: 'Thailand',
+    match_date: '2026-06-15T19:00:00Z',
+    stadium_name: 'Mỹ Đình National Stadium',
+    stadium_address: 'Lê Đức Thọ',
+    stadium_city: 'Hà Nội',
+    stand_name: 'B',
+    seat_label: 'B-05',
+    status: 'paid',
+    qr_token: 'mock-qr-token-0987654321fedcba',
+  },
+]

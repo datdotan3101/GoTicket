@@ -128,5 +128,19 @@ export const matchesService = {
       }
       return stands;
     });
+  },
+
+  async getAvailabilityByMatchId(matchId) {
+    const result = await query(
+      `SELECT st.id, st.name, st.price, st.total_seats,
+              COUNT(s.id) FILTER (WHERE s.status = 'available')::int AS available_seats
+       FROM stands st
+       LEFT JOIN seats s ON s.stand_id = st.id
+       WHERE st.match_id = $1
+       GROUP BY st.id, st.name, st.price, st.total_seats
+       ORDER BY st.name`,
+      [matchId]
+    );
+    return result.rows;
   }
 };

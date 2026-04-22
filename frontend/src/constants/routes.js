@@ -13,6 +13,7 @@ export const APP_ROUTES = {
   CHECKOUT: '/audience/checkout',
   PAYMENT_SUCCESS: '/audience/payment-success',
   MY_TICKETS: '/audience/my-tickets',
+  TICKET_DETAIL: '/audience/tickets/:ticketId',
   CHECKER_DASHBOARD: '/checker',
   CHECKER_SCAN: '/checker/scan',
   CHECKER_LIVE_SEATS: '/checker/matches/:matchId/live-seats',

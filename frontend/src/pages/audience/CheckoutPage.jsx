@@ -50,15 +50,15 @@ export default function CheckoutPage() {
   const [ticketIds, setTicketIds] = useState([])
   const checkoutData = location.state
   const navigate = useNavigate()
-  const selectedSeats = useMemo(() => checkoutData?.seats ?? [], [checkoutData?.seats])
+  
   const totalAmount = useMemo(
-    () => selectedSeats.reduce((sum, seat) => sum + Number(seat.price || 0), 0),
-    [selectedSeats],
+    () => (Number(checkoutData?.price) || 0) * (Number(checkoutData?.quantity) || 0),
+    [checkoutData],
   )
 
   const createPendingTickets = async () => {
-    if (!checkoutData?.matchId || !checkoutData?.seatIds?.length) {
-      toast.error('Missing checkout data. Please select seats again.')
+    if (!checkoutData?.matchId || !checkoutData?.standId) {
+      toast.error('Dữ liệu thanh toán không hợp lệ. Vui lòng chọn lại khán đài.')
       navigate('/')
       return
     }
@@ -66,7 +66,8 @@ export default function CheckoutPage() {
     try {
       const bookResponse = await ticketService.book({
         matchId: checkoutData.matchId,
-        seatIds: checkoutData.seatIds,
+        standId: checkoutData.standId,
+        quantity: checkoutData.quantity,
       })
       const booked = bookResponse.data?.data ?? []
       const ids = booked.map((ticket) => ticket.id)
@@ -76,29 +77,38 @@ export default function CheckoutPage() {
       const payment = intentResponse.data?.data
       setClientSecret(payment?.clientSecret || '')
     } catch (error) {
-      toast.error(error.response?.data?.message ?? 'Cannot create checkout session.')
+      toast.error(error.response?.data?.message ?? 'Không thể tạo phiên thanh toán.')
     }
   }
 
   return (
     <section className="container page">
-      <h1>Checkout</h1>
-      <p>Selected seats: {selectedSeats.map((seat) => seat.seat_label).join(', ') || 'none'}</p>
-      <p>Total: {formatVND(totalAmount)}</p>
+      <h1>Thanh toán</h1>
+      <div className="bg-white p-6 rounded-2xl border border-gray-200 mb-6">
+        <p className="text-gray-500 mb-2">Khán đài: <strong className="text-gray-900">{checkoutData?.standName}</strong></p>
+        <p className="text-gray-500 mb-2">Số lượng: <strong className="text-gray-900">{checkoutData?.quantity} vé</strong></p>
+        <p className="text-lg font-bold">Tổng cộng: <span className="text-blue-700">{formatVND(totalAmount)}</span></p>
+      </div>
 
       {!clientSecret && (
-        <button type="button" onClick={createPendingTickets}>
-          Create payment session
+        <button 
+          className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg active:scale-95"
+          type="button" 
+          onClick={createPendingTickets}
+        >
+          Tiến hành thanh toán ngay
         </button>
       )}
 
       {clientSecret && stripePromise && (
-        <Elements stripe={stripePromise} options={{ clientSecret }}>
-          <CheckoutForm ticketIds={ticketIds} totalAmount={totalAmount} />
-        </Elements>
+        <div className="bg-white p-6 rounded-2xl border border-gray-200">
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <CheckoutForm ticketIds={ticketIds} totalAmount={totalAmount} />
+          </Elements>
+        </div>
       )}
 
-      {clientSecret && !stripePromise && <p>Missing VITE_STRIPE_PUBLIC_KEY in .env</p>}
+      {clientSecret && !stripePromise && <p className="text-red-500">Thiếu VITE_STRIPE_PUBLIC_KEY trong .env</p>}
     </section>
   )
 }

@@ -22,6 +22,11 @@ export const getMatchSeats = asyncHandler(async (req, res) => {
   return sendSuccess(res, data);
 });
 
+export const getMatchAvailability = asyncHandler(async (req, res) => {
+  const data = await matchesService.getAvailabilityByMatchId(Number(req.params.id));
+  return sendSuccess(res, data);
+});
+
 export const createMatch = asyncHandler(async (req, res) => {
   const data = await matchesService.create(req.body, req.user);
   return sendSuccess(res, data, HTTP_STATUS.CREATED);
