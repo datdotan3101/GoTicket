@@ -24,9 +24,21 @@ export const approvalsService = {
     const result = await query(
       `SELECT a.*,
               u.email AS submitted_by_email,
-              u.full_name AS submitted_by_name
+              u.full_name AS submitted_by_name,
+              m.home_team,
+              m.away_team,
+              m.match_date,
+              s.name AS stadium_name,
+              s.address AS stadium_address,
+              (
+                SELECT json_agg(json_build_object('name', st.name, 'price', st.price, 'total_seats', st.total_seats))
+                FROM stands st
+                WHERE st.match_id = m.id
+              ) AS stands
        FROM approvals a
        LEFT JOIN users u ON u.id = a.submitted_by
+       LEFT JOIN matches m ON a.resource_type = 'match' AND a.resource_id = m.id
+       LEFT JOIN stadiums s ON m.stadium_id = s.id
        ${where}
        ORDER BY a.created_at ASC`,
       values

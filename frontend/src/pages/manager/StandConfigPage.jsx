@@ -1,89 +1,11 @@
 import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Save, Eye, Layout, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, Save, Eye, ShieldCheck } from 'lucide-react'
 import { STAND_NAMES } from '../../constants/standRatios'
 import { matchService } from '../../services/matchService'
 import { generateStandsPreview } from '../../utils/standGenerator'
-
-const StandSectorGrid = ({ standName, totalSeats, prefix, rows, cols }) => {
-  const blocks = rows * cols
-  if (blocks === 0) return null
-  const seatsPerBlock = Math.floor(totalSeats / blocks)
-  const remainder = totalSeats % blocks
-  
-  const cells = []
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const num = r * cols + c + 1
-      cells.push({
-        id: `${prefix}${num}`,
-        seats: seatsPerBlock + (num <= remainder ? 1 : 0)
-      })
-    }
-  }
-
-  return (
-    <div className={`stand-sector-wrapper stand-${standName.toLowerCase()}`}>
-      <div className="stand-sector-title">STAND {standName} - {totalSeats} Seats</div>
-      <div className="stand-sector-grid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
-        {cells.map(cell => (
-          <div key={cell.id} className="sector-cell">
-            <span className="sector-id">{cell.id}</span>
-            <span className="sector-seats">{cell.seats}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-const StadiumMap = ({ stands }) => {
-  const getStandData = (name) => stands.find(s => s.name === name) || { total_seats: 0 }
-
-  return (
-    <div className="stadium-visual-container">
-      <div className="stadium-map">
-        
-        {/* Left Stand (C) */}
-        <StandSectorGrid standName="C" totalSeats={getStandData('C').total_seats} prefix="C" rows={5} cols={2} />
-
-        <div className="stadium-center-column">
-          {/* Top Stand (A) and VIP - Same Row */}
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-end' }}>
-            <StandSectorGrid standName="A" totalSeats={getStandData('A').total_seats} prefix="A" rows={3} cols={6} />
-            
-            <div className="stand-sector-wrapper stand-vip">
-              <div className="stand-sector-title" style={{ color: '#818cf8' }}>VIP AREA</div>
-              <div className="sector-cell" style={{ background: 'rgba(79, 70, 229, 0.2)', border: '1px solid #4f46e5' }}>
-                <span className="sector-id" style={{ color: '#fff' }}>VIP</span>
-                <span className="sector-seats" style={{ color: '#fff' }}>{getStandData('VIP').total_seats} Seats</span>
-              </div>
-            </div>
-          </div>
-
-          {/* The Pitch */}
-          <div className="football-pitch" style={{ margin: '20px 0' }}>
-            <div className="pitch-outline">
-              <div className="center-circle"></div>
-              <div className="penalty-area left"></div>
-              <div className="penalty-area right"></div>
-            </div>
-          </div>
-
-          {/* Bottom Stand (B) */}
-          <StandSectorGrid standName="B" totalSeats={getStandData('B').total_seats} prefix="B" rows={3} cols={6} />
-        </div>
-
-        {/* Right Stand (D) */}
-        <div className="stadium-side-column">
-          <StandSectorGrid standName="D" totalSeats={getStandData('D').total_seats} prefix="D" rows={5} cols={2} />
-        </div>
-
-      </div>
-    </div>
-  )
-}
+import StadiumMap from '../../components/seat/StadiumMap'
 
 export default function StandConfigPage() {
   const { matchId } = useParams()

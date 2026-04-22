@@ -7,6 +7,7 @@ export const matchService = {
   getAvailability: (id) => api.get(`/matches/${id}/availability`),
   create: (payload) => api.post('/matches', payload),
   update: (id, payload) => api.put(`/matches/${id}`, payload),
+  delete: (id) => api.delete(`/matches/${id}`),
   submit: (id) => api.post(`/matches/${id}/submit`),
   previewStands: (payload) => api.post('/matches/stands/preview', payload),
   configureStands: (id, payload) => api.put(`/matches/${id}/stands`, payload),

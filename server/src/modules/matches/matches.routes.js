@@ -6,6 +6,8 @@ import { runValidation } from "../../middlewares/validate.js";
 import {
   configureStands,
   createMatch,
+  deleteMatch,
+  getMatchAvailability,
   getMatchById,
   getMatchSeats,
   getMatches,
@@ -87,6 +89,7 @@ router.get("/:id", getMatchById);
  *         description: "List of seats with status and price"
  */
 router.get("/:id/seats", getMatchSeats);
+router.get("/:id/availability", getMatchAvailability);
 
 /**
  * @swagger
@@ -148,6 +151,8 @@ router.post("/", auth, requireRoles(ROLES.MANAGER), runValidation(createMatchRul
  *         description: "Not found"
  * */
 router.put("/:id", auth, requireRoles(ROLES.MANAGER), updateMatch);
+
+router.delete("/:id", auth, requireRoles(ROLES.MANAGER), deleteMatch);
 
 /**
  * @swagger

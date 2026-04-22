@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { leagueService } from '../../services/leagueService'
 import { matchService } from '../../services/matchService'
 import { stadiumService } from '../../services/stadiumService'
+import { uploadService } from '../../services/uploadService'
 import { unwrapData } from '../../utils/apiData'
 import { STAND_NAMES } from '../../constants/standRatios'
 import DatePicker from 'react-datepicker'
@@ -32,6 +33,7 @@ export default function MatchCreatePage() {
   const [leagues, setLeagues] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [previewUrl, setPreviewUrl] = useState(null)
+  const [selectedFile, setSelectedFile] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -101,32 +103,49 @@ export default function MatchCreatePage() {
 
     setIsSubmitting(true)
     try {
+      let uploadedUrl = null;
+      if (selectedFile) {
+        try {
+          const uploadRes = await uploadService.uploadFile(selectedFile);
+          uploadedUrl = uploadRes.data?.url || uploadRes.url || null;
+        } catch (e) {
+          toast.error("Thumbnail upload failed, proceeding without image.");
+        }
+      }
+
       // Step 1: Create Match
       const basicPayload = {
         ...form,
         stadiumId: Number(form.stadiumId),
         leagueId: Number(form.leagueId),
+        thumbnailUrl: uploadedUrl,
       }
       const matchRes = await matchService.create(basicPayload)
       const createdMatch = unwrapData(matchRes)
       const matchId = createdMatch.id
 
-      // Step 2: Configure Stands
-      const standsPayload = {
-        totalCapacity: Number(standConfig.totalCapacity),
-        vipCapacity: Number(standConfig.vipCapacity || 0),
-        prices: {
-          VIP: Number(standConfig.prices.VIP || 0),
-          A: Number(standConfig.prices.A || 0),
-          B: Number(standConfig.prices.B || 0),
-          C: Number(standConfig.prices.C || 0),
-          D: Number(standConfig.prices.D || 0),
+      try {
+        // Step 2: Configure Stands
+        const standsPayload = {
+          totalCapacity: Number(standConfig.totalCapacity),
+          vipCapacity: Number(standConfig.vipCapacity || 0),
+          prices: {
+            VIP: Number(standConfig.prices.VIP || 0),
+            A: Number(standConfig.prices.A || 0),
+            B: Number(standConfig.prices.B || 0),
+            C: Number(standConfig.prices.C || 0),
+            D: Number(standConfig.prices.D || 0),
+          }
         }
-      }
-      await matchService.configureStands(matchId, standsPayload)
+        await matchService.configureStands(matchId, standsPayload)
 
-      // Step 3: Submit for Approval
-      await matchService.submit(matchId)
+        // Step 3: Submit for Approval
+        await matchService.submit(matchId)
+      } catch (stepError) {
+        // Rollback: delete the match if steps 2 or 3 fail
+        try { await matchService.delete(matchId) } catch (_) {}
+        throw stepError
+      }
 
       toast.success('Match created and sent for approval!')
       navigate('/manager')
@@ -193,6 +212,7 @@ export default function MatchCreatePage() {
                     const file = e.target.files[0];
                     if (file) {
                       setPreviewUrl(URL.createObjectURL(file));
+                      setSelectedFile(file);
                     }
                   }} />
                 </div>

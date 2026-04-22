@@ -37,7 +37,10 @@ export const createMatchRules = [
   body("description")
     .optional()
     .trim()
-    .isLength({ max: 2000 }).withMessage("description tối đa 2000 ký tự.")
+    .isLength({ max: 2000 }).withMessage("description tối đa 2000 ký tự."),
+  body("thumbnailUrl")
+    .optional()
+    .isString().withMessage("thumbnailUrl phải là một chuỗi.")
 ];
 
 export const configStandsRules = [

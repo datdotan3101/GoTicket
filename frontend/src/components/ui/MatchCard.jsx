@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { isMatchHot } from '../../utils/hotBadge'
 import { formatDateTime } from '../../utils/formatDate'
+import { formatVND } from '../../utils/formatCurrency'
 
 const DUMMY_IMAGES = [
   'https://images.unsplash.com/photo-1518605368461-1ee0676644ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
@@ -13,11 +14,11 @@ export default function MatchCard({ match }) {
   const totalSeats = Number(match.total_seats || 0)
   const isHot = isMatchHot(soldCount, totalSeats)
 
-  // Use modulo for consistent dummy image per match if no actual thumbnail exists
-  const imgUrl = match.thumbnail_url || DUMMY_IMAGES[match.id % DUMMY_IMAGES.length]
+  const matchId = parseInt(match.id, 10) || 0
+  const imgUrl = match.thumbnail_url || DUMMY_IMAGES[matchId % DUMMY_IMAGES.length]
 
   return (
-    <article className="match-card">
+    <article className="match-card" style={{ border: '1px solid #cbd5e1' }}>
       <div className="mc-image" style={{ backgroundImage: `url(${imgUrl})` }}>
         {isHot && <div className="mc-badge">SELLING FAST</div>}
       </div>
@@ -47,13 +48,18 @@ export default function MatchCard({ match }) {
         </div>
       </div>
 
-      <div className="mc-footer">
+      <div className="mc-footer" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '16px' }}>
         <div className="mc-price-col">
-          <span className="mc-price-label">STARTING FROM</span>
-          {/* Price mocked up for premium showcase UI */}
-          <span className="mc-price-val">£145.00</span> 
+          <span className="mc-price-label">TICKET PRICE</span>
+          <span className="mc-price-val" style={{ fontSize: '1.05rem', whiteSpace: 'nowrap' }}>
+            {match.min_price != null && match.max_price != null
+              ? match.min_price === match.max_price 
+                ? formatVND(match.min_price)
+                : `${formatVND(match.min_price)} - ${formatVND(match.max_price)}`
+              : 'TBA'}
+          </span> 
         </div>
-        <Link className="mc-buy-btn" to={`/audience/matches/${match.id}/seats`}>
+        <Link className="mc-buy-btn" to={`/audience/matches/${match.id}/seats`} style={{ textAlign: 'center', width: '100%' }}>
           Buy Tickets
         </Link>
       </div>

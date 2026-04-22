@@ -51,3 +51,8 @@ export const configureStands = asyncHandler(async (req, res) => {
   const data = await matchesService.configureStands(Number(req.params.id), req.body, req.user);
   return sendSuccess(res, data);
 });
+
+export const deleteMatch = asyncHandler(async (req, res) => {
+  await matchesService.delete(Number(req.params.id), req.user);
+  return sendSuccess(res, { deleted: true });
+});
