@@ -33,7 +33,11 @@ export const matchesService = {
     const totalResult = await query(`SELECT COUNT(*)::int AS total FROM matches m ${whereClause}`, values);
     values.push(limit, offset);
     const result = await query(
-      `SELECT m.* FROM matches m ${whereClause}
+      `SELECT m.*, s.name AS stadium_name, s.address AS stadium_address, l.name AS league_name 
+       FROM matches m
+       LEFT JOIN stadiums s ON s.id = m.stadium_id
+       LEFT JOIN leagues l ON l.id = m.league_id
+       ${whereClause}
        ORDER BY m.match_date ASC
        LIMIT $${values.length - 1} OFFSET $${values.length}`,
       values

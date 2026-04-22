@@ -29,10 +29,12 @@ export default function ApprovedMatchesPage() {
 
   return (
     <section className="container page">
-      <div className="section-head">
+      <div className="section-head" style={{ marginBottom: '32px' }}>
         <div>
-          <h1>Approved Matches</h1>
-          <p className="section-subtitle">List of matches that have been approved or published.</p>
+          <h1 style={{ fontSize: '3rem', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '-2px', color: '#111827', lineHeight: 1 }}>Match</h1>
+          <p className="section-subtitle" style={{ fontSize: '1.1rem', color: '#6b7280', marginTop: '8px', fontWeight: 500 }}>
+            Management of approved and published sports matches.
+          </p>
         </div>
       </div>
 
@@ -41,17 +43,17 @@ export default function ApprovedMatchesPage() {
       ) : (
         <div className="cards-grid">
           {matches.map((match) => (
-            <article className="card" key={match.id}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <h3 style={{ margin: 0, fontSize: '1rem' }}>{match.home_team} vs {match.away_team}</h3>
-                <span className={`badge ${match.status}`}>
+            <article className="card" key={match.id} style={{ padding: '24px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', borderRadius: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#111827' }}>{match.home_team} vs {match.away_team}</h3>
+                <span className={`badge ${match.status}`} style={{ padding: '6px 12px', borderRadius: '6px' }}>
                   {match.status.replace('_', ' ')}
                 </span>
               </div>
-              <div style={{ fontSize: '0.85rem', color: '#4b5563', display: 'grid', gap: '4px', marginTop: '8px' }}>
-                <p><strong>ID:</strong> #{match.id}</p>
-                <p><strong>Date:</strong> {formatDateTime(match.match_date)}</p>
-                <p><strong>Stadium:</strong> {match.stadium_name || `Stadium ID: ${match.stadium_id}`}</p>
+              <div style={{ fontSize: '0.9rem', color: '#4b5563', display: 'grid', gap: '8px' }}>
+                <p style={{ margin: 0 }}><strong>📅 Date:</strong> {formatDateTime(match.match_date)}</p>
+                <p style={{ margin: 0 }}><strong>🏟️ Stadium:</strong> {match.stadium_name || 'N/A'}</p>
+                <p style={{ margin: 0 }}><strong>📍 Address:</strong> {match.stadium_address || 'N/A'}</p>
               </div>
             </article>
           ))}
