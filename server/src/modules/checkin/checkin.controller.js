@@ -7,6 +7,11 @@ export const scanCheckin = asyncHandler(async (req, res) => {
   return sendSuccess(res, data);
 });
 
+export const codeCheckin = asyncHandler(async (req, res) => {
+  const data = await checkinService.checkinByCode(req.body.ticketCode);
+  return sendSuccess(res, data);
+});
+
 export const matchStats = asyncHandler(async (req, res) => {
   const data = await checkinService.getMatchCheckinStats(Number(req.params.id));
   return sendSuccess(res, data);

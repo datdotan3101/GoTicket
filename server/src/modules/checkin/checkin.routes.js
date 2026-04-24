@@ -2,7 +2,7 @@ import { Router } from "express";
 import { ROLES } from "../../constants/roles.js";
 import { auth } from "../../middlewares/auth.js";
 import { requireRoles } from "../../middlewares/roles.js";
-import { matchStats, scanCheckin } from "./checkin.controller.js";
+import { matchStats, scanCheckin, codeCheckin } from "./checkin.controller.js";
 
 const router = Router();
 
@@ -52,6 +52,7 @@ const router = Router();
  *         description: "Invalid QR token"
  */
 router.post("/scan", auth, requireRoles(ROLES.CHECKER), scanCheckin);
+router.post("/code", auth, requireRoles(ROLES.CHECKER), codeCheckin);
 
 /**
  * @swagger

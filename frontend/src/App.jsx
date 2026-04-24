@@ -29,7 +29,6 @@ const MyTicketsPage = lazy(() => import('./pages/audience/MyTicketsPage'))
 const TicketDetailPage = lazy(() => import('./pages/audience/TicketDetailPage'))
 const CheckerDashboard = lazy(() => import('./pages/checker/CheckerDashboard'))
 const QRScanPage = lazy(() => import('./pages/checker/QRScanPage'))
-const LiveSeatMapPage = lazy(() => import('./pages/checker/LiveSeatMapPage'))
 const EditorDashboard = lazy(() => import('./pages/editor/EditorDashboard'))
 const NewsCreatePage = lazy(() => import('./pages/editor/NewsCreatePage'))
 const NewsEditPage = lazy(() => import('./pages/editor/NewsEditPage'))
@@ -81,7 +80,6 @@ export default function App() {
             <Route element={<ProtectedRoute allowedRoles={[ROLES.CHECKER]} />}>
               <Route path={APP_ROUTES.CHECKER_DASHBOARD} element={<CheckerDashboard />} />
               <Route path={APP_ROUTES.CHECKER_SCAN} element={<QRScanPage />} />
-              <Route path={APP_ROUTES.CHECKER_LIVE_SEATS} element={<LiveSeatMapPage />} />
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={[ROLES.EDITOR]} />}>
