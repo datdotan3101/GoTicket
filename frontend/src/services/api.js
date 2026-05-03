@@ -15,7 +15,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const is401 = error.response?.status === 401
+    const url = error.config?.url ?? ''
+    // Never auto-logout on checkin routes — QR/code errors return 400,
+    // but as a safety net, don't treat a checkin 401 as a session expiry.
+    const isCheckinRoute = url.includes('/checkin/')
+    if (is401 && !isCheckinRoute) {
       useAuthStore.getState().logout()
     }
     return Promise.reject(error)

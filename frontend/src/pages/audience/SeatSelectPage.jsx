@@ -14,25 +14,29 @@ export default function SeatSelectPage() {
   const navigate = useNavigate()
   const [stands, setStands] = useState([])
   const [selectedStand, setSelectedStand] = useState(null)
+  const [match, setMatch] = useState(null)
   const [quantity, setQuantity] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    const fetchAvailability = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true)
         setError(null)
-        const response = await matchService.getAvailability(matchId)
-        setStands(unwrapData(response) ?? [])
+        const [availRes, matchRes] = await Promise.all([
+          matchService.getAvailability(matchId),
+          matchService.getById(matchId)
+        ])
+        setStands(unwrapData(availRes) ?? [])
+        setMatch(unwrapData(matchRes))
       } catch (err) {
-        setError(err.response?.data?.message || 'Không thể tải thông tin khán đài')
-        setStands([])
+        setError(err.response?.data?.message || 'Failed to load page information')
       } finally {
         setIsLoading(false)
       }
     }
-    fetchAvailability()
+    fetchData()
   }, [matchId])
 
   const handleSelectStand = (stand) => {
@@ -45,7 +49,7 @@ export default function SeatSelectPage() {
 
   const continueCheckout = () => {
     if (!selectedStand) {
-      toast.error('Vui lòng chọn khán đài')
+      toast.error('Please select a stand')
       return
     }
     navigate('/audience/checkout', {
@@ -61,240 +65,255 @@ export default function SeatSelectPage() {
 
   if (isLoading) return (
     <section className="container page" style={{ paddingTop: '60px' }}>
-      <LoadingSpinner text="Đang kiểm tra chỗ trống..." />
+      <LoadingSpinner text="Checking seat availability..." />
     </section>
   )
 
   if (error) return (
     <section className="container page" style={{ paddingTop: '60px' }}>
-      <ErrorState title="Lỗi tải dữ liệu" message={error} onRetry={() => window.location.reload()} />
+      <ErrorState title="Data loading error" message={error} onRetry={() => window.location.reload()} />
     </section>
   )
 
   if (stands.length === 0) return (
     <section className="container page" style={{ paddingTop: '60px' }}>
-      <EmptyState title="Hết vé" message="Rất tiếc, trận đấu này đã hết vé ở tất cả các khán đài." icon="🏟️" />
+      <EmptyState title="Sold Out" message="Sorry, this match is sold out across all stands." icon="🏟️" />
     </section>
   )
 
   const totalPrice = (selectedStand?.price || 0) * quantity
 
   return (
-    <section style={{ background: '#f1f5f9', minHeight: '100vh', padding: '0 0 60px 0' }}>
-      {/* Page Header */}
-      <div style={{ background: '#0f172a', color: '#fff', padding: '28px 0' }}>
-        <div className="container">
-          <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 900, letterSpacing: '-0.5px' }}>
-            🏟️ Chọn Khán Đài
+    <section style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: '80px' }}>
+      {/* ─── IMAGE 1: PREMUM HEADER CARD ─── */}
+      <div className="container" style={{ paddingTop: '40px' }}>
+        <div style={{
+          background: '#fff',
+          borderRadius: '12px',
+          padding: '40px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px'
+        }}>
+          <h1 style={{ 
+            fontSize: '2.5rem', 
+            fontWeight: 800, 
+            color: '#1e293b', 
+            margin: 0,
+            letterSpacing: '-1px'
+          }}>
+            {match?.home_team} - {match?.away_team}
           </h1>
-          <p style={{ margin: '6px 0 0', color: '#94a3b8', fontSize: '0.9rem' }}>
-            Nhấp vào khu vực trên sơ đồ sân hoặc danh sách bên phải để chọn vé.
-          </p>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '40px',
+            flexWrap: 'wrap',
+            color: '#64748b',
+            fontSize: '0.9rem',
+            fontWeight: 600
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1.1rem' }}>📍</span>
+              {match?.stadium_name || 'Sân vận động Hàng Đẫy'}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1.1rem' }}>📅</span>
+              {match ? new Date(match.match_date).toLocaleDateString('vi-VN') : '--/--/----'}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1.1rem' }}>🕒</span>
+              {match ? new Date(match.match_date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#3b82f6' }}>
+              <span style={{ fontSize: '1.1rem' }}>📅+</span>
+              Thêm vào lịch
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Main Content: 2 columns */}
-      <div className="container" style={{ paddingTop: '32px' }}>
+      {/* ─── IMAGE 2: MAIN LAYOUT ─── */}
+      <div className="container" style={{ paddingTop: '48px' }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.6fr) minmax(300px, 1fr)',
-          gap: '28px',
-          alignItems: 'start',
+          gridTemplateColumns: '1.6fr 1fr',
+          gap: '48px',
+          alignItems: 'start'
         }}>
-
-          {/* ─── LEFT: Stadium Map ─── */}
+          
+          {/* LEFT: Stadium Map */}
           <div>
-            <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                Sơ đồ sân
-              </span>
-              <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
-            </div>
-            <StadiumMap
-              stands={stands}
-              selectedStandId={selectedStand?.id}
-              onSelectStand={handleSelectStand}
-            />
-
-            {/* Stand list as pills for quick reference */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '16px' }}>
-              {stands.map((stand) => {
-                const soldOut = stand.available_seats === 0
-                const sel = selectedStand?.id === stand.id
-                return (
-                  <button
-                    key={stand.id}
-                    onClick={() => handleSelectStand(stand)}
-                    disabled={soldOut}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: '99px',
-                      border: `1.5px solid ${sel ? '#4f46e5' : soldOut ? '#e2e8f0' : '#cbd5e1'}`,
-                      background: sel ? '#4f46e5' : soldOut ? '#f8fafc' : '#fff',
-                      color: sel ? '#fff' : soldOut ? '#94a3b8' : '#334155',
-                      fontWeight: 700,
-                      fontSize: '0.8rem',
-                      cursor: soldOut ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.2s',
-                      opacity: soldOut ? 0.6 : 1,
-                    }}
-                  >
-                    {stand.name === 'VIP' ? '💎 VIP' : `Khán đài ${stand.name}`}
-                    {soldOut && ' — Hết vé'}
-                    {!soldOut && ` (${stand.available_seats.toLocaleString()} chỗ)`}
-                  </button>
-                )
-              })}
+            <h2 style={{ 
+              fontSize: '1.75rem', 
+              fontWeight: 800, 
+              color: '#1e293b', 
+              textAlign: 'center',
+              marginBottom: '32px'
+            }}>
+              {match?.stadium_name || 'Sân vận động Hàng Đẫy Hà Nội'}
+            </h2>
+            
+            <div style={{ 
+              background: '#fff', 
+              borderRadius: '16px', 
+              padding: '24px', 
+              border: '1px solid #e2e8f0' 
+            }}>
+              <StadiumMap
+                stands={stands}
+                selectedStandId={selectedStand?.id}
+                onSelectStand={handleSelectStand}
+              />
             </div>
           </div>
 
-          {/* ─── RIGHT: Booking Panel ─── */}
-          <div style={{ position: 'sticky', top: '24px' }}>
-            {/* Stand details */}
-            {selectedStand ? (
+          {/* RIGHT: Ticket List */}
+          <div>
+            <h2 style={{ 
+              fontSize: '1.75rem', 
+              fontWeight: 800, 
+              color: '#1e293b', 
+              textAlign: 'center',
+              marginBottom: '32px'
+            }}>
+              Danh sách vé
+            </h2>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Header for the list if needed or just the stands */}
               <div style={{
-                background: '#fff',
-                borderRadius: '20px',
-                border: '1px solid #e2e8f0',
-                overflow: 'hidden',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                background: '#f8d7da',
+                padding: '12px 20px',
+                borderRadius: '8px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                color: '#721c24',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
               }}>
-                {/* Stand banner */}
-                <div style={{
-                  background: selectedStand.name === 'VIP'
-                    ? 'linear-gradient(135deg, #312e81, #4f46e5)'
-                    : 'linear-gradient(135deg, #1e293b, #334155)',
-                  padding: '24px',
-                  color: '#fff',
-                }}>
-                  <div style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '2px', opacity: 0.7, marginBottom: '6px' }}>
-                    KHÁN ĐÀI ĐÃ CHỌN
-                  </div>
-                  <div style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-1px' }}>
-                    {selectedStand.name === 'VIP' ? '💎 VIP' : `Khán đài ${selectedStand.name}`}
-                  </div>
-                  <div style={{ fontSize: '0.85rem', opacity: 0.8, marginTop: '6px' }}>
-                    {selectedStand.available_seats.toLocaleString()} chỗ trống
-                  </div>
-                </div>
-
-                <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  {/* Price per ticket */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>Giá mỗi vé</span>
-                    <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a' }}>
-                      {formatVND(selectedStand.price)}
-                    </span>
-                  </div>
-
-                  {/* Quantity selector */}
-                  <div>
-                    <label style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '12px' }}>
-                      Số lượng vé
-                    </label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
-                      <button
-                        onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                        disabled={quantity <= 1}
-                        style={{
-                          width: '48px', height: '48px', border: 'none', background: '#f8fafc',
-                          fontWeight: 900, fontSize: '1.25rem', cursor: quantity <= 1 ? 'not-allowed' : 'pointer',
-                          color: quantity <= 1 ? '#cbd5e1' : '#334155', transition: 'background 0.2s',
-                        }}
-                      >−</button>
-                      <span style={{ flex: 1, textAlign: 'center', fontWeight: 900, fontSize: '1.5rem', color: '#0f172a' }}>
-                        {quantity}
-                      </span>
-                      <button
-                        onClick={() => setQuantity((q) => Math.min(6, selectedStand.available_seats, q + 1))}
-                        disabled={quantity >= 6 || quantity >= selectedStand.available_seats}
-                        style={{
-                          width: '48px', height: '48px', border: 'none', background: '#f8fafc',
-                          fontWeight: 900, fontSize: '1.25rem',
-                          cursor: quantity >= 4 || quantity >= selectedStand.available_seats ? 'not-allowed' : 'pointer',
-                          color: quantity >= 4 || quantity >= selectedStand.available_seats ? '#cbd5e1' : '#334155',
-                          transition: 'background 0.2s',
-                        }}
-                      >+</button>
-                    </div>
-                    <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '8px', textAlign: 'center', fontStyle: 'italic' }}>
-                      * Tối đa 6 vé mỗi lần đặt
-                    </p>
-                  </div>
-
-                  {/* Total */}
-                  <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '20px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                      <span style={{ color: '#475569', fontWeight: 700 }}>Tổng cộng</span>
-                      <span style={{ fontSize: '1.75rem', fontWeight: 900, color: '#4f46e5' }}>
-                        {formatVND(totalPrice)}
-                      </span>
-                    </div>
-                    <button
-                      onClick={continueCheckout}
-                      style={{
-                        width: '100%', padding: '16px', background: '#0f172a', color: '#fff',
-                        border: 'none', borderRadius: '12px', fontWeight: 800, fontSize: '1rem',
-                        cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.5px',
-                      }}
-                      onMouseOver={(e) => { e.currentTarget.style.background = '#1e293b'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                      onMouseOut={(e) => { e.currentTarget.style.background = '#0f172a'; e.currentTarget.style.transform = 'translateY(0)' }}
-                    >
-                      Tiếp theo →
-                    </button>
-                  </div>
-                </div>
+                <span>Các vé khác</span>
+                <span>▼</span>
               </div>
-            ) : (
-              /* Placeholder when nothing selected */
-              <div style={{
-                background: '#fff',
-                borderRadius: '20px',
-                border: '2px dashed #cbd5e1',
-                padding: '40px 24px',
-                textAlign: 'center',
-                color: '#94a3b8',
-              }}>
-                <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🏟️</div>
-                <div style={{ fontWeight: 800, fontSize: '1rem', color: '#475569', marginBottom: '6px' }}>
-                  Chưa chọn khán đài
+
+              {stands.map(stand => (
+                <div 
+                  key={stand.id}
+                  onClick={() => handleSelectStand(stand)}
+                  style={{
+                    background: '#fff',
+                    borderRadius: '12px',
+                    border: `1px solid ${selectedStand?.id === stand.id ? '#ef4444' : '#e2e8f0'}`,
+                    padding: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    cursor: stand.available_seats > 0 ? 'pointer' : 'not-allowed',
+                    transition: 'all 0.2s',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                >
+                  {/* Status Bar */}
+                  <div style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: '4px',
+                    background: stand.available_seats > 0 ? '#22c55e' : '#cbd5e1'
+                  }} />
+
+                  {/* Logo Placeholder */}
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '8px',
+                    background: '#ef4444',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    fontWeight: 900,
+                    fontSize: '0.8rem'
+                  }}>
+                    ⚽
+                  </div>
+
+                  {/* Info */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 800, color: '#1e293b', fontSize: '1rem' }}>
+                      {stand.name.startsWith('Stand') ? stand.name : `Stand ${stand.name}`}
+                    </div>
+                    <div style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '4px' }}>
+                      {formatVND(stand.price)} <span style={{ fontSize: '0.75rem' }}>( Gồm 8% VAT )</span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <button style={{ 
+                      width: '32px', height: '32px', borderRadius: '6px', border: '1px solid #e2e8f0',
+                      background: '#fff', color: '#ef4444', fontWeight: 800, cursor: 'pointer'
+                    }}>i</button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleSelectStand(stand); continueCheckout(); }}
+                      style={{ 
+                        width: '32px', height: '32px', borderRadius: '6px', border: '1px solid #ef4444',
+                        background: '#fff', color: '#ef4444', fontWeight: 800, cursor: 'pointer'
+                      }}
+                    >🛒</button>
+                  </div>
                 </div>
-                <div style={{ fontSize: '0.85rem', lineHeight: 1.5 }}>
-                  Nhấp vào một khu vực trên sơ đồ sân hoặc sử dụng các nút phía dưới để bắt đầu.
+              ))}
+            </div>
+
+            {/* Selection Summary (Keep original style but integrated) */}
+            {selectedStand && (
+              <div style={{
+                marginTop: '32px',
+                padding: '24px',
+                background: '#1e293b',
+                borderRadius: '16px',
+                color: '#fff',
+                animation: 'fadeIn 0.3s ease-out'
+              }}>
+                <div style={{ fontSize: '0.7rem', fontWeight: 800, opacity: 0.6, textTransform: 'uppercase', marginBottom: '8px' }}>Bạn đã chọn</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{selectedStand.name}</div>
+                
+                <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.7rem', opacity: 0.6 }}>Số lượng</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
+                      <button onClick={() => setQuantity(q => Math.max(1, q-1))} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer' }}>-</button>
+                      <span style={{ fontSize: '1.25rem', fontWeight: 800 }}>{quantity}</span>
+                      <button onClick={() => setQuantity(q => Math.min(6, selectedStand.available_seats, q+1))} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer' }}>+</button>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '0.7rem', opacity: 0.6 }}>Tổng cộng</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fbbf24' }}>{formatVND(totalPrice)}</div>
+                  </div>
                 </div>
 
-                {/* Quick stand buttons */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '24px' }}>
-                  {stands.filter(s => s.available_seats > 0).map(stand => (
-                    <button
-                      key={stand.id}
-                      onClick={() => handleSelectStand(stand)}
-                      style={{
-                        padding: '12px 16px',
-                        borderRadius: '10px',
-                        border: '1px solid #e2e8f0',
-                        background: '#f8fafc',
-                        color: '#334155',
-                        fontWeight: 700,
-                        fontSize: '0.85rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        transition: 'all 0.15s',
-                      }}
-                      onMouseOver={(e) => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.borderColor = '#4f46e5' }}
-                      onMouseOut={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = '#e2e8f0' }}
-                    >
-                      <span>{stand.name === 'VIP' ? '💎 VIP' : `Khán đài ${stand.name}`}</span>
-                      <span style={{ color: '#4f46e5', fontWeight: 900 }}>{formatVND(stand.price)}</span>
-                    </button>
-                  ))}
-                </div>
+                <button 
+                  onClick={continueCheckout}
+                  style={{
+                    width: '100%', marginTop: '24px', padding: '16px', background: '#3b82f6',
+                    color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer'
+                  }}
+                >
+                  Thanh toán ngay →
+                </button>
               </div>
             )}
           </div>
-
         </div>
       </div>
     </section>

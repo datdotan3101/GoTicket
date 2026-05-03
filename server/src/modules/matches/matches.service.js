@@ -35,7 +35,9 @@ export const matchesService = {
     const result = await query(
       `SELECT m.*, s.name AS stadium_name, s.address AS stadium_address, l.name AS league_name,
               (SELECT MIN(price) FROM stands st WHERE st.match_id = m.id) AS min_price,
-              (SELECT MAX(price) FROM stands st WHERE st.match_id = m.id) AS max_price
+              (SELECT MAX(price) FROM stands st WHERE st.match_id = m.id) AS max_price,
+              (SELECT COUNT(*)::int FROM tickets t WHERE t.match_id = m.id AND t.status IN ('paid', 'checked_in')) AS sold_count,
+              (SELECT COALESCE(SUM(total_seats), 0)::int FROM stands st WHERE st.match_id = m.id) AS total_seats
        FROM matches m
        LEFT JOIN stadiums s ON s.id = m.stadium_id
        LEFT JOIN leagues l ON l.id = m.league_id
@@ -49,7 +51,16 @@ export const matchesService = {
   },
 
   async getById(id) {
-    const result = await query("SELECT * FROM matches WHERE id = $1", [id]);
+    const result = await query(
+      `SELECT m.*, s.name AS stadium_name, s.address AS stadium_address, l.name AS league_name,
+              (SELECT COUNT(*)::int FROM tickets t WHERE t.match_id = m.id AND t.status IN ('paid', 'checked_in')) AS sold_count,
+              (SELECT COALESCE(SUM(total_seats), 0)::int FROM stands st WHERE st.match_id = m.id) AS total_seats
+       FROM matches m
+       LEFT JOIN stadiums s ON s.id = m.stadium_id
+       LEFT JOIN leagues l ON l.id = m.league_id
+       WHERE m.id = $1`,
+      [id]
+    );
     return result.rows[0] || null;
   },
 

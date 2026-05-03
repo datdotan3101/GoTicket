@@ -22,13 +22,18 @@ export default function QRScanPage() {
   const [scanResult, setScanResult] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [cameraStatus, setCameraStatus] = useState('idle') // 'idle' | 'starting' | 'active' | 'error'
+  const [showSuccess, setShowSuccess] = useState(false)
+
 
   const html5QrCodeRef = useRef(null)
-  // Use a ref for the callback so it never goes stale inside html5-qrcode
+  const scanLockedRef = useRef(false) // hard lock: block all scan callbacks for SCAN_COOLDOWN ms
   const handleCheckinRef = useRef(null)
 
   handleCheckinRef.current = async (value, type) => {
-    if (isSubmitting) return
+    // Hard lock — camera fires callbacks at 20 FPS; block all until cooldown expires
+    if (scanLockedRef.current) return
+    scanLockedRef.current = true
+
     setIsSubmitting(true)
     try {
       const response = type === 'qr'
@@ -36,7 +41,9 @@ export default function QRScanPage() {
         : await checkinService.checkinByCode(value)
       const data = unwrapData(response)
       setScanResult(data)
+      setShowSuccess(true)
       toast.success(data.message || 'Check-in successful.')
+      setTimeout(() => setShowSuccess(false), 4000)
       if (type === 'manual') {
         setTicketCode('')
         setMode('scan')
@@ -45,6 +52,8 @@ export default function QRScanPage() {
       toast.error(error.response?.data?.message ?? 'Check-in failed.')
     } finally {
       setIsSubmitting(false)
+      // Unlock after 3 seconds — gives checker time to move to next ticket
+      setTimeout(() => { scanLockedRef.current = false }, 3000)
     }
   }
 
@@ -61,7 +70,15 @@ export default function QRScanPage() {
     try {
       await scanner.start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
+        {
+          fps: 20,                           // Higher FPS → better chance of reading screen QRs
+          qrbox: { width: 300, height: 300 }, // Larger box → tolerates more perspective distortion
+          aspectRatio: 1.0,
+          disableFlip: false,                // Allow mirrored codes (front camera)
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true // Use native BarcodeDetector API when available
+          }
+        },
         (decoded) => handleCheckinRef.current(decoded, 'qr')
       )
       setCameraStatus('active')
@@ -131,6 +148,24 @@ export default function QRScanPage() {
         <div className="scanner-main-layout">
           {/* Left: viewport + controls */}
           <div className="scanner-viewport-card">
+
+            {/* ✅ FULL-SCREEN SUCCESS OVERLAY */}
+            {showSuccess && scanResult && (
+              <div className="checkin-success-overlay animate-fadeIn">
+                <div className="checkin-success-icon">
+                  <CheckCircle2 size={72} />
+                </div>
+                <h2 className="checkin-success-title">ACCESS GRANTED</h2>
+                <p className="checkin-success-sub">Ticket #{scanResult.ticketId}</p>
+                <p className="checkin-success-time">{new Date().toLocaleTimeString()}</p>
+                <button
+                  onClick={() => setShowSuccess(false)}
+                  className="mt-8 px-8 py-3 bg-white/10 hover:bg-white/20 rounded-full text-white font-bold text-sm uppercase tracking-widest border border-white/20 transition-all"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
 
             {/*
               ⚠️  CRITICAL: This div must ALWAYS be in the DOM and ALWAYS be EMPTY.

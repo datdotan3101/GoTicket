@@ -5,7 +5,13 @@ import { TICKET_STATUS } from "../../constants/ticketStatus.js";
 
 export const checkinService = {
   async scanQrToken(qrToken) {
-    const payload = jwt.verify(qrToken, process.env.QR_JWT_SECRET || process.env.JWT_SECRET);
+    // ignoreExpiration: true → accept QR tokens past their exp date.
+    // Signature is still verified — only the expiry check is skipped.
+    const payload = jwt.verify(
+      qrToken,
+      process.env.QR_JWT_SECRET || process.env.JWT_SECRET,
+      { ignoreExpiration: true }
+    );
     
     let tickets = [];
     if (payload.ticketCode) {

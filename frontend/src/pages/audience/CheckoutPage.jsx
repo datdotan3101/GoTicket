@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useElements, useStripe } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 import toast from 'react-hot-toast'
-import { CreditCard, ShieldCheck, Ticket, Info, Loader2, User, CheckCircle2, X } from 'lucide-react'
+import { CreditCard, ShieldCheck, Ticket, Info, Loader2, User, CheckCircle2, X, ArrowLeft } from 'lucide-react'
 import { paymentService } from '../../services/paymentService'
 import { ticketService } from '../../services/ticketService'
 import { formatVND } from '../../utils/formatCurrency'
@@ -41,15 +41,15 @@ function SuccessModal({ isOpen, onClose }) {
         <div className="success-icon-wrapper">
           <CheckCircle2 size={80} className="success-icon" />
         </div>
-        <h2 className="success-title">Thanh toán Thành công!</h2>
+        <h2 className="success-title">Payment Successful!</h2>
         <p className="success-message">
-          Vé của bạn đã được xác nhận. Bạn có thể xem lại thông tin vé trong mục "Vé của tôi".
+          Your tickets have been confirmed. You can view your ticket details in the "My Tickets" section.
         </p>
         <button 
           className="modal-button"
           onClick={onClose}
         >
-          Xem vé của tôi ngay
+          View My Tickets
         </button>
       </div>
     </div>
@@ -71,7 +71,7 @@ function CheckoutForm({ totalAmount, onProcessing, onSuccess }) {
     event.preventDefault()
     if (!stripe || !elements) return
     if (!cardholderName.trim()) {
-      toast.error('Vui lòng nhập tên chủ thẻ')
+      toast.error('Please enter the cardholder name')
       return
     }
 
@@ -87,7 +87,7 @@ function CheckoutForm({ totalAmount, onProcessing, onSuccess }) {
       })
 
       if (result.error) {
-        toast.error(result.error.message || 'Thanh toán thất bại.')
+        toast.error(result.error.message || 'Payment failed.')
         setIsPaying(false)
         onProcessing(false)
       } else {
@@ -96,23 +96,23 @@ function CheckoutForm({ totalAmount, onProcessing, onSuccess }) {
             await paymentService.confirmLocalPayment(result.paymentIntent.id);
             onSuccess()
           } catch (confirmError) {
-            toast.error('Giao dịch thành công nhưng cập nhật trạng thái thất bại. Vui lòng liên hệ CSKH.');
+            toast.error('Transaction successful but status update failed. Please contact support.');
             setIsPaying(false);
             onProcessing(false);
           }
         }
       }
     } catch (err) {
-      toast.error('Đã có lỗi xảy ra. Vui lòng thử lại.')
+      toast.error('An error occurred. Please try again.')
       setIsPaying(false)
       onProcessing(false)
     }
   }
 
   return (
-    <form onSubmit={handleConfirmPayment} className="payment-form">
+    <form onSubmit={handleConfirmPayment} className="payment-form" autoComplete="off">
       <div className="brand-selector">
-        <p className="selector-label">Chọn phương thức thanh toán:</p>
+        <p className="selector-label">Select payment method:</p>
         <div className="brand-options">
           <button 
             type="button" 
@@ -120,7 +120,7 @@ function CheckoutForm({ totalAmount, onProcessing, onSuccess }) {
             onClick={() => handleBrandChange('visa')}
           >
             <div className="brand-logo-wrapper">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/d/d6/Visa_2021.svg" alt="Visa" />
+              <img src="https://logos-world.net/wp-content/uploads/2020/04/Visa-Logo.png" alt="Visa" />
             </div>
             <span>Visa</span>
             {cardBrand === 'visa' && <CheckCircle2 size={16} className="check-icon" />}
@@ -145,17 +145,17 @@ function CheckoutForm({ totalAmount, onProcessing, onSuccess }) {
         <div className="card-number-display">•••• •••• •••• ••••</div>
         <div className="card-bottom">
           <div className="card-holder">
-            <div className="card-label">CHỦ THẺ</div>
-            <div className="card-value">{cardholderName || 'HO TEN CUA BAN'}</div>
+            <div className="card-label">CARDHOLDER</div>
+            <div className="card-value">{cardholderName || 'YOUR NAME HERE'}</div>
           </div>
           <div className="card-expiry">
-            <div className="card-label">HẾT HẠN</div>
+            <div className="card-label">EXPIRY</div>
             <div className="card-value">MM/YY</div>
           </div>
         </div>
         <div className="card-brand-logo">
           {cardBrand === 'visa' ? (
-            <img src="https://upload.wikimedia.org/wikipedia/commons/d/d6/Visa_2021.svg" alt="Visa" className="logo-img white-filter" />
+            <img src="https://logos-world.net/wp-content/uploads/2020/04/Visa-Logo.png" alt="Visa" className="logo-img white-filter" />
           ) : (
             <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="MasterCard" className="logo-img" />
           )}
@@ -164,19 +164,22 @@ function CheckoutForm({ totalAmount, onProcessing, onSuccess }) {
 
       <div className="payment-inputs">
         <div className="input-group">
-          <label><User size={14} /> Tên chủ thẻ</label>
+          <label><User size={14} /> Cardholder Name</label>
           <input 
             type="text" 
             placeholder="NGUYEN VAN A" 
             className="custom-input"
             value={cardholderName}
-            onChange={(e) => setCardholderName(e.target.value.toUpperCase())}
+            onChange={(e) => {
+              const val = e.target.value.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/Đ/g, 'D');
+              setCardholderName(val);
+            }}
             required
           />
         </div>
 
         <div className="input-group">
-          <label><CreditCard size={14} /> Số thẻ ({cardBrand.charAt(0).toUpperCase() + cardBrand.slice(1)})</label>
+          <label><CreditCard size={14} /> Card Number ({cardBrand.charAt(0).toUpperCase() + cardBrand.slice(1)})</label>
           <div className="stripe-input-wrapper">
             <CardNumberElement 
               options={CARD_ELEMENT_OPTIONS} 
@@ -191,7 +194,7 @@ function CheckoutForm({ totalAmount, onProcessing, onSuccess }) {
 
         <div className="input-row">
           <div className="input-group">
-            <label>Ngày hết hạn</label>
+            <label>Expiry Date</label>
             <div className="stripe-input-wrapper">
               <CardExpiryElement options={CARD_ELEMENT_OPTIONS} />
             </div>
@@ -211,15 +214,15 @@ function CheckoutForm({ totalAmount, onProcessing, onSuccess }) {
         disabled={!stripe || isPaying}
       >
         {isPaying ? (
-          <><Loader2 className="animate-spin" size={20} /> Đang xử lý...</>
+          <><Loader2 className="animate-spin" size={20} /> Processing...</>
         ) : (
-          `Thanh toán ngay ${formatVND(window.totalAmount)}`
+          'Pay'
         )}
       </button>
 
       <div className="payment-security-note">
         <ShieldCheck size={16} />
-        Giao dịch được bảo mật bởi hệ thống Stripe quốc tế.
+        Transactions are secured by the international Stripe system.
       </div>
     </form>
   )
@@ -248,7 +251,7 @@ export default function CheckoutPage() {
 
   const createPendingTickets = useCallback(async () => {
     if (!checkoutData?.matchId || !checkoutData?.standId) {
-      toast.error('Dữ liệu thanh toán không hợp lệ.')
+      toast.error('Invalid payment data.')
       navigate('/')
       return
     }
@@ -268,7 +271,7 @@ export default function CheckoutPage() {
       const payment = intentResponse.data?.data
       setClientSecret(payment?.clientSecret || '')
     } catch (error) {
-      toast.error(error.response?.data?.message ?? 'Không thể khởi tạo phiên thanh toán.')
+      toast.error(error.response?.data?.message ?? 'Failed to initialize payment session.')
       navigate(-1)
     } finally {
       setIsInitializing(false)
@@ -292,7 +295,7 @@ export default function CheckoutPage() {
   if (isInitializing) {
     return (
       <div className="checkout-loading-screen">
-        <LoadingSpinner text="Đang kết nối cổng thanh toán an toàn..." />
+        <LoadingSpinner text="Connecting to secure payment gateway..." />
       </div>
     )
   }
@@ -301,14 +304,12 @@ export default function CheckoutPage() {
     <section className="checkout-page">
       <div className="checkout-header">
         <div className="container">
-          <div className="checkout-steps">
-            <span className="step completed">Chọn chỗ</span>
-            <span className="step-arrow">→</span>
-            <span className="step active">Thanh toán</span>
-            <span className="step-arrow">→</span>
-            <span className="step">Hoàn tất</span>
+          <div className="checkout-header-content">
+            <button onClick={() => navigate(-1)} className="checkout-back-btn" title="Back to Seat Selection">
+              <ArrowLeft size={24} />
+            </button>
+            <h1 className="checkout-title">Payment</h1>
           </div>
-          <h1 className="checkout-title">Xác nhận Thanh toán</h1>
         </div>
       </div>
 
@@ -318,34 +319,34 @@ export default function CheckoutPage() {
             <div className="summary-card">
               <div className="card-header">
                 <Ticket className="header-icon" />
-                <h3>Chi tiết đơn hàng</h3>
+                <h3>Order Details</h3>
               </div>
               
               <div className="summary-details">
                 <div className="detail-item">
-                  <span className="label">Trận đấu</span>
-                  <span className="value">{checkoutData?.matchName || 'Trận đấu bóng đá'}</span>
+                  <span className="label">Match</span>
+                  <span className="value">{checkoutData?.matchName || 'Soccer Match'}</span>
                 </div>
                 <div className="detail-item">
-                  <span className="label">Khu vực</span>
+                  <span className="label">Section</span>
                   <span className="value highlight">{checkoutData?.standName}</span>
                 </div>
                 <div className="detail-item">
-                  <span className="label">Số lượng</span>
-                  <span className="value">{checkoutData?.quantity} vé</span>
+                  <span className="label">Quantity</span>
+                  <span className="value">{checkoutData?.quantity} tickets</span>
                 </div>
               </div>
 
               <div className="summary-total">
                 <div className="total-row">
-                  <span>Tổng cộng</span>
+                  <span>Total</span>
                   <span className="total-value">{formatVND(totalAmount)}</span>
                 </div>
               </div>
 
               <div className="summary-info">
                 <Info size={16} />
-                <span>Bạn sẽ nhận được vé điện tử ngay sau khi giao dịch thành công.</span>
+                <span>You will receive your digital tickets immediately after a successful transaction.</span>
               </div>
             </div>
           </div>
@@ -354,7 +355,7 @@ export default function CheckoutPage() {
             <div className="payment-card">
               <div className="card-header">
                 <CreditCard className="header-icon" />
-                <h3>Thông tin thẻ</h3>
+                <h3>Card Information</h3>
               </div>
 
               {clientSecret && stripePromise ? (
@@ -369,7 +370,7 @@ export default function CheckoutPage() {
                 </div>
               ) : (
                 <div className="payment-error">
-                  Đang khởi tạo cổng thanh toán an toàn...
+                  Initializing secure payment gateway...
                 </div>
               )}
             </div>
@@ -379,7 +380,7 @@ export default function CheckoutPage() {
 
       {isGlobalProcessing && (
         <div className="payment-overlay">
-          <LoadingSpinner text="Đang xử lý giao dịch bảo mật..." />
+          <LoadingSpinner text="Processing secure transaction..." />
         </div>
       )}
 

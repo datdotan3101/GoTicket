@@ -1,177 +1,4 @@
-/**
- * StadiumMap — Shared visual stadium map component.
- *
- * Props:
- *  - stands: array of stand objects. Each must have { name, total_seats }
- *  - selectedStandId: (optional) id of currently selected stand
- *  - onSelectStand: (optional) callback(stand) — if provided, enables interactive mode
- */
-const STAND_COLORS = {
-  selected: { bg: 'rgba(79, 70, 229, 0.35)', border: '#6366f1', glow: '0 0 16px rgba(99,102,241,0.6)' },
-  soldOut:  { bg: 'rgba(239, 68, 68, 0.08)', border: 'rgba(239,68,68,0.2)', glow: 'none' },
-  hover:    { bg: 'rgba(79, 70, 229, 0.2)', border: '#4f46e5', glow: 'none' },
-  default:  { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.1)', glow: 'none' },
-}
-
-function StandSectorGrid({ standName, standData, interactive, selected, onSelect, rows = 3, cols = 6, direction = 'up', layout = 'horizontal' }) {
-  const totalSeats = standData?.total_seats || 0
-  const availableSeats = standData?.available_seats ?? totalSeats
-  const isSoldOut = interactive && availableSeats === 0
-  const isSelected = selected
-
-  const blocks = rows * cols
-  const seatsPerBlock = blocks > 0 ? Math.floor(totalSeats / blocks) : 0
-  const remainder = blocks > 0 ? totalSeats % blocks : 0
-
-  const cells = []
-  
-  if (layout === 'vertical') {
-    // Column-major orientation: Floors are Columns, Labels are Headers
-    // Header Row
-    for (let c = 0; c < cols; c++) {
-      cells.push({
-        isLabel: true,
-        label: `Floor ${c + 1}`,
-        key: `floor-${c + 1}`,
-        isHeader: true
-      })
-    }
-    // Data Rows
-    for (let r = 0; r < rows; r++) {
-      const floorIndex = direction === 'down' ? r : (rows - 1 - r);
-      for (let c = 0; c < cols; c++) {
-        const num = c * rows + floorIndex + 1;
-        cells.push({
-          isLabel: false,
-          id: `${standName}${num}`,
-          seats: seatsPerBlock + (num <= remainder ? 1 : 0),
-          key: `${standName}${num}`
-        })
-      }
-    }
-  } else {
-    // Row-major orientation: Floors are Rows (Default for A and B)
-    for (let r = 0; r < rows; r++) {
-      const floorNum = direction === 'down' ? (r + 1) : (rows - r)
-      cells.push({
-        isLabel: true,
-        label: `Floor ${floorNum}`,
-        key: `floor-${floorNum}`
-      })
-      const sectorOffset = (floorNum - 1) * cols
-      for (let c = 0; c < cols; c++) {
-        const num = sectorOffset + c + 1
-        cells.push({
-          isLabel: false,
-          id: `${standName}${num}`,
-          seats: seatsPerBlock + (num <= remainder ? 1 : 0),
-          key: `${standName}${num}`
-        })
-      }
-    }
-  }
-
-  const wrapperStyle = {
-    background: isSelected
-      ? STAND_COLORS.selected.bg
-      : isSoldOut
-        ? STAND_COLORS.soldOut.bg
-        : STAND_COLORS.default.bg,
-    border: `1px solid ${isSelected
-      ? STAND_COLORS.selected.border
-      : isSoldOut
-        ? STAND_COLORS.soldOut.border
-        : STAND_COLORS.default.border}`,
-    boxShadow: isSelected ? STAND_COLORS.selected.glow : 'none',
-    padding: '12px',
-    borderRadius: '8px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-    cursor: interactive && !isSoldOut ? 'pointer' : isSoldOut ? 'not-allowed' : 'default',
-    transition: 'all 0.2s ease',
-    opacity: isSoldOut ? 0.5 : 1,
-  }
-
-  return (
-    <div
-      style={wrapperStyle}
-      onClick={() => interactive && !isSoldOut && onSelect && onSelect(standData)}
-    >
-      <div className="stand-sector-title" style={{ color: isSelected ? '#a5b4fc' : '#94a3b8' }}>
-        STAND {standName} — {totalSeats.toLocaleString()} SEATS
-        {interactive && isSoldOut && (
-          <span style={{ color: '#ef4444', marginLeft: '6px', fontSize: '0.6rem' }}>SOLD OUT</span>
-        )}
-      </div>
-      <div className="stand-sector-grid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
-        {cells.map((cell) => (
-          cell.isLabel ? (
-            <div key={cell.key} className={cell.isHeader ? "floor-header-cell" : "floor-row-label"}>
-              {!cell.isHeader && <div className="floor-row-line" />}
-              <span>{cell.label}</span>
-              {!cell.isHeader && <div className="floor-row-line" />}
-            </div>
-          ) : (
-            <div
-              key={cell.key}
-              className="sector-cell"
-              style={{
-                background: isSelected ? 'rgba(99,102,241,0.2)' : undefined,
-                borderColor: isSelected ? 'rgba(99,102,241,0.5)' : undefined,
-                pointerEvents: 'none',
-              }}
-            >
-              <span className="sector-id">{cell.id}</span>
-              <span className="sector-seats">{cell.seats}</span>
-            </div>
-          )
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function VipBlock({ standData, interactive, selected, onSelect }) {
-  const totalSeats = standData?.total_seats || 0
-  const availableSeats = standData?.available_seats ?? totalSeats
-  const isSoldOut = interactive && availableSeats === 0
-
-  return (
-    <div
-      style={{
-        background: selected ? 'rgba(79,70,229,0.35)' : isSoldOut ? 'rgba(239,68,68,0.08)' : 'rgba(79,70,229,0.15)',
-        border: `1px solid ${selected ? '#6366f1' : isSoldOut ? 'rgba(239,68,68,0.3)' : '#4f46e5'}`,
-        boxShadow: selected ? '0 0 16px rgba(99,102,241,0.6)' : 'none',
-        padding: '12px',
-        borderRadius: '8px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-        cursor: interactive && !isSoldOut ? 'pointer' : isSoldOut ? 'not-allowed' : 'default',
-        transition: 'all 0.2s ease',
-        opacity: isSoldOut ? 0.5 : 1,
-        minWidth: '90px',
-      }}
-      onClick={() => interactive && !isSoldOut && onSelect && onSelect(standData)}
-    >
-      <div className="stand-sector-title" style={{ color: selected ? '#a5b4fc' : '#818cf8' }}>VIP AREA</div>
-      <div
-        className="sector-cell"
-        style={{
-          background: selected ? 'rgba(99,102,241,0.3)' : 'rgba(79,70,229,0.2)',
-          border: `1px solid ${selected ? '#6366f1' : '#4f46e5'}`,
-          pointerEvents: 'none',
-        }}
-      >
-        <span className="sector-id" style={{ color: '#fff' }}>VIP</span>
-        <span className="sector-seats" style={{ color: selected ? '#a5b4fc' : '#a5b4fc' }}>
-          {totalSeats.toLocaleString()} seats
-        </span>
-      </div>
-    </div>
-  )
-}
+import React from 'react'
 
 export default function StadiumMap({ stands = [], selectedStandId, onSelectStand }) {
   const interactive = typeof onSelectStand === 'function'
@@ -182,79 +9,143 @@ export default function StadiumMap({ stands = [], selectedStandId, onSelectStand
     return interactive && stand?.id != null && stand.id === selectedStandId
   }
 
-  return (
-    <div className="stadium-visual-container">
-      <div className="stadium-map">
-        {/* Left: Stand C */}
-        <StandSectorGrid
-          standName="C"
-          standData={getStand('C')}
-          interactive={interactive}
-          selected={isSelected('C')}
-          onSelect={onSelectStand}
-          rows={5}
-          cols={2}
-          layout="vertical"
+  const handleStandClick = (name) => {
+    if (!interactive) return
+    const stand = getStand(name)
+    if (stand.available_seats > 0) {
+      onSelectStand(stand)
+    }
+  }
+
+  // Helper to render a striped block (representing rows of seats)
+  const renderStripedBlock = (name, x, y, width, height, color, label, isTop = true) => {
+    const stand = getStand(name)
+    const selected = isSelected(name)
+    const soldOut = stand.available_seats === 0
+    
+    // Draw horizontal lines for "rows"
+    const rows = []
+    const rowCount = 8
+    for (let i = 0; i < rowCount; i++) {
+      rows.push(
+        <rect
+          key={i}
+          x={x}
+          y={y + (i * (height / rowCount))}
+          width={width}
+          height={(height / rowCount) - 1}
+          fill={selected ? '#4f46e5' : soldOut ? '#e2e8f0' : color}
+          opacity={selected ? 1 : 0.85}
         />
+      )
+    }
 
-        {/* Center column */}
-        <div className="stadium-center-column">
-          {/* Top: Stand A + VIP */}
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-end' }}>
-            <StandSectorGrid
-              standName="A"
-              standData={getStand('A')}
-              interactive={interactive}
-              selected={isSelected('A')}
-              onSelect={onSelectStand}
-              rows={3}
-              cols={6}
-              direction="up"
-            />
-            <VipBlock
-              standData={getStand('VIP')}
-              interactive={interactive}
-              selected={isSelected('VIP')}
-              onSelect={onSelectStand}
-            />
-          </div>
+    return (
+      <g 
+        onClick={() => handleStandClick(name)}
+        style={{ cursor: soldOut ? 'not-allowed' : 'pointer' }}
+      >
+        {/* Main interactive area */}
+        <rect 
+          x={x} y={y} width={width} height={height} 
+          fill="transparent" 
+          stroke={selected ? '#4f46e5' : 'transparent'} 
+          strokeWidth="2"
+        />
+        {rows}
+        {/* Label */}
+        <text
+          x={x + width / 2}
+          y={isTop ? y - 10 : y + height + 15}
+          textAnchor="middle"
+          fill="#1e293b"
+          style={{ 
+            fontSize: '11px', 
+            fontWeight: 800, 
+            pointerEvents: 'none',
+            userSelect: 'none'
+          }}
+        >
+          {label}
+        </text>
+      </g>
+    )
+  }
 
-          {/* Football Pitch */}
-          <div className="football-pitch" style={{ margin: '20px 0' }}>
-            <div className="pitch-outline">
-              <div className="center-circle" />
-              <div className="penalty-area left" />
-              <div className="penalty-area right" />
-            </div>
-          </div>
+  return (
+    <div style={{ width: '100%', position: 'relative', background: '#fff', borderRadius: '16px' }}>
+      <svg viewBox="0 0 800 600" style={{ width: '100%', height: 'auto' }}>
+        {/* Athletic Track & Pitch - Shrunk ry for more gap */}
+        <ellipse cx="400" cy="300" rx="280" ry="135" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2" />
+        <rect x="250" y="215" width="300" height="170" rx="4" fill="#22c55e" stroke="#fff" strokeWidth="2" />
+        <circle cx="400" cy="300" r="25" fill="none" stroke="#fff" strokeWidth="2" />
+        <line x1="400" y1="215" x2="400" y2="385" stroke="#fff" strokeWidth="2" />
 
-          {/* Bottom: Stand B */}
-          <StandSectorGrid
-            standName="B"
-            standData={getStand('B')}
-            interactive={interactive}
-            selected={isSelected('B')}
-            onSelect={onSelectStand}
-            rows={3}
-            cols={6}
-            direction="down"
-          />
-        </div>
+        {/* ─── STAND A (TOP) - Reverted to all Blue as per image ─── */}
+        {/* Tier 2 */}
+        {renderStripedBlock('A', 150, 20, 100, 40, '#2563eb', 'A5-T2')}
+        {renderStripedBlock('A', 260, 20, 100, 40, '#2563eb', 'A3-T2')}
+        {renderStripedBlock('A', 370, 20, 60, 40, '#2563eb', 'A1-T2')}
+        {renderStripedBlock('A', 440, 20, 100, 40, '#2563eb', 'A2-T2')}
+        {renderStripedBlock('A', 550, 20, 100, 40, '#2563eb', 'A4-T2')}
 
-        {/* Right: Stand D */}
-        <div className="stadium-side-column">
-          <StandSectorGrid
-            standName="D"
-            standData={getStand('D')}
-            interactive={interactive}
-            selected={isSelected('D')}
-            onSelect={onSelectStand}
-            rows={5}
-            cols={2}
-            layout="vertical"
-          />
-        </div>
-      </div>
+        {/* Tier 1 */}
+        {renderStripedBlock('A', 170, 75, 100, 40, '#2563eb', 'A5-T1', false)}
+        {renderStripedBlock('A', 280, 75, 80, 40, '#2563eb', 'A3-T1', false)}
+        {renderStripedBlock('A', 370, 75, 60, 40, '#2563eb', 'A1-T1', false)}
+        {renderStripedBlock('A', 440, 75, 80, 40, '#2563eb', 'A2-T1', false)}
+        {renderStripedBlock('A', 530, 75, 100, 40, '#2563eb', 'A4-T1', false)}
+
+        {/* ─── STAND B (BOTTOM) - Applied Red center, others Blue ─── */}
+        {renderStripedBlock('B', 150, 500, 100, 40, '#2563eb', 'B14-T1', false)}
+        {renderStripedBlock('B', 260, 500, 80, 40, '#2563eb', 'B13-T1', false)}
+        {renderStripedBlock('B', 350, 500, 100, 40, '#ef4444', 'B12-T1', false)}
+        {renderStripedBlock('B', 460, 500, 80, 40, '#2563eb', 'B10-T1', false)}
+        {renderStripedBlock('B', 550, 500, 100, 40, '#2563eb', 'B9-T1', false)}
+
+        {/* ─── STAND D (LEFT) ─── */}
+        <g onClick={() => handleStandClick('D')} style={{ cursor: 'pointer' }}>
+          {/* Top Block - Simplified to avoid overlap */}
+          <rect x="30" y="100" width="40" height="80" fill={isSelected('D') ? '#4f46e5' : '#22c55e'} opacity="0.8" />
+          {/* Center Blocks */}
+          <rect x="30" y="200" width="40" height="80" fill={isSelected('D') ? '#4f46e5' : '#22c55e'} opacity="0.8" />
+          <rect x="30" y="300" width="40" height="80" fill={isSelected('D') ? '#4f46e5' : '#22c55e'} opacity="0.8" />
+          <text x="50" y="300" textAnchor="middle" fill="#111827" style={{ fontSize: '24px', fontWeight: 900 }}>D</text>
+          
+          {/* Vertical Stripes for D */}
+          <g style={{ pointerEvents: 'none' }}>
+            {[35, 45, 55, 65].map(x => (
+              <React.Fragment key={x}>
+                <line x1={x} y1="100" x2={x} y2="180" stroke="#fff" strokeWidth="1" opacity="0.5" />
+                <line x1={x} y1="200" x2={x} y2="280" stroke="#fff" strokeWidth="1" opacity="0.5" />
+                <line x1={x} y1="300" x2={x} y2="380" stroke="#fff" strokeWidth="1" opacity="0.5" />
+              </React.Fragment>
+            ))}
+          </g>
+        </g>
+
+        {/* ─── STAND C (RIGHT) ─── */}
+        <g onClick={() => handleStandClick('C')} style={{ cursor: 'pointer' }}>
+          {/* Mirroring D structure */}
+          <rect x="730" y="100" width="40" height="80" fill={isSelected('C') ? '#4f46e5' : '#94a3b8'} opacity="0.8" />
+          <rect x="730" y="200" width="40" height="80" fill={isSelected('C') ? '#4f46e5' : '#94a3b8'} opacity="0.8" />
+          <rect x="730" y="300" width="40" height="80" fill={isSelected('C') ? '#4f46e5' : '#94a3b8'} opacity="0.8" />
+          <text x="750" y="300" textAnchor="middle" fill="#111827" style={{ fontSize: '24px', fontWeight: 900 }}>C</text>
+          
+          {/* Vertical Stripes for C */}
+          <g style={{ pointerEvents: 'none' }}>
+            {[735, 745, 755, 765].map(x => (
+              <React.Fragment key={x}>
+                <line x1={x} y1="100" x2={x} y2="180" stroke="#fff" strokeWidth="1" opacity="0.5" />
+                <line x1={x} y1="200" x2={x} y2="280" stroke="#fff" strokeWidth="1" opacity="0.5" />
+                <line x1={x} y1="300" x2={x} y2="380" stroke="#fff" strokeWidth="1" opacity="0.5" />
+              </React.Fragment>
+            ))}
+          </g>
+        </g>
+      </svg>
     </div>
   )
 }
+
+
