@@ -46,20 +46,8 @@ export const createMatchRules = [
 export const configStandsRules = [
   body("totalCapacity")
     .notEmpty().withMessage("totalCapacity là bắt buộc.")
-    .isInt({ min: 100, max: 100000 }).withMessage("Tổng ghế phải từ 100 đến 100,000."),
-  body("vipCapacity")
-    .optional()
-    .isInt({ min: 0 }).withMessage("Số lượng ghế VIP không hợp lệ."),
-  body("prices")
-    .notEmpty().withMessage("prices là bắt buộc."),
-  body("prices.VIP")
-    .isFloat({ min: 0 }).withMessage("Giá ghế VIP phải >= 0."),
-  body("prices.A")
-    .isFloat({ min: 0 }).withMessage("Giá khán đài A phải >= 0."),
-  body("prices.B")
-    .isFloat({ min: 0 }).withMessage("Giá khán đài B phải >= 0."),
-  body("prices.C")
-    .isFloat({ min: 0 }).withMessage("Giá khán đài C phải >= 0."),
-  body("prices.D")
-    .isFloat({ min: 0 }).withMessage("Giá khán đài D phải >= 0.")
+    .isInt({ min: 100, max: 1000000 }).withMessage("Tổng ghế phải từ 100 đến 1,000,000."),
+  body("blockConfigs")
+    .notEmpty().withMessage("Cấu hình khán đài (blockConfigs) là bắt buộc.")
+    .isObject().withMessage("blockConfigs phải là một đối tượng."),
 ];

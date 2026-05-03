@@ -19,8 +19,15 @@ import { unwrapData } from '../../utils/apiData'
 export default function CheckerDashboard() {
   const socketRef = useSocket({ enabled: true })
   const [matches, setMatches] = useState([])
-  const [selectedMatchId, setSelectedMatchId] = useState('')
+  const [selectedMatchId, setSelectedMatchId] = useState(
+    () => localStorage.getItem('checker_selected_match_id') || ''
+  )
   const [stats, setStats] = useState({ total_tickets: 0, checked_in_tickets: 0, not_checked_in_tickets: 0 })
+
+  const handleSelectMatch = (id) => {
+    setSelectedMatchId(id)
+    localStorage.setItem('checker_selected_match_id', id)
+  }
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -29,7 +36,12 @@ export default function CheckerDashboard() {
         const payload = unwrapData(response)
         const list = payload?.data ?? payload ?? []
         setMatches(list)
-        if (list[0]?.id) setSelectedMatchId(String(list[0].id))
+        // Only set default if nothing was previously saved
+        const saved = localStorage.getItem('checker_selected_match_id')
+        const savedExists = saved && list.some(m => String(m.id) === saved)
+        if (!savedExists && list[0]?.id) {
+          handleSelectMatch(String(list[0].id))
+        }
       } catch {
         setMatches([])
       }
@@ -100,7 +112,7 @@ export default function CheckerDashboard() {
               </div>
               <select 
                 value={selectedMatchId} 
-                onChange={(event) => setSelectedMatchId(event.target.value)}
+                onChange={(event) => handleSelectMatch(event.target.value)}
                 className="premium-select"
               >
                 {matches.map((match) => (

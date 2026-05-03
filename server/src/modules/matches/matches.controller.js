@@ -43,7 +43,7 @@ export const submitMatch = asyncHandler(async (req, res) => {
 });
 
 export const previewStands = asyncHandler(async (req, res) => {
-  const data = generateStands(req.body.totalCapacity, req.body.vipCapacity, req.body.prices);
+  const data = generateStands(req.body.blockConfigs || {});
   return sendSuccess(res, data);
 });
 

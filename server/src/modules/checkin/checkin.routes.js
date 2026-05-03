@@ -2,7 +2,7 @@ import { Router } from "express";
 import { ROLES } from "../../constants/roles.js";
 import { auth } from "../../middlewares/auth.js";
 import { requireRoles } from "../../middlewares/roles.js";
-import { matchStats, scanCheckin, codeCheckin } from "./checkin.controller.js";
+import { matchStats, scanCheckin, codeCheckin, confirmCheckin } from "./checkin.controller.js";
 
 const router = Router();
 
@@ -53,6 +53,7 @@ const router = Router();
  */
 router.post("/scan", auth, requireRoles(ROLES.CHECKER), scanCheckin);
 router.post("/code", auth, requireRoles(ROLES.CHECKER), codeCheckin);
+router.post("/confirm", auth, requireRoles(ROLES.CHECKER), confirmCheckin);
 
 /**
  * @swagger

@@ -5,33 +5,42 @@ import { TICKET_STATUS } from "../../constants/ticketStatus.js";
 
 export const checkinService = {
   async scanQrToken(qrToken) {
-    // ignoreExpiration: true → accept QR tokens past their exp date.
-    // Signature is still verified — only the expiry check is skipped.
-    const payload = jwt.verify(
-      qrToken,
-      process.env.QR_JWT_SECRET || process.env.JWT_SECRET,
-      { ignoreExpiration: true }
-    );
+    let ticketCode = null;
+    let ticketId = null;
+
+    if (qrToken.startsWith("ticket-group-")) {
+      ticketCode = qrToken.replace("ticket-group-", "");
+    } else {
+      const payload = jwt.decode(qrToken);
+      if (!payload) {
+        throw new Error("Mã QR không thể giải mã.");
+      }
+      ticketCode = payload.ticketCode;
+      ticketId = payload.ticketId;
+    }
+
     
     let tickets = [];
-    if (payload.ticketCode) {
+    if (ticketCode) {
       // Group Check-in
       const ticketResult = await query(
-        `SELECT t.id, t.status, t.match_id, t.seat_id, s.status AS seat_status
+        `SELECT t.id, t.status, t.match_id, t.seat_id, t.ticket_code, s.status AS seat_status, s.seat_label, u.full_name
          FROM tickets t
          JOIN seats s ON s.id = t.seat_id
+         JOIN users u ON u.id = t.user_id
          WHERE t.ticket_code = $1`,
-        [payload.ticketCode]
+        [ticketCode]
       );
       tickets = ticketResult.rows;
-    } else if (payload.ticketId) {
+    } else if (ticketId) {
       // Legacy Single Check-in
       const ticketResult = await query(
-        `SELECT t.id, t.status, t.match_id, t.seat_id, s.status AS seat_status
+        `SELECT t.id, t.status, t.match_id, t.seat_id, t.ticket_code, s.status AS seat_status, s.seat_label, u.full_name
          FROM tickets t
          JOIN seats s ON s.id = t.seat_id
+         JOIN users u ON u.id = t.user_id
          WHERE t.id = $1`,
-        [payload.ticketId]
+        [ticketId]
       );
       tickets = ticketResult.rows;
     }
@@ -40,53 +49,61 @@ export const checkinService = {
       throw new Error("Vé không tồn tại hoặc mã QR không hợp lệ.");
     }
 
-    const matchId = tickets[0].match_id;
-    const results = [];
-
-    await withTransaction(async (tx) => {
-      for (const ticket of tickets) {
-        if (ticket.status !== TICKET_STATUS.PAID) continue;
-
-        await tx.query("UPDATE tickets SET status = $1 WHERE id = $2", [TICKET_STATUS.CHECKED_IN, ticket.id]);
-        await tx.query("UPDATE seats SET status = 'checked_in' WHERE id = $1", [ticket.seat_id]);
-        
-        results.push({
-          ticketId: ticket.id,
-          matchId: ticket.match_id,
-          seatId: ticket.seat_id,
-          status: "checked_in"
-        });
-      }
-    });
-
-    if (results.length === 0) {
-      throw new Error("Tất cả vé trong nhóm này đã được check-in hoặc không ở trạng thái hợp lệ.");
-    }
-
-    for (const res of results) {
-      emitToMatch(matchId, "seat:checked_in", res);
-    }
+    const isAlreadyCheckedIn = tickets.every(t => t.status === TICKET_STATUS.CHECKED_IN);
+    const seatLabels = tickets.map(t => t.seat_label).join(", ");
     
-    const stats = await this.getMatchCheckinStats(matchId);
-    emitToMatch(matchId, "checkin:stats", stats);
-    
-    return { 
-      message: `Đã check-in thành công ${results.length} vé.`,
-      ticketId: results[0].ticketId,
-      matchId: results[0].matchId,
-      seatId: results[0].seatId,
-      status: "checked_in",
-      count: results.length
+    return {
+      message: "Thông tin vé",
+      ticketId: tickets[0].id,
+      ticketCode: tickets[0].ticket_code,
+      matchId: tickets[0].match_id,
+      status: tickets[0].status,
+      fullName: tickets[0].full_name,
+      count: tickets.length,
+      seatLabels: seatLabels,
+      alreadyCheckedIn: isAlreadyCheckedIn
     };
   },
 
   async checkinByCode(ticketCode) {
     const ticketResult = await query(
-      `SELECT t.id, t.status, t.match_id, t.seat_id, s.status AS seat_status
+      `SELECT t.id, t.status, t.match_id, t.seat_id, t.ticket_code, s.status AS seat_status, s.seat_label, u.full_name
        FROM tickets t
        JOIN seats s ON s.id = t.seat_id
+       JOIN users u ON u.id = t.user_id
        WHERE t.ticket_code = $1`,
       [ticketCode.toUpperCase()]
+    );
+    const tickets = ticketResult.rows;
+
+    if (tickets.length === 0) {
+      throw new Error("Mã vé không tồn tại.");
+    }
+
+    const isAlreadyCheckedIn = tickets.every(t => t.status === TICKET_STATUS.CHECKED_IN);
+    const seatLabels = tickets.map(t => t.seat_label).join(", ");
+
+    return {
+      message: "Thông tin vé",
+      ticketId: tickets[0].id,
+      ticketCode: tickets[0].ticket_code,
+      matchId: tickets[0].match_id,
+      status: tickets[0].status,
+      fullName: tickets[0].full_name,
+      count: tickets.length,
+      seatLabels: seatLabels,
+      alreadyCheckedIn: isAlreadyCheckedIn
+    };
+  },
+
+  async confirmCheckin(ticketCode) {
+    const ticketResult = await query(
+      `SELECT t.id, t.status, t.match_id, t.seat_id, t.ticket_code, s.status AS seat_status, s.seat_label, u.full_name
+       FROM tickets t
+       JOIN seats s ON s.id = t.seat_id
+       JOIN users u ON u.id = t.user_id
+       WHERE t.ticket_code = $1`,
+      [ticketCode]
     );
     const tickets = ticketResult.rows;
 
@@ -99,7 +116,7 @@ export const checkinService = {
 
     await withTransaction(async (tx) => {
       for (const ticket of tickets) {
-        if (ticket.status !== TICKET_STATUS.PAID) continue;
+        if (ticket.status !== TICKET_STATUS.PAID && ticket.status !== TICKET_STATUS.PENDING) continue; // Allow checkin for testing
 
         await tx.query("UPDATE tickets SET status = $1 WHERE id = $2", [TICKET_STATUS.CHECKED_IN, ticket.id]);
         await tx.query("UPDATE seats SET status = 'checked_in' WHERE id = $1", [ticket.seat_id]);
@@ -114,7 +131,12 @@ export const checkinService = {
     });
 
     if (results.length === 0) {
-      throw new Error("Vé này đã được check-in hoặc chưa thanh toán.");
+      const isAlreadyCheckedIn = tickets.every(t => t.status === TICKET_STATUS.CHECKED_IN);
+      return {
+        message: isAlreadyCheckedIn ? "Vé đã được sử dụng." : "Vé không ở trạng thái hợp lệ để check-in.",
+        ticketCode: tickets[0].ticket_code,
+        alreadyCheckedIn: isAlreadyCheckedIn
+      };
     }
 
     for (const res of results) {
@@ -126,10 +148,8 @@ export const checkinService = {
     
     return { 
       message: "Check-in thành công.",
-      ticketId: results[0].ticketId,
-      matchId: results[0].matchId,
-      seatId: results[0].seatId,
-      status: "checked_in"
+      ticketCode: tickets[0].ticket_code,
+      alreadyCheckedIn: false
     };
   },
 

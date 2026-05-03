@@ -7,31 +7,55 @@ import { matchService } from '../../services/matchService'
 import { generateStandsPreview } from '../../utils/standGenerator'
 import StadiumMap from '../../components/seat/StadiumMap'
 
+const STADIUM_COLUMNS = [
+  { id: 'A1', stand: 'A', tiers: ['T1', 'T2'] },
+  { id: 'A2', stand: 'A', tiers: ['T1', 'T2'] },
+  { id: 'A3', stand: 'A', tiers: ['T1', 'T2'] },
+  { id: 'A4', stand: 'A', tiers: ['T1', 'T2'] },
+  { id: 'A5', stand: 'A', tiers: ['T1', 'T2'] },
+  { id: 'B9', stand: 'B', tiers: ['T1'] },
+  { id: 'B10', stand: 'B', tiers: ['T1'] },
+  { id: 'B12', stand: 'B', tiers: ['T1'] },
+  { id: 'B13', stand: 'B', tiers: ['T1'] },
+  { id: 'B14', stand: 'B', tiers: ['T1'] },
+  { id: 'C', stand: 'C', tiers: ['T1'] },
+  { id: 'D', stand: 'D', tiers: ['T1'] },
+]
+
 export default function StandConfigPage() {
   const { matchId } = useParams()
-  const [totalCapacity, setTotalCapacity] = useState('500')
-  const [vipCapacity, setVipCapacity] = useState('100')
-  const [prices, setPrices] = useState({ VIP: '500000', A: '200000', B: '200000', C: '100000', D: '100000' })
   const [serverPreview, setServerPreview] = useState([])
-
-  const localPreview = useMemo(
-    () => (totalCapacity ? generateStandsPreview(Number(totalCapacity), Number(vipCapacity)) : []),
-    [totalCapacity, vipCapacity],
+  
+  const [columnConfigs, setColumnConfigs] = useState(
+    STADIUM_COLUMNS.reduce((acc, col) => {
+      acc[col.id] = { price: '200000', activeTiers: [...col.tiers] }
+      return acc
+    }, {})
   )
+
+  const blockConfigs = useMemo(() => {
+    const configs = {}
+    STADIUM_COLUMNS.forEach(col => {
+      col.tiers.forEach(tier => {
+        const blockId = `${col.id}-${tier}`
+        configs[blockId] = {
+          price: columnConfigs[col.id].price,
+          active: columnConfigs[col.id].activeTiers.includes(tier)
+        }
+      })
+    })
+    return configs
+  }, [columnConfigs])
+
+  const localPreview = useMemo(() => {
+    return []
+  }, [])
 
   const payload = useMemo(
     () => ({
-      totalCapacity: Number(totalCapacity),
-      vipCapacity: Number(vipCapacity),
-      prices: {
-        VIP: Number(prices.VIP || 0),
-        A: Number(prices.A || 0),
-        B: Number(prices.B || 0),
-        C: Number(prices.C || 0),
-        D: Number(prices.D || 0),
-      },
+      blockConfigs
     }),
-    [prices, totalCapacity, vipCapacity],
+    [blockConfigs],
   )
 
   const previewOnServer = async () => {
@@ -51,6 +75,15 @@ export default function StandConfigPage() {
     } catch (error) {
       toast.error(error.response?.data?.message || 'Save failed.')
     }
+  }
+
+  const toggleTier = (colId, tier) => {
+    setColumnConfigs(prev => {
+      const activeTiers = prev[colId].activeTiers.includes(tier)
+        ? prev[colId].activeTiers.filter(t => t !== tier)
+        : [...prev[colId].activeTiers, tier]
+      return { ...prev, [colId]: { ...prev[colId], activeTiers } }
+    })
   }
 
   return (
@@ -80,75 +113,89 @@ export default function StandConfigPage() {
       <div className="dashboard-section-head">
         <h2 className="dashboard-section-title">Visual Seating Plan</h2>
       </div>
-      <StadiumMap stands={localPreview} />
+      <div style={{ background: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0', marginBottom: '32px' }}>
+        <StadiumMap stands={localPreview} blockConfigs={blockConfigs} />
+      </div>
 
       {/* TẦNG 2: Configuration Form */}
       <div className="config-layout">
         <div className="config-form-section">
-          <h3 className="config-sub-title">Capacity Settings</h3>
-          <div className="mc-details-grid">
-            <div className="mc-input-group">
-              <label>TOTAL STADIUM CAPACITY</label>
-              <input 
-                type="number" 
-                className="mc-nice-input" 
-                value={totalCapacity} 
-                onChange={(e) => setTotalCapacity(e.target.value)} 
-              />
-            </div>
-            <div className="mc-input-group">
-              <label>VIP SEATS COUNT</label>
-              <input 
-                type="number" 
-                className="mc-nice-input" 
-                style={{ borderColor: '#4f46e5', borderWidth: '2px' }}
-                value={vipCapacity} 
-                onChange={(e) => setVipCapacity(e.target.value)} 
-              />
-            </div>
-          </div>
-
-          <h3 className="config-sub-title" style={{ marginTop: '30px' }}>Pricing Strategy (VND)</h3>
-          <div className="pricing-grid">
-            {STAND_NAMES.map((name) => (
-              <div key={name} className="mc-input-group">
-                <label className={name === 'VIP' ? 'vip-label' : ''}>{name === 'VIP' ? '💎 VIP PRICE' : `STAND ${name} PRICE`}</label>
-                <input
-                  type="number"
-                  className={`mc-nice-input ${name === 'VIP' ? 'vip-input' : ''}`}
-                  placeholder="0"
-                  value={prices[name]}
-                  onChange={(e) => setPrices((p) => ({ ...p, [name]: e.target.value }))}
-                />
-              </div>
-            ))}
+          <h3 className="config-sub-title" style={{ marginTop: '0px' }}>Block-Level Configuration</h3>
+          <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '20px' }}>Set prices by column block and toggle sale status per tier.</p>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {['A', 'B', 'C', 'D'].map(standName => {
+               const columns = STADIUM_COLUMNS.filter(c => c.stand === standName)
+               if (columns.length === 0) return null
+               return (
+                 <div key={standName} style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                   <h4 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', fontWeight: 800, color: '#1e293b' }}>Stand {standName}</h4>
+                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '16px' }}>
+                     {columns.map(col => {
+                       const isActive = col.tiers.some(t => columnConfigs[col.id]?.activeTiers.includes(t))
+                       return (
+                         <div key={col.id} style={{ 
+                           background: '#fff', 
+                           padding: '16px', 
+                           borderRadius: '8px', 
+                           border: `1px solid ${isActive ? '#cbd5e1' : '#e2e8f0'}`,
+                         }}>
+                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                             <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.1rem' }}>Block {col.id}</span>
+                           </div>
+                           <div style={{ position: 'relative', marginBottom: '16px' }}>
+                             <input 
+                               type="number" 
+                               className="mc-nice-input" 
+                               placeholder="Giá vé" 
+                               style={{ width: '100%', paddingLeft: '32px' }} 
+                               value={columnConfigs[col.id]?.price} 
+                               onChange={(e) => setColumnConfigs(p => ({ ...p, [col.id]: { ...p[col.id], price: e.target.value } }))} 
+                             />
+                             <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '0.9rem', fontWeight: 600 }}>₫</span>
+                           </div>
+                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                             {col.tiers.map(tier => (
+                               <label key={tier} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: '#475569', background: '#f8fafc', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                                 <input 
+                                   type="checkbox" 
+                                   checked={columnConfigs[col.id]?.activeTiers.includes(tier)} 
+                                   onChange={() => toggleTier(col.id, tier)} 
+                                   style={{ width: '16px', height: '16px', accentColor: '#4f46e5' }}
+                                 />
+                                 Mở bán Tầng {tier.replace('T', '')}
+                               </label>
+                             ))}
+                           </div>
+                         </div>
+                       )
+                     })}
+                   </div>
+                 </div>
+               )
+            })}
           </div>
         </div>
 
         <div className="config-summary-section">
-          <div className="config-summary-card">
+          <div className="config-summary-card" style={{ position: 'sticky', top: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
               <ShieldCheck size={24} color="#4f46e5" />
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Configuration Summary</h3>
             </div>
             <div className="summary-list">
-              {localPreview.map(stand => (
-                <div key={stand.name} className="summary-item">
-                  <span className="summary-label">Stand {stand.name}</span>
-                  <div className="summary-values">
-                    <span className="summary-seats">{stand.total_seats} seats</span>
-                    <span className="summary-grid">{stand.rows}x{stand.seats_per_row} grid</span>
-                  </div>
-                </div>
-              ))}
+              <div className="summary-item">
+                <span className="summary-label">Active Blocks</span>
+                <span className="summary-seats">{Object.values(blockConfigs).filter(b => b.active).length} Blocks</span>
+              </div>
               <div className="summary-divider"></div>
               <div className="summary-item total">
                 <span className="summary-label">Final Capacity</span>
-                <span className="summary-seats">{localPreview.reduce((acc, s) => acc + s.total_seats, 0)} Seats</span>
+                <span className="summary-seats">{Object.values(blockConfigs).filter(b => b.active).length * 100} Seats</span>
               </div>
             </div>
             <p className="summary-note">
-              * The total seats might vary slightly from the capacity due to grid rounding.
+              * Each active block is configured with 100 seats by default.
             </p>
           </div>
         </div>

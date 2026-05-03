@@ -162,7 +162,7 @@ export const matchesService = {
       throw new Error("Bạn không có quyền thao tác trận đấu của CLB khác.");
     }
 
-    const stands = generateStands(payload.totalCapacity, payload.vipCapacity, payload.prices);
+    const stands = generateStands(payload.blockConfigs || {});
     return withTransaction(async (tx) => {
       const run = (text, params) => tx.query(text, params);
       await run("DELETE FROM seats WHERE match_id = $1", [matchId]);

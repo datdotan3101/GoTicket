@@ -228,16 +228,21 @@ function CheckoutForm({ totalAmount, onProcessing, onSuccess }) {
   )
 }
 
-export default function CheckoutPage() {
+export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
   const location = useLocation()
   const navigate = useNavigate()
-  const checkoutData = location.state
+  const checkoutData = checkoutDataProp || location.state
 
   const [clientSecret, setClientSecret] = useState('')
   const [ticketIds, setTicketIds] = useState([])
   const [isInitializing, setIsInitializing] = useState(true)
   const [isGlobalProcessing, setIsGlobalProcessing] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+
+  const handleBack = () => {
+    if (onBackProp) onBackProp()
+    else navigate(-1)
+  }
 
   const totalAmount = useMemo(
     () => (Number(checkoutData?.price) || 0) * (Number(checkoutData?.quantity) || 0),
@@ -252,7 +257,7 @@ export default function CheckoutPage() {
   const createPendingTickets = useCallback(async () => {
     if (!checkoutData?.matchId || !checkoutData?.standId) {
       toast.error('Invalid payment data.')
-      navigate('/')
+      if (!onBackProp) navigate('/')
       return
     }
 
@@ -272,11 +277,11 @@ export default function CheckoutPage() {
       setClientSecret(payment?.clientSecret || '')
     } catch (error) {
       toast.error(error.response?.data?.message ?? 'Failed to initialize payment session.')
-      navigate(-1)
+      handleBack()
     } finally {
       setIsInitializing(false)
     }
-  }, [checkoutData, navigate])
+  }, [checkoutData, navigate, onBackProp])
 
   useEffect(() => {
     createPendingTickets()
@@ -302,16 +307,7 @@ export default function CheckoutPage() {
 
   return (
     <section className="checkout-page">
-      <div className="checkout-header">
-        <div className="container">
-          <div className="checkout-header-content">
-            <button onClick={() => navigate(-1)} className="checkout-back-btn" title="Back to Seat Selection">
-              <ArrowLeft size={24} />
-            </button>
-            <h1 className="checkout-title">Payment</h1>
-          </div>
-        </div>
-      </div>
+
 
       <div className="container">
         <div className="checkout-layout">

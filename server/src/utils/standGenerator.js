@@ -1,39 +1,26 @@
-import { STAND_NAMES, STAND_RATIOS } from "../constants/standRatios.js";
-
-const getRowsAndSeatsPerRow = (seatCount) => {
-  const rows = Math.max(1, Math.round(Math.sqrt(seatCount / 2)));
-  const seatsPerRow = Math.max(1, Math.ceil(seatCount / rows));
-  return { rows, seatsPerRow };
-};
-
-export const generateStands = (totalCapacity, vipCapacity, prices) => {
-  const total = Number(totalCapacity);
-  const vip = Number(vipCapacity || 0);
-  const normalTotal = Math.max(0, total - vip);
+export const generateStands = (blockConfigs = {}) => {
+  const stands = [];
   
-  let remainingNormal = normalTotal;
-  const normalStands = ["A", "B", "C", "D"];
-
-  return STAND_NAMES.map((name) => {
-    let standTotal = 0;
+  for (const [blockId, config] of Object.entries(blockConfigs)) {
+    if (!config.active) continue;
     
-    if (name === "VIP") {
-      standTotal = vip;
-    } else {
-      const isLastNormal = name === "D";
-      standTotal = isLastNormal ? remainingNormal : Math.floor(normalTotal * STAND_RATIOS[name]);
-      remainingNormal -= standTotal;
-    }
+    // Assign capacity based on manager input, default to 100 if not provided
+    const standTotal = parseInt(config.capacity, 10) || 100;
+    const seatsPerRow = 10;
+    const rows = Math.ceil(standTotal / seatsPerRow);
 
-    const { rows, seatsPerRow } = getRowsAndSeatsPerRow(standTotal);
-    const totalSeats = rows * seatsPerRow;
-
-    return {
-      name,
+    stands.push({
+      name: blockId, // The DB "stand" is now a specific block like 'A1-T1'
       rows,
       seatsPerRow,
       totalSeats: standTotal,
-      price: Number(prices[name] || 0)
-    };
-  });
+      price: Number(config.price || 0)
+    });
+  }
+
+  // Sort them so they appear consistently
+  stands.sort((a, b) => a.name.localeCompare(b.name));
+  
+  return stands;
 };
+

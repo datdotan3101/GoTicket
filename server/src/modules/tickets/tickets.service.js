@@ -105,7 +105,7 @@ export const ticketsService = {
        JOIN stands st ON st.id = s.stand_id
        JOIN matches m ON m.id = t.match_id
        JOIN stadiums std ON std.id = m.stadium_id
-       WHERE t.user_id = $1
+       WHERE t.user_id = $1 AND t.status IN ('paid', 'checked_in')
        GROUP BY t.ticket_code, m.id, std.id, st.id, st.price
        ORDER BY created_at DESC`,
       [userId]

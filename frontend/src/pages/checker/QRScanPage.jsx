@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Html5Qrcode } from 'html5-qrcode'
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
@@ -11,12 +11,17 @@ import {
   Clock,
 } from 'lucide-react'
 import { checkinService } from '../../services/checkinService'
+import { matchService } from '../../services/matchService'
 import { unwrapData } from '../../utils/apiData'
 
 // Stable element ID — must match the empty div below
 const VIEWPORT_ID = 'qr-reader-viewport'
-
 export default function QRScanPage() {
+  const [matches, setMatches] = useState([])
+  const [selectedMatchId, setSelectedMatchId] = useState(() => localStorage.getItem('checker_selected_match_id') || '')
+  const [stats, setStats] = useState({ total_tickets: 0, checked_in_tickets: 0, not_checked_in_tickets: 0 })
+  const [history, setHistory] = useState([])
+
   const [mode, setMode] = useState('scan') // 'scan' | 'manual'
   const [ticketCode, setTicketCode] = useState('')
   const [scanResult, setScanResult] = useState(null)
@@ -25,37 +30,107 @@ export default function QRScanPage() {
   const [showSuccess, setShowSuccess] = useState(false)
 
 
+
   const html5QrCodeRef = useRef(null)
-  const scanLockedRef = useRef(false) // hard lock: block all scan callbacks for SCAN_COOLDOWN ms
+  const scanLockedRef = useRef(false)
   const handleCheckinRef = useRef(null)
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const response = await matchService.getAll({ limit: 30 })
+        const payload = unwrapData(response)
+        const list = payload?.data ?? payload ?? []
+        setMatches(list)
+        if (!selectedMatchId && list[0]?.id) {
+          setSelectedMatchId(String(list[0].id))
+        }
+      } catch (err) {
+        console.error('Failed to fetch matches', err)
+      }
+    }
+    fetchMatches()
+  }, [])
+
+  useEffect(() => {
+    if (!selectedMatchId) return
+    const fetchStats = async () => {
+      try {
+        const response = await checkinService.getStatsByMatch(selectedMatchId)
+        setStats(unwrapData(response) || { total_tickets: 0, checked_in_tickets: 0, not_checked_in_tickets: 0 })
+      } catch (err) {
+        console.error('Failed to fetch stats', err)
+      }
+    }
+    fetchStats()
+  }, [selectedMatchId])
+
 
   handleCheckinRef.current = async (value, type) => {
-    // Hard lock — camera fires callbacks at 20 FPS; block all until cooldown expires
     if (scanLockedRef.current) return
     scanLockedRef.current = true
-
     setIsSubmitting(true)
+
     try {
       const response = type === 'qr'
         ? await checkinService.scanQr(value)
         : await checkinService.checkinByCode(value)
+
       const data = unwrapData(response)
       setScanResult(data)
+      toast.success(`✅ ${data.fullName} — ${data.ticketCode}`)
+
+      // Add to history
+      setHistory(prev => [{
+        time: new Date().toLocaleTimeString(),
+        customer: data.fullName,
+        ticketCode: data.ticketCode,
+        status: 'VALID',
+        class: data.seatLabels || 'Standard'
+      }, ...prev].slice(0, 10))
+
+    } catch (error) {
+      toast.error(error.response?.data?.message ?? 'Scan failed.')
+    } finally {
+      setIsSubmitting(false)
+      setTimeout(() => { scanLockedRef.current = false }, 1500)
+    }
+  }
+
+  const handleConfirmCheckin = async () => {
+    if (!scanResult || scanResult.alreadyCheckedIn) return
+    
+    setIsSubmitting(true)
+    try {
+      const response = await checkinService.confirm(scanResult.ticketCode)
+      const data = unwrapData(response)
+      
       setShowSuccess(true)
       toast.success(data.message || 'Check-in successful.')
-      setTimeout(() => setShowSuccess(false), 4000)
-      if (type === 'manual') {
-        setTicketCode('')
-        setMode('scan')
+
+      // Update history
+      setHistory(prev => prev.map(item => 
+        item.ticketCode === scanResult.ticketCode ? { ...item, status: 'ENTERED' } : item
+      ))
+
+      // Refresh stats
+      if (selectedMatchId) {
+        const statsRes = await checkinService.getStatsByMatch(selectedMatchId)
+        setStats(unwrapData(statsRes))
       }
+      
+      setTimeout(() => {
+        setShowSuccess(false)
+        setScanResult(prev => ({ ...prev, alreadyCheckedIn: true }))
+      }, 4000)
     } catch (error) {
       toast.error(error.response?.data?.message ?? 'Check-in failed.')
     } finally {
       setIsSubmitting(false)
-      // Unlock after 3 seconds — gives checker time to move to next ticket
-      setTimeout(() => { scanLockedRef.current = false }, 3000)
     }
   }
+
 
   // Start camera — only called when mode === 'scan'
   const startCamera = async () => {
@@ -71,12 +146,12 @@ export default function QRScanPage() {
       await scanner.start(
         { facingMode: 'environment' },
         {
-          fps: 20,                           // Higher FPS → better chance of reading screen QRs
-          qrbox: { width: 300, height: 300 }, // Larger box → tolerates more perspective distortion
+          fps: 15,
+          qrbox: { width: 280, height: 280 },
           aspectRatio: 1.0,
-          disableFlip: false,                // Allow mirrored codes (front camera)
+          disableFlip: false,
           experimentalFeatures: {
-            useBarCodeDetectorIfSupported: true // Use native BarcodeDetector API when available
+            useBarCodeDetectorIfSupported: true
           }
         },
         (decoded) => handleCheckinRef.current(decoded, 'qr')
@@ -127,216 +202,248 @@ export default function QRScanPage() {
     handleCheckinRef.current(ticketCode.trim(), 'manual')
   }
 
+  // Auto-focus input when in manual mode
+  useEffect(() => {
+    if (mode === 'manual' && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [mode, scanResult])
+
+  const currentMatch = matches.find(m => String(m.id) === selectedMatchId)
+  const checkinPercentage = stats.total_tickets > 0 ? Math.round((stats.checked_in_tickets / stats.total_tickets) * 100) : 0
+  const radius = 80
+  const circumference = 2 * Math.PI * radius
+  const strokeDashoffset = circumference - (checkinPercentage / 100) * circumference
+
   return (
-    <div className="qr-scanner-premium">
+    <div className="checker-console-layout">
       <div className="container">
-        {/* Header */}
-        <header className="scanner-header">
-          <Link to="/checker" className="scanner-back-btn">
-            <ChevronLeft size={20} />
-            <span>Back to Dashboard</span>
-          </Link>
-          <div className="scanner-title">
-            <h1>Ticket Validator</h1>
+        <header className="console-header">
+          <div className="console-title-wrap">
+            <Link to="/checker" className="flex items-center gap-2 text-slate-400 hover:text-slate-600 mb-2 transition-colors">
+              <ChevronLeft size={16} />
+              <span className="text-xs font-bold uppercase tracking-wider">Back to Dashboard</span>
+            </Link>
+            <h1>Check-in Verification & Stats</h1>
           </div>
-          <div className="flex items-center gap-2 text-blue-400 font-bold text-xs uppercase tracking-widest">
-            <Clock size={14} />
-            <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          
+          <div className="console-match-info">
+            <span className="console-match-label">Current Match</span>
+            <div className="console-match-value">
+              {currentMatch ? `${currentMatch.home_team} vs ${currentMatch.away_team}` : 'No Match Selected'}
+            </div>
           </div>
         </header>
 
-        <div className="scanner-main-layout">
-          {/* Left: viewport + controls */}
-          <div className="scanner-viewport-card">
-
-            {/* ✅ FULL-SCREEN SUCCESS OVERLAY */}
-            {showSuccess && scanResult && (
-              <div className="checkin-success-overlay animate-fadeIn">
-                <div className="checkin-success-icon">
-                  <CheckCircle2 size={72} />
+        <div className="console-grid">
+          {/* Progress Card */}
+          <div className="console-card">
+            <h2 className="card-title-console">Check-in Progress</h2>
+            
+            <div className="progress-ring-container">
+              <svg width="200" height="200">
+                <circle
+                  stroke="#f1f5f9"
+                  strokeWidth="15"
+                  fill="transparent"
+                  r={radius}
+                  cx="100"
+                  cy="100"
+                />
+                <circle
+                  stroke="#1D4ED8"
+                  strokeWidth="15"
+                  strokeDasharray={circumference}
+                  style={{ strokeDashoffset, transition: 'stroke-dashoffset 0.5s ease' }}
+                  strokeLinecap="round"
+                  fill="transparent"
+                  r={radius}
+                  cx="100"
+                  cy="100"
+                  transform="rotate(-90 100 100)"
+                />
+              </svg>
+              <div className="progress-ring-text">
+                <div className="progress-percentage">{checkinPercentage}%</div>
+                <div className="progress-stats-label">
+                  {stats.checked_in_tickets.toLocaleString()} / {stats.total_tickets.toLocaleString()}
                 </div>
-                <h2 className="checkin-success-title">ACCESS GRANTED</h2>
-                <p className="checkin-success-sub">Ticket #{scanResult.ticketId}</p>
-                <p className="checkin-success-time">{new Date().toLocaleTimeString()}</p>
-                <button
-                  onClick={() => setShowSuccess(false)}
-                  className="mt-8 px-8 py-3 bg-white/10 hover:bg-white/20 rounded-full text-white font-bold text-sm uppercase tracking-widest border border-white/20 transition-all"
-                >
-                  Dismiss
-                </button>
               </div>
-            )}
-
-            {/*
-              ⚠️  CRITICAL: This div must ALWAYS be in the DOM and ALWAYS be EMPTY.
-              html5-qrcode owns everything inside it. React must never render
-              children here, otherwise React's removeChild will crash when
-              html5-qrcode has already moved those nodes.
-            */}
-            <div
-              className="scanner-frame"
-              style={{ display: mode === 'scan' ? 'block' : 'none' }}
-            >
-              <div className="corner tl" />
-              <div className="corner tr" />
-              <div className="corner bl" />
-              <div className="corner br" />
-              {/* ← NO children here ever → html5-qrcode owns this div */}
-              <div id={VIEWPORT_ID} className="w-full h-full overflow-hidden rounded-2xl" />
             </div>
 
-            {/* Overlay status shown OUTSIDE the viewport div */}
-            {mode === 'scan' && cameraStatus !== 'active' && (
-              <div className="scanner-status-overlay">
-                {cameraStatus === 'starting' && (
-                  <>
-                    <Scan size={56} className="animate-pulse text-slate-500" />
-                    <span className="text-sm font-bold uppercase tracking-widest text-slate-500 mt-4">
-                      Initializing Camera...
-                    </span>
-                  </>
-                )}
-                {cameraStatus === 'error' && (
-                  <>
-                    <AlertCircle size={48} className="text-red-500" />
-                    <span className="text-sm font-bold uppercase tracking-widest text-red-400 mt-4">
-                      Camera unavailable
-                    </span>
-                    <p className="text-xs text-slate-500 mt-2 text-center max-w-xs">
-                      Allow camera permission in your browser or use manual code entry below.
-                    </p>
-                  </>
-                )}
+            <div className="console-stats-row">
+              <div className="stat-box-console">
+                <span className="stat-box-label">Remaining</span>
+                <div className="stat-box-value">{stats.not_checked_in_tickets.toLocaleString()}</div>
               </div>
-            )}
-
-            {/* Scan mode — "Enter Code Ticket" button */}
-            {mode === 'scan' && (
-              <div className="text-center mt-6">
-                <p className="text-slate-400 text-sm mb-6">
-                  {cameraStatus === 'active'
-                    ? 'Camera active — align QR code within the frame.'
-                    : 'Or enter the code manually.'}
-                </p>
-                <button
-                  onClick={() => setMode('manual')}
-                  className="inline-flex flex-row items-center justify-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl text-white font-bold transition-all shadow-lg shadow-blue-900/20 mx-auto border-none"
-                >
-                  <Keyboard size={20} className="shrink-0" />
-                  <span className="whitespace-nowrap leading-none">Enter Code Ticket</span>
-                </button>
+              <div className="stat-box-console">
+                <span className="stat-box-label">Rate/Min</span>
+                <div className="stat-box-value accent">0</div>
               </div>
-            )}
+            </div>
+          </div>
 
-            {/* Manual mode */}
-            {mode === 'manual' && (
-              <div className="manual-input-container animate-fadeIn w-full">
-                <div className="flex items-center justify-center mb-8">
-                  <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400">
-                    <Keyboard size={32} />
+          {/* Scanner Card — Camera Primary, Manual Secondary */}
+          <div className="console-card scanner-console-card" style={{padding: 0, display: 'flex', flexDirection: 'column'}}>
+
+            {/* ── PRIMARY: Camera Viewport ── */}
+            <div className="scanner-console-viewport" style={{flex: 1, minHeight: 200}}>
+              {/* Status badge */}
+              <div className="scanner-overlay-top">
+                <div className={`status-dot-console ${cameraStatus === 'active' ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`}></div>
+                <span>Camera {cameraStatus === 'active' ? 'Active' : 'Starting...'}</span>
+              </div>
+
+              {/* QR viewport — owned by html5-qrcode */}
+              <div id={VIEWPORT_ID} className="w-full h-full"></div>
+
+              {/* Scan frame corners when active */}
+              {cameraStatus === 'active' && !showSuccess && (
+                <>
+                  <div className="absolute inset-0 pointer-events-none border-[50px] border-black/50"></div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 border-2 border-white/20 rounded-2xl">
+                    <div className="absolute -top-1 -left-1 w-7 h-7 border-t-4 border-l-4 border-blue-400 rounded-tl-xl"></div>
+                    <div className="absolute -top-1 -right-1 w-7 h-7 border-t-4 border-r-4 border-blue-400 rounded-tr-xl"></div>
+                    <div className="absolute -bottom-1 -left-1 w-7 h-7 border-b-4 border-l-4 border-blue-400 rounded-bl-xl"></div>
+                    <div className="absolute -bottom-1 -right-1 w-7 h-7 border-b-4 border-r-4 border-blue-400 rounded-br-xl"></div>
+                    <div className="absolute left-0 right-0 h-0.5 bg-blue-400/70 animate-scan-line"></div>
                   </div>
+                </>
+              )}
+
+              {/* Success overlay */}
+              {showSuccess && scanResult && (
+                <div className="checkin-success-overlay animate-fadeIn bg-green-600">
+                  <div className="checkin-success-icon"><CheckCircle2 size={64} /></div>
+                  <h2 className="checkin-success-title">ACCESS GRANTED</h2>
+                  <p className="checkin-success-sub">{scanResult.fullName} &bull; {scanResult.ticketCode}</p>
+                  <p className="checkin-success-time">{new Date().toLocaleTimeString()}</p>
                 </div>
+              )}
 
-                <h2 className="text-2xl font-black text-center mb-2 uppercase tracking-tight">
-                  Manual Entry
-                </h2>
-                <p className="text-slate-400 text-sm text-center mb-10">
-                  Use this if the QR code is damaged or unreadable.
-                </p>
-
-                <form onSubmit={onSubmit} className="flex flex-col gap-6 w-full max-w-sm mx-auto">
-                  <div className="relative">
-                    <input
-                      autoFocus
-                      className="scanner-input text-center text-3xl tracking-[0.3em] font-black uppercase w-full py-6"
-                      placeholder="XXXXX"
-                      maxLength={10}
-                      value={ticketCode}
-                      onChange={(e) => setTicketCode(e.target.value.toUpperCase())}
-                    />
-                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-slate-900 px-3 py-1 rounded-full border border-white/10 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                      Ticket Code
+              {/* Scan result info chip */}
+              {scanResult && !showSuccess && (
+                <div className="absolute bottom-[80px] left-4 right-4 bg-white/95 backdrop-blur-md p-3 rounded-xl shadow-2xl z-20 flex justify-between items-center animate-fadeIn border border-slate-200/50">
+                  <div className="flex gap-3 items-center min-w-0">
+                    <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                      <CheckCircle2 size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-black text-slate-900 truncate text-sm">{scanResult.fullName}</div>
+                      <div className="text-xs text-slate-500 truncate">{scanResult.seatLabels} &bull; <span className="font-mono text-blue-600">{scanResult.ticketCode}</span></div>
                     </div>
                   </div>
+                  <button
+                    onClick={handleConfirmCheckin}
+                    disabled={isSubmitting}
+                    className="manual-approve-btn ml-3"
+                    style={{padding: '8px 20px', fontSize: '0.8rem'}}
+                  >
+                    Approve
+                  </button>
+                </div>
+              )}
 
-                  <div className="flex flex-col gap-3 mt-4">
-                    <button
-                      type="submit"
+              {/* Bottom bar: manual entry toggle */}
+              <div className="scanner-controls-bottom" style={{gap: 0, padding: 0}}>
+                {mode === 'manual' ? (
+                  // Manual input expanded
+                  <form onSubmit={onSubmit} className="flex gap-2 w-full">
+                    <input
+                      ref={inputRef}
+                      autoFocus
+                      placeholder="Enter ticket code..."
+                      className="console-input-manual"
+                      style={{flex:1}}
+                      value={ticketCode}
+                      onChange={(e) => setTicketCode(e.target.value.toUpperCase())}
                       disabled={isSubmitting}
-                      className="scanner-submit-btn py-5"
-                    >
-                      <CheckCircle2 size={20} />
-                      <span>{isSubmitting ? 'Validating...' : 'Confirm Check-in'}</span>
+                    />
+                    <button type="submit" disabled={isSubmitting} className="console-confirm-btn" style={{padding: '0 20px'}}>
+                      {isSubmitting ? '...' : 'OK'}
                     </button>
-
                     <button
                       type="button"
                       onClick={() => setMode('scan')}
-                      className="py-4 text-slate-500 hover:text-white font-bold text-sm uppercase tracking-widest transition-colors"
+                      className="console-confirm-btn"
+                      style={{background: '#334155', padding: '0 16px'}}
                     >
-                      Return to Scanner
+                      ✕
                     </button>
-                  </div>
-                </form>
+                  </form>
+                ) : (
+                  // Collapsed — show "Enter Code" button
+                  <button
+                    onClick={() => setMode('manual')}
+                    className="camera-toggle-btn"
+                    style={{margin: '0 auto', borderStyle: 'solid', background: 'rgba(15,23,42,0.7)', color: '#fff', borderColor: 'rgba(255,255,255,0.15)'}}
+                  >
+                    <Keyboard size={14} />
+                    <span>Enter Code Manually</span>
+                  </button>
+                )}
               </div>
-            )}
-          </div>
-
-          {/* Right: result panel */}
-          <aside className="scan-result-aside">
-            {scanResult ? (
-              <div className="result-card-premium">
-                <div className="result-header success">
-                  <CheckCircle2 size={48} />
-                  <h2 className="text-xl font-black uppercase italic">Access Granted</h2>
-                </div>
-                <div className="result-body">
-                  <div className="result-info-grid">
-                    <div className="result-info-item">
-                      <span className="result-info-label">Ticket Reference</span>
-                      <span className="result-info-value font-mono">#{scanResult.ticketId}</span>
-                    </div>
-                    <div className="result-info-item">
-                      <span className="result-info-label">Validated At</span>
-                      <span className="result-info-value">{new Date().toLocaleString()}</span>
-                    </div>
-                    <div className="result-info-item">
-                      <span className="result-info-label">Status</span>
-                      <div className="flex items-center gap-2 text-green-600 font-bold">
-                        <CheckCircle2 size={16} />
-                        <span>Successfully Checked-in</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-slate-800/50 border border-white/5 rounded-[32px] p-8 text-center flex flex-col items-center gap-4 justify-center h-full min-h-[400px]">
-                <div className="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center mb-2">
-                  <Scan size={32} className="text-slate-400" />
-                </div>
-                <h3 className="text-xl font-bold text-white">Awaiting Scan</h3>
-                <p className="text-slate-400 text-sm max-w-[240px]">
-                  Point the camera at a QR code or enter the ticket code manually.
-                </p>
-              </div>
-            )}
-
-            <div className="bg-blue-900/20 border border-blue-500/20 rounded-[32px] p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">
-                  <AlertCircle size={20} />
-                </div>
-                <h4 className="font-bold text-blue-100">Security Notice</h4>
-              </div>
-              <p className="text-blue-200/60 text-xs leading-relaxed">
-                Tokens are cryptographically signed. Any tampering will result in immediate validation failure.
-                Report suspicious activity to the venue manager.
-              </p>
             </div>
-          </aside>
+          </div>
+        </div>
+
+        {/* Entry History */}
+        <div className="console-card history-card-console">
+          <div className="history-header">
+            <h2>Recent Entry History</h2>
+            <Link to="#" className="view-all-console">View All</Link>
+          </div>
+          
+          <table className="console-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Ticket Class</th>
+                <th>Customer</th>
+                <th>Ticket Code</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.length > 0 ? history.map((item, i) => (
+                <tr key={i}>
+                  <td className="history-time">{item.time}</td>
+                  <td>
+                    <span className={`ticket-class-badge ${item.class.includes('VIP') ? 'vip' : ''}`}>
+                      {item.class}
+                    </span>
+                  </td>
+                  <td className="history-customer">{item.customer}</td>
+                  <td className="font-mono text-slate-500">{item.ticketCode}</td>
+                  <td>
+                    <span className={`history-status ${item.status === 'ENTERED' || item.status === 'VALID' ? 'success' : 'error'}`}>
+                      {item.status === 'ENTERED' || item.status === 'VALID' ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+                      {item.status}
+                    </span>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan="5" className="text-center py-8 text-slate-400 font-medium italic">
+                    No recent scans in this session.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
+      
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes scan-line {
+          0% { top: 0; }
+          100% { top: 100%; }
+        }
+        .animate-scan-line {
+          position: absolute;
+          animation: scan-line 2s linear infinite;
+        }
+      ` }} />
     </div>
   )
 }
