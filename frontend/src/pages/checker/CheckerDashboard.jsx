@@ -34,7 +34,14 @@ export default function CheckerDashboard() {
       try {
         const response = await matchService.getAll({ limit: 30 })
         const payload = unwrapData(response)
-        const list = payload?.data ?? payload ?? []
+        const allMatches = payload?.data ?? payload ?? []
+        // Only show upcoming or ongoing matches (match_date within last 4 hours or future)
+        const now = new Date()
+        const list = allMatches.filter(m => {
+          if (!m.match_date) return true
+          const matchEnd = new Date(new Date(m.match_date).getTime() + 4 * 60 * 60 * 1000)
+          return matchEnd > now
+        })
         setMatches(list)
         // Only set default if nothing was previously saved
         const saved = localStorage.getItem('checker_selected_match_id')
@@ -129,44 +136,7 @@ export default function CheckerDashboard() {
       <main className="container">
         <div className="dashboard-grid">
           <div className="stats-main">
-            <div className="premium-stats-grid">
-              <div className="stat-card-premium total">
-                <div className="stat-icon-bg"><Users size={24} /></div>
-                <div className="stat-info">
-                  <span className="stat-label">Total Tickets</span>
-                  <h2 className="stat-value">{stats.total_tickets.toLocaleString()}</h2>
-                </div>
-              </div>
-              
-              <div className="stat-card-premium checked">
-                <div className="stat-icon-bg"><CheckCircle2 size={24} /></div>
-                <div className="stat-info">
-                  <span className="stat-label">Checked-in</span>
-                  <h2 className="stat-value">{stats.checked_in_tickets.toLocaleString()}</h2>
-                </div>
-              </div>
-
-              <div className="stat-card-premium remaining">
-                <div className="stat-icon-bg"><XCircle size={24} /></div>
-                <div className="stat-info">
-                  <span className="stat-label">Remaining</span>
-                  <h2 className="stat-value">{stats.not_checked_in_tickets.toLocaleString()}</h2>
-                </div>
-              </div>
-
-              <div className="stat-card-premium ratio">
-                <div className="stat-icon-bg"><BarChart3 size={24} /></div>
-                <div className="stat-info">
-                  <span className="stat-label">Attendance Rate</span>
-                  <h2 className="stat-value">{checkinRatio}%</h2>
-                </div>
-                <div className="progress-container">
-                  <div className="progress-bar" style={{ width: `${checkinRatio}%` }}></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="checker-actions-grid">
+            <div className="checker-actions-grid" style={{ marginBottom: '32px' }}>
               <Link to="/checker/scan" className="action-card scan full-width">
                 <div className="action-icon"><QrCode size={32} /></div>
                 <div className="action-text">
@@ -175,6 +145,43 @@ export default function CheckerDashboard() {
                 </div>
                 <ChevronRight className="action-arrow" />
               </Link>
+            </div>
+
+            <div className="stats-grid">
+              <div className="stat-card" style={{ color: '#4f46e5' }}>
+                <div className="stat-icon-wrap" style={{ background: '#e0e7ff', color: '#4f46e5' }}>
+                  <Users size={24} />
+                </div>
+                <span className="stat-label">Total Tickets</span>
+                <h2 className="stat-value" style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: '#0f172a' }}>{stats.total_tickets.toLocaleString()}</h2>
+              </div>
+              
+              <div className="stat-card" style={{ color: '#10b981' }}>
+                <div className="stat-icon-wrap" style={{ background: '#dcfce7', color: '#166534' }}>
+                  <CheckCircle2 size={24} />
+                </div>
+                <span className="stat-label">Checked-in</span>
+                <h2 className="stat-value" style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: '#0f172a' }}>{stats.checked_in_tickets.toLocaleString()}</h2>
+              </div>
+
+              <div className="stat-card" style={{ color: '#ef4444' }}>
+                <div className="stat-icon-wrap" style={{ background: '#fee2e2', color: '#991b1b' }}>
+                  <XCircle size={24} />
+                </div>
+                <span className="stat-label">Remaining</span>
+                <h2 className="stat-value" style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: '#0f172a' }}>{stats.not_checked_in_tickets.toLocaleString()}</h2>
+              </div>
+
+              <div className="stat-card" style={{ color: '#8b5cf6' }}>
+                <div className="stat-icon-wrap" style={{ background: '#f3e8ff', color: '#5b21b6' }}>
+                  <BarChart3 size={24} />
+                </div>
+                <span className="stat-label">Attendance Rate</span>
+                <h2 className="stat-value" style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: '#0f172a' }}>{checkinRatio}%</h2>
+                <div className="progress-container" style={{ marginTop: 'auto' }}>
+                  <div className="progress-bar" style={{ width: `${checkinRatio}%`, background: '#8b5cf6' }}></div>
+                </div>
+              </div>
             </div>
 
             <div className="stand-analytics-section">

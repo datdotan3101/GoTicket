@@ -9,7 +9,7 @@ const DUMMY_IMAGES = [
   'https://images.unsplash.com/photo-1508344928928-7137b29de218?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
 ]
 
-export default function MatchCard({ match }) {
+export default function MatchCard({ match, showHotBadge = false }) {
   const soldCount = Number(match.sold_count || 0)
   const totalSeats = Number(match.total_seats || 0)
   const isHot = isMatchHot(soldCount, totalSeats)
@@ -19,7 +19,31 @@ export default function MatchCard({ match }) {
 
   return (
     <Link to={`/audience/matches/${match.id}/seats`} className="match-card-link">
-      <article className="match-card" style={{ border: '1px solid #cbd5e1' }}>
+      <article className="match-card" style={{ border: '1px solid #cbd5e1', position: 'relative' }}>
+        {/* HOT badge in top-right */}
+        {showHotBadge && (
+          <div style={{
+            position: 'absolute',
+            top: '12px',
+            right: '12px',
+            background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+            color: '#fff',
+            fontSize: '0.65rem',
+            fontWeight: 900,
+            padding: '4px 12px',
+            borderRadius: '8px',
+            zIndex: 10,
+            letterSpacing: '1.5px',
+            textTransform: 'uppercase',
+            boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}>
+            🔥 HOT
+          </div>
+        )}
+
         <div className="mc-image" style={{ backgroundImage: `url(${imgUrl})` }}>
           {isHot && <div className="mc-badge">SELLING FAST</div>}
         </div>
@@ -52,3 +76,4 @@ export default function MatchCard({ match }) {
     </Link>
   )
 }
+

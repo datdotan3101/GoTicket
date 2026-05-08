@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import MatchCard from '../../components/ui/MatchCard'
 import { matchService } from '../../services/matchService'
 import { unwrapData } from '../../utils/apiData'
@@ -10,7 +10,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchMatches = async () => {
       try {
-        const response = await matchService.getAll({ limit: 3, status: 'published' }) // Featured limit
+        const response = await matchService.getAll({ limit: 20, status: 'published' })
         const payload = unwrapData(response)
         let items = []
         if (Array.isArray(payload)) items = payload
@@ -25,6 +25,30 @@ export default function HomePage() {
 
     fetchMatches()
   }, [])
+
+  // Split matches into categories
+  const { newMatches, onSaleMatches } = useMemo(() => {
+    const now = new Date()
+    const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
+
+    // New/Hot: created recently (last 3 days) or sorted by newest first
+    const sorted = [...matches].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+    const hot = sorted.slice(0, 3)
+
+    // On Sale: ticket_sale_open_at is in the past and match_date is in the future
+    const onSale = matches.filter(m => {
+      if (!m.match_date) return false
+      const matchDate = new Date(m.match_date)
+      if (matchDate <= now) return false // match already happened
+      if (m.ticket_sale_open_at) {
+        const saleOpen = new Date(m.ticket_sale_open_at)
+        return saleOpen <= now
+      }
+      return true // if no ticket_sale_open_at, assume on sale
+    })
+
+    return { newMatches: hot, onSaleMatches: onSale.slice(0, 6) }
+  }, [matches])
 
   return (
     <div className="home-wrapper">
@@ -69,8 +93,35 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* On Sale Now — top priority */}
+      {!isLoading && onSaleMatches.length > 0 && (
+        <section className="featured-section">
+          <div className="container">
+            <div className="section-head" style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <h2 className="section-title" style={{ margin: 0 }}>🎟️ ON SALE NOW</h2>
+                <span style={{
+                  background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                  color: '#fff',
+                  fontSize: '0.65rem',
+                  fontWeight: 800,
+                  padding: '4px 12px',
+                  borderRadius: '99px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px'
+                }}>Open</span>
+              </div>
+            </div>
+            
+            <div className="match-cards-grid">
+              {onSaleMatches.map((match) => <MatchCard key={`sale-${match.id}`} match={match} showHotBadge />)}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Featured Matchups */}
-      <section className="featured-section">
+      <section className="featured-section" style={onSaleMatches.length > 0 ? { paddingTop: 0 } : {}}>
         <div className="container">
           <h2 className="section-title mb-6">FEATURED MATCHUPS</h2>
           
@@ -78,10 +129,10 @@ export default function HomePage() {
              <p className="loading-state">Loading matchups...</p>
           ) : (
             <div className="match-cards-grid">
-              {Array.isArray(matches) && matches.map((match) => <MatchCard key={match.id} match={match} />)}
+              {newMatches.map((match) => <MatchCard key={match.id} match={match} />)}
             </div>
           )}
-          {!isLoading && matches.length === 0 && <p className="empty-state-text">No published matches yet.</p>}
+          {!isLoading && newMatches.length === 0 && <p className="empty-state-text">No published matches yet.</p>}
         </div>
       </section>
 
