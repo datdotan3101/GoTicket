@@ -1,6 +1,6 @@
 import api from './api'
 
 export const aiService = {
-  chat: (message) => api.post('/ai/chat', { message }),
+  chat: (messages) => api.post('/ai/chat', { messages }),
   getRecommendations: () => api.get('/ai/recommendations'),
 }

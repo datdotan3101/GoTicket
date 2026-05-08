@@ -12,7 +12,7 @@ export const chat = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: "messages là bắt buộc và phải là array." });
   }
   const data = await aiService.chat(req.user.id, messages);
-  return sendSuccess(res, data);
+  return sendSuccess(res, { reply: data.message, usage: data.usage });
 });
 
 /**

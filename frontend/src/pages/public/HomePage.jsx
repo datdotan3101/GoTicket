@@ -27,13 +27,15 @@ export default function HomePage() {
   }, [])
 
   // Split matches into categories
-  const { newMatches, onSaleMatches } = useMemo(() => {
+  const { newMatches, onSaleMatches, endedMatches } = useMemo(() => {
     const now = new Date()
-    const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
 
     // New/Hot: created recently (last 3 days) or sorted by newest first
     const sorted = [...matches].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
-    const hot = sorted.slice(0, 3)
+    const hot = sorted.filter(m => {
+      if (!m.match_date) return false
+      return new Date(m.match_date) > now
+    }).slice(0, 3)
 
     // On Sale: ticket_sale_open_at is in the past and match_date is in the future
     const onSale = matches.filter(m => {
@@ -47,7 +49,15 @@ export default function HomePage() {
       return true // if no ticket_sale_open_at, assume on sale
     })
 
-    return { newMatches: hot, onSaleMatches: onSale.slice(0, 6) }
+    // Ended: match_date is in the past
+    const ended = matches
+      .filter(m => {
+        if (!m.match_date) return false
+        return new Date(m.match_date) <= now
+      })
+      .sort((a, b) => new Date(b.match_date) - new Date(a.match_date)) // newest ended first
+
+    return { newMatches: hot, onSaleMatches: onSale.slice(0, 6), endedMatches: ended.slice(0, 6) }
   }, [matches])
 
   return (
@@ -99,7 +109,7 @@ export default function HomePage() {
           <div className="container">
             <div className="section-head" style={{ marginBottom: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <h2 className="section-title" style={{ margin: 0 }}>🎟️ ON SALE NOW</h2>
+                <h2 className="section-title" style={{ margin: 0 }}>ON SALE NOW</h2>
                 <span style={{
                   background: 'linear-gradient(135deg, #22c55e, #16a34a)',
                   color: '#fff',
@@ -120,21 +130,22 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Featured Matchups */}
-      <section className="featured-section" style={onSaleMatches.length > 0 ? { paddingTop: 0 } : {}}>
-        <div className="container">
-          <h2 className="section-title mb-6">FEATURED MATCHUPS</h2>
-          
-          {isLoading ? (
-             <p className="loading-state">Loading matchups...</p>
-          ) : (
-            <div className="match-cards-grid">
-              {newMatches.map((match) => <MatchCard key={match.id} match={match} />)}
+
+
+      {/* Ended Matches */}
+      {!isLoading && endedMatches.length > 0 && (
+        <section className="featured-section" style={{ paddingTop: 0 }}>
+          <div className="container">
+            <div className="section-head" style={{ marginBottom: '24px' }}>
+                <h2 className="section-title" style={{ margin: 0 }}>ENDED MATCHES</h2>
             </div>
-          )}
-          {!isLoading && newMatches.length === 0 && <p className="empty-state-text">No published matches yet.</p>}
-        </div>
-      </section>
+            
+            <div className="match-cards-grid">
+              {endedMatches.map((match) => <MatchCard key={`ended-${match.id}`} match={match} />)}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Trust Gateway Section */}
       <section className="trust-section container">

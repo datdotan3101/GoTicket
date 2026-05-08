@@ -13,6 +13,7 @@ export default function MatchCard({ match, showHotBadge = false }) {
   const soldCount = Number(match.sold_count || 0)
   const totalSeats = Number(match.total_seats || 0)
   const isHot = isMatchHot(soldCount, totalSeats)
+  const isEnded = match.match_date ? new Date(match.match_date) < new Date() : false
 
   const matchId = parseInt(match.id, 10) || 0
   const imgUrl = match.thumbnail_url || DUMMY_IMAGES[matchId % DUMMY_IMAGES.length]
@@ -20,8 +21,27 @@ export default function MatchCard({ match, showHotBadge = false }) {
   return (
     <Link to={`/audience/matches/${match.id}/seats`} className="match-card-link">
       <article className="match-card" style={{ border: '1px solid #cbd5e1', position: 'relative' }}>
+        {/* Kết thúc badge */}
+        {isEnded && (
+          <div style={{
+            position: 'absolute',
+            top: '12px',
+            right: '12px',
+            background: '#64748b',
+            color: '#fff',
+            fontSize: '0.65rem',
+            fontWeight: 800,
+            padding: '4px 12px',
+            borderRadius: '8px',
+            zIndex: 10,
+            letterSpacing: '0.5px',
+          }}>
+            ENDED
+          </div>
+        )}
+
         {/* HOT badge in top-right */}
-        {showHotBadge && (
+        {!isEnded && showHotBadge && (
           <div style={{
             position: 'absolute',
             top: '12px',

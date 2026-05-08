@@ -3,33 +3,33 @@ import toast from 'react-hot-toast'
 
 const MAP_BLOCKS = [
   // A Stands (Top) - T2
-  { id: 'A5-T2', stand: 'A', tier: 'Level 2', color: '#496db7', d: 'M 190 70 h 90 v 15 h -15 v 15 h -75 Z', labelX: 240, labelY: 55, pattern: 'stripe-h' },
-  { id: 'A3-T2', stand: 'A', tier: 'Level 2', color: '#e5e834', d: 'M 290 70 h 75 v 30 h -85 v -15 h 10 Z', labelX: 325, labelY: 55, pattern: 'stripe-h' },
-  { id: 'A1-T2', stand: 'A', tier: 'Level 2', color: '#e33434', d: 'M 375 70 h 80 v 30 h -80 Z', labelX: 415, labelY: 55, pattern: 'stripe-h' },
-  { id: 'A2-T2', stand: 'A', tier: 'Level 2', color: '#e5e834', d: 'M 465 70 h 75 v 15 h 10 v 15 h -85 Z', labelX: 505, labelY: 55, pattern: 'stripe-h' },
-  { id: 'A4-T2', stand: 'A', tier: 'Level 2', color: '#496db7', d: 'M 560 70 h 90 v 30 h -75 v -15 h -15 Z', labelX: 610, labelY: 55, pattern: 'stripe-h' },
+  { id: 'A5-T2', stand: 'A', tier: 'Floor 2', color: '#496db7', d: 'M 190 70 h 90 v 15 h -15 v 15 h -75 Z', labelX: 240, labelY: 55, pattern: 'stripe-h' },
+  { id: 'A3-T2', stand: 'A', tier: 'Floor 2', color: '#e5e834', d: 'M 290 70 h 75 v 30 h -85 v -15 h 10 Z', labelX: 325, labelY: 55, pattern: 'stripe-h' },
+  { id: 'A1-T2', stand: 'A', tier: 'Floor 2', color: '#e33434', d: 'M 375 70 h 80 v 30 h -80 Z', labelX: 415, labelY: 55, pattern: 'stripe-h' },
+  { id: 'A2-T2', stand: 'A', tier: 'Floor 2', color: '#e5e834', d: 'M 465 70 h 75 v 15 h 10 v 15 h -85 Z', labelX: 505, labelY: 55, pattern: 'stripe-h' },
+  { id: 'A4-T2', stand: 'A', tier: 'Floor 2', color: '#496db7', d: 'M 560 70 h 90 v 30 h -75 v -15 h -15 Z', labelX: 610, labelY: 55, pattern: 'stripe-h' },
 
   // A Stands (Top) - T1
-  { id: 'A5-T1', stand: 'A', tier: 'Level 1', color: '#496db7', d: 'M 220 110 h 85 v 15 h -15 v 15 h -70 Z', labelX: 250, labelY: 155, pattern: 'stripe-h' },
-  { id: 'A3-T1', stand: 'A', tier: 'Level 1', color: '#e5e834', d: 'M 315 110 h 65 v 30 h -75 v -15 h 10 Z', labelX: 345, labelY: 155, pattern: 'stripe-h' },
-  { id: 'A1-T1', stand: 'A', tier: 'Level 1', color: '#e33434', d: 'M 390 110 h 50 v 30 h -50 Z', labelX: 415, labelY: 155, pattern: 'stripe-h' },
-  { id: 'A2-T1', stand: 'A', tier: 'Level 1', color: '#e5e834', d: 'M 450 110 h 65 v 15 h 10 v 15 h -75 Z', labelX: 485, labelY: 155, pattern: 'stripe-h' },
-  { id: 'A4-T1', stand: 'A', tier: 'Level 1', color: '#496db7', d: 'M 535 110 h 85 v 30 h -70 v -15 h -15 Z', labelX: 580, labelY: 155, pattern: 'stripe-h' },
+  { id: 'A5-T1', stand: 'A', tier: 'Floor 1', color: '#496db7', d: 'M 220 110 h 85 v 15 h -15 v 15 h -70 Z', labelX: 250, labelY: 155, pattern: 'stripe-h' },
+  { id: 'A3-T1', stand: 'A', tier: 'Floor 1', color: '#e5e834', d: 'M 315 110 h 65 v 30 h -75 v -15 h 10 Z', labelX: 345, labelY: 155, pattern: 'stripe-h' },
+  { id: 'A1-T1', stand: 'A', tier: 'Floor 1', color: '#e33434', d: 'M 390 110 h 50 v 30 h -50 Z', labelX: 415, labelY: 155, pattern: 'stripe-h' },
+  { id: 'A2-T1', stand: 'A', tier: 'Floor 1', color: '#e5e834', d: 'M 450 110 h 65 v 15 h 10 v 15 h -75 Z', labelX: 485, labelY: 155, pattern: 'stripe-h' },
+  { id: 'A4-T1', stand: 'A', tier: 'Floor 1', color: '#496db7', d: 'M 535 110 h 85 v 30 h -70 v -15 h -15 Z', labelX: 580, labelY: 155, pattern: 'stripe-h' },
 
   // D Stand (Left)
-  { id: 'D-T1', stand: 'D', tier: 'Level 1', color: '#2ec36a', d: 'M 160 160 h -25 l -25 35 v 50 h 25 v -40 l 25 -25 Z M 110 255 h 25 v 45 h -25 Z M 110 310 h 25 v 45 h -25 Z', labelX: 85, labelY: 295, pattern: 'stripe-v', labelName: 'D' },
+  { id: 'D-T1', stand: 'D', tier: 'Floor 1', color: '#2ec36a', d: 'M 160 160 h -25 l -25 35 v 50 h 25 v -40 l 25 -25 Z M 110 255 h 25 v 45 h -25 Z M 110 310 h 25 v 45 h -25 Z', labelX: 85, labelY: 295, pattern: 'stripe-v', labelName: 'D' },
 
   // C Stand (Right)
-  { id: 'C-T1', stand: 'C', tier: 'Level 1', color: '#bdc3c7', d: 'M 640 160 h 25 l 25 35 v 50 h -25 v -40 l -25 -25 Z M 665 255 h 25 v 45 h -25 Z M 665 310 h 25 v 45 h -25 Z', labelX: 715, labelY: 295, pattern: 'stripe-v', labelName: 'C' },
+  { id: 'C-T1', stand: 'C', tier: 'Floor 1', color: '#bdc3c7', d: 'M 640 160 h 25 l 25 35 v 50 h -25 v -40 l -25 -25 Z M 665 255 h 25 v 45 h -25 Z M 665 310 h 25 v 45 h -25 Z', labelX: 715, labelY: 295, pattern: 'stripe-v', labelName: 'C' },
 
   // B Stands (Bottom)
-  { id: 'B15-T1', stand: 'B', tier: 'Level 1', color: '#8b5ca0', d: 'M 225 455 L 140 370 L 115 395 L 200 480 Z', labelX: 100, labelY: 410, pattern: 'stripe-d-right' },
-  { id: 'B14-T1', stand: 'B', tier: 'Level 1', color: '#4a8cd0', d: 'M 230 460 h 20 v 10 h 30 v -10 h 20 v 50 h -70 Z', labelX: 265, labelY: 445, pattern: 'stripe-h' },
-  { id: 'B13-T1', stand: 'B', tier: 'Level 1', color: '#b9ce58', d: 'M 305 460 h 15 v 10 h 20 v -10 h 15 v 50 h -50 Z', labelX: 330, labelY: 445, pattern: 'stripe-h' },
-  { id: 'B12-T1', stand: 'B', tier: 'Level 1', color: '#c55685', d: 'M 360 460 h 80 v 50 h -80 Z', labelX: 400, labelY: 530, pattern: 'stripe-h' },
-  { id: 'B10-T1', stand: 'B', tier: 'Level 1', color: '#5ec788', d: 'M 445 460 h 15 v 10 h 20 v -10 h 15 v 50 h -50 Z', labelX: 470, labelY: 445, pattern: 'stripe-h' },
-  { id: 'B9-T1', stand: 'B', tier: 'Level 1', color: '#4a8cd0', d: 'M 500 460 h 20 v 10 h 30 v -10 h 20 v 50 h -70 Z', labelX: 535, labelY: 445, pattern: 'stripe-h' },
-  { id: 'B8-T1', stand: 'B', tier: 'Level 1', color: '#8b5ca0', d: 'M 575 455 L 660 370 L 685 395 L 600 480 Z', labelX: 700, labelY: 410, pattern: 'stripe-d-left' },
+  { id: 'B15-T1', stand: 'B', tier: 'Floor 1', color: '#8b5ca0', d: 'M 225 455 L 140 370 L 115 395 L 200 480 Z', labelX: 100, labelY: 410, pattern: 'stripe-d-right' },
+  { id: 'B14-T1', stand: 'B', tier: 'Floor 1', color: '#4a8cd0', d: 'M 230 460 h 20 v 10 h 30 v -10 h 20 v 50 h -70 Z', labelX: 265, labelY: 445, pattern: 'stripe-h' },
+  { id: 'B13-T1', stand: 'B', tier: 'Floor 1', color: '#b9ce58', d: 'M 305 460 h 15 v 10 h 20 v -10 h 15 v 50 h -50 Z', labelX: 330, labelY: 445, pattern: 'stripe-h' },
+  { id: 'B12-T1', stand: 'B', tier: 'Floor 1', color: '#c55685', d: 'M 360 460 h 80 v 50 h -80 Z', labelX: 400, labelY: 530, pattern: 'stripe-h' },
+  { id: 'B10-T1', stand: 'B', tier: 'Floor 1', color: '#5ec788', d: 'M 445 460 h 15 v 10 h 20 v -10 h 15 v 50 h -50 Z', labelX: 470, labelY: 445, pattern: 'stripe-h' },
+  { id: 'B9-T1', stand: 'B', tier: 'Floor 1', color: '#4a8cd0', d: 'M 500 460 h 20 v 10 h 30 v -10 h 20 v 50 h -70 Z', labelX: 535, labelY: 445, pattern: 'stripe-h' },
+  { id: 'B8-T1', stand: 'B', tier: 'Floor 1', color: '#8b5ca0', d: 'M 575 455 L 660 370 L 685 395 L 600 480 Z', labelX: 700, labelY: 410, pattern: 'stripe-d-left' },
 ]
 
 export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelectBlock, blockConfigs = {} }) {
@@ -99,7 +99,19 @@ export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelec
           const isActive = standData.total_seats > 0
           const soldOut = isActive && standData.available_seats === 0
           
-          const fill = selected ? '#4f46e5' : (!isActive || soldOut) ? '#cbd5e1' : block.color
+          // Active + available → original color, Sold out → muted red, Inactive → grey
+          const fill = selected 
+            ? '#4f46e5' 
+            : soldOut 
+              ? '#9b1c1c' 
+              : !isActive 
+                ? '#cbd5e1' 
+                : block.color
+
+          // Compute center of block path for SOLD OUT label
+          const pathParts = block.d.split('M ').filter(Boolean)
+          let cx = block.labelX
+          let cy = block.labelY + 15
 
           return (
             <g
@@ -128,12 +140,12 @@ export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelec
               <path 
                 d={block.d} 
                 fill={fill} 
-                opacity={(!isActive || soldOut) ? 0.5 : 0.9} 
+                opacity={soldOut ? 0.6 : !isActive ? 0.4 : 0.9} 
               />
               <path 
                 d={block.d} 
                 fill={`url(#${block.pattern})`} 
-                opacity={(!isActive || soldOut) ? 0.2 : 0.8} 
+                opacity={soldOut ? 0.15 : !isActive ? 0.2 : 0.8} 
                 pointerEvents="none" 
               />
               {selected && (
@@ -149,11 +161,23 @@ export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelec
                 x={block.labelX} 
                 y={block.labelY} 
                 textAnchor="middle" 
-                fill="#000" 
-                style={{ fontSize: '12px', fontWeight: 900, pointerEvents: 'none', opacity: soldOut ? 0.4 : 1 }}
+                fill={soldOut ? '#fff' : '#000'} 
+                style={{ fontSize: '12px', fontWeight: 900, pointerEvents: 'none', opacity: soldOut ? 0.7 : !isActive ? 0.4 : 1 }}
               >
                 {block.labelName || block.id}
               </text>
+              {/* SOLD OUT overlay text for sold-out blocks */}
+              {soldOut && (
+                <text
+                  x={cx}
+                  y={cy}
+                  textAnchor="middle"
+                  fill="#fff"
+                  style={{ fontSize: '8px', fontWeight: 900, pointerEvents: 'none', letterSpacing: '1px', opacity: 0.9 }}
+                >
+                  SOLD OUT
+                </text>
+              )}
             </g>
           )
         })}

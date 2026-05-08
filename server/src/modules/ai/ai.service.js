@@ -16,7 +16,9 @@ Nhiệm vụ của bạn:
 4. Khi user muốn đặt vé, trả về URL dạng: /checkout?match=ID&stand=A&qty=2
 
 Quy tắc:
-- Trả lời tiếng Việt, thân thiện, ngắn gọn (tối đa 3 đoạn).
+- Trả lời tiếng Việt, thân thiện, ngắn gọn.
+- Khi liệt kê lịch thi đấu, hãy dùng danh sách đánh số dạng: "1. Trận [Đội A] với [Đội B], ngày [thời gian], tại sân [Tên sân]."
+- Tuyệt đối KHÔNG hiển thị mã ID của trận đấu ra ngoài cho người dùng thấy. Mã ID chỉ dùng để tạo URL đặt vé.
 - Không tự chế thông tin về trận đấu nếu không có dữ liệu.
 - Nếu không biết, hãy nói thẳng và gợi ý user xem trang chính.`;
 
@@ -36,13 +38,22 @@ const getActiveMatchesContext = async () => {
      ORDER BY m.match_date ASC
      LIMIT 10`
   );
-  if (result.rows.length === 0) return "";
+  if (result.rows.length === 0) return { aiContext: "", userText: "" };
 
-  const lines = result.rows.map(
+  const aiLines = result.rows.map(
     (m) =>
       `- [ID:${m.id}] ${m.home_team} vs ${m.away_team} | ${new Date(m.match_date).toLocaleString("vi-VN")} | Sân: ${m.stadium_name || "N/A"} | Giải: ${m.league_name || "N/A"}`
   );
-  return `\nCác trận đấu sắp diễn ra:\n${lines.join("\n")}`;
+  
+  const userLines = result.rows.map(
+    (m, idx) =>
+      `${idx + 1}. Trận ${m.home_team} với ${m.away_team}, lúc ${new Date(m.match_date).toLocaleString("vi-VN")}, tại sân ${m.stadium_name || "N/A"}.`
+  );
+
+  return {
+    aiContext: `\nCác trận đấu sắp diễn ra:\n${aiLines.join("\n")}`,
+    userText: `${userLines.join("\n")}`
+  };
 };
 
 export const aiService = {
@@ -53,23 +64,41 @@ export const aiService = {
    */
   async chat(userId, messages) {
     const groq = getGroq();
-    if (!groq) {
-      throw Object.assign(new Error("AI service chưa được cấu hình. Vui lòng liên hệ admin."), {
-        statusCode: 503
-      });
-    }
 
     // Lấy context trận đấu hiện tại (không fail nếu DB lỗi)
-    let matchContext = "";
+    let matchContext = { aiContext: "", userText: "" };
     try {
       matchContext = await getActiveMatchesContext();
     } catch {
       // Bỏ qua nếu DB chưa sẵn sàng
     }
 
+    if (!groq) {
+      const lastMsg = messages[messages.length - 1]?.content?.toLowerCase() || "";
+      let reply = "Xin chào! Tôi có thể giúp bạn tìm lịch thi đấu hoặc đặt vé. Vui lòng hỏi tôi về 'lịch thi đấu', 'trận đấu sắp tới' hoặc 'đặt vé' nhé.";
+      
+      if (lastMsg.includes("đặt vé") || lastMsg.includes("mua vé")) {
+         const activeResult = await query("SELECT id FROM matches WHERE status IN ('published', 'upcoming') AND match_date > NOW() ORDER BY match_date ASC LIMIT 1");
+         if (activeResult.rows.length > 0) {
+            reply = `Tuyệt vời, bạn có thể bắt đầu đặt vé ngay! Dẫn đến /checkout?match=${activeResult.rows[0].id}`;
+         } else {
+            reply = "Hiện tại chưa có trận đấu nào đang mở bán. Bạn vui lòng quay lại sau nhé!";
+         }
+      } else if (lastMsg.includes("lịch") || lastMsg.includes("trận đấu") || lastMsg.includes("sắp tới")) {
+         reply = matchContext.userText ? `Dưới đây là lịch thi đấu sắp tới:\n\n${matchContext.userText}\n\nBạn muốn đặt vé trận nào không? (Ví dụ: "đặt vé")` : "Hiện tại chưa có trận đấu nào sắp tới.";
+      } else if (lastMsg.includes("chào") || lastMsg.includes("hi")) {
+         reply = "Chào bạn! Mình là trợ lý GoTicket (Offline mode). Bạn cần tìm trận đấu hay đặt vé hôm nay?";
+      }
+
+      return {
+        message: reply,
+        usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }
+      };
+    }
+
     const systemMessage = {
       role: "system",
-      content: SYSTEM_PROMPT + matchContext
+      content: SYSTEM_PROMPT + matchContext.aiContext
     };
 
     // Giới hạn lịch sử tránh vượt context window
