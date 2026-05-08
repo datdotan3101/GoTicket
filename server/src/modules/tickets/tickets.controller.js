@@ -6,8 +6,9 @@ import { ticketsService } from "./tickets.service.js";
 export const bookTickets = asyncHandler(async (req, res) => {
   const data = await ticketsService.bookTickets({
     matchId: Number(req.body.matchId),
-    standId: Number(req.body.standId),
-    quantity: Number(req.body.quantity),
+    standId: req.body.standId ? Number(req.body.standId) : undefined,
+    quantity: req.body.quantity ? Number(req.body.quantity) : undefined,
+    selections: req.body.selections,
     userId: req.user.id
   });
   return sendSuccess(res, data, HTTP_STATUS.CREATED);

@@ -14,15 +14,15 @@ export default function TicketCard({ ticket }) {
         <p className="text-sm text-gray-600 mb-2">Match: {formatDateTime(ticket.match_date)}</p>
         <div className="flex flex-col gap-1 border-t border-gray-100 pt-3">
           <div className="flex justify-between text-xs">
-            <span className="text-gray-500 uppercase tracking-wider font-bold">Khán đài</span>
+            <span className="text-gray-500 uppercase tracking-wider font-bold">Stand</span>
             <span className="font-black text-gray-900">{ticket.stand_name}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-gray-500 uppercase tracking-wider font-bold">Ghế</span>
+            <span className="text-gray-500 uppercase tracking-wider font-bold">Seats</span>
             <span className="font-bold text-gray-900">{ticket.seat_labels}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-gray-500 uppercase tracking-wider font-bold">Số lượng</span>
+            <span className="text-gray-500 uppercase tracking-wider font-bold">Quantity</span>
             <span className="font-bold text-gray-900">{ticket.quantity}</span>
           </div>
         </div>

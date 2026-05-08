@@ -52,7 +52,7 @@ export default function App() {
     <div className="app-shell flex flex-col min-h-screen relative">
       <Navbar />
       <main className="app-main flex-1 relative">
-        <Suspense fallback={<LoadingSpinner text="Đang tải trang..." />}>
+        <Suspense fallback={<LoadingSpinner text="Loading page..." />}>
           <Routes>
             <Route path={APP_ROUTES.HOME} element={<HomePage />} />
             <Route path={APP_ROUTES.LOGIN} element={<LoginPage />} />

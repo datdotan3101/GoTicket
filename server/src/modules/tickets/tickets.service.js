@@ -24,52 +24,58 @@ const generateTicketCode = () => {
 };
 
 export const ticketsService = {
-  async bookTickets({ matchId, standId, quantity, userId }) {
-    if (!standId || !quantity || quantity <= 0) {
+  async bookTickets({ matchId, selections, standId, quantity, userId }) {
+    const finalSelections = selections || [{ standId, quantity }];
+    
+    if (!finalSelections || finalSelections.length === 0) {
       throw new Error("Thông tin đặt vé không hợp lệ.");
     }
 
     const bookedTickets = await withTransaction(async (tx) => {
       const run = (text, params) => tx.query(text, params);
-      
-      // Tìm các ghế còn trống trong khán đài được chọn
-      const seatResult = await run(
-        `SELECT id, seat_label
-         FROM seats
-         WHERE match_id = $1 AND stand_id = $2 AND status = 'available'
-         ORDER BY id ASC
-         LIMIT $3
-         FOR UPDATE SKIP LOCKED`,
-        [matchId, standId, quantity]
-      );
-
-      const seats = seatResult.rows;
-      if (seats.length < quantity) {
-        throw new Error("Rất tiếc, khán đài này không còn đủ số lượng ghế bạn yêu cầu.");
-      }
-
-      const seatIds = seats.map(s => s.id);
-      const ticketIds = [];
+      const allBooked = [];
       const ticketCode = generateTicketCode();
-      
-      for (const seat of seats) {
-        const ticketResult = await run(
-          `INSERT INTO tickets (user_id, match_id, seat_id, status, ticket_code)
-           VALUES ($1, $2, $3, $4, $5)
-           RETURNING id, user_id, match_id, seat_id, status, ticket_code, created_at`,
-          [userId, matchId, seat.id, TICKET_STATUS.PENDING, ticketCode]
-        );
-        ticketIds.push(ticketResult.rows[0]);
-      }
 
-      await run(
-        `UPDATE seats
-         SET status = 'booked'
-         WHERE id = ANY($1::bigint[])`,
-        [seatIds]
-      );
+      for (const sel of finalSelections) {
+        if (!sel.standId || !sel.quantity || sel.quantity <= 0) continue;
+
+        // Tìm các ghế còn trống trong khán đài được chọn
+        const seatResult = await run(
+          `SELECT id, seat_label
+           FROM seats
+           WHERE match_id = $1 AND stand_id = $2 AND status = 'available'
+           ORDER BY id ASC
+           LIMIT $3
+           FOR UPDATE SKIP LOCKED`,
+          [matchId, sel.standId, sel.quantity]
+        );
+
+        const seats = seatResult.rows;
+        if (seats.length < sel.quantity) {
+          throw new Error(`Rất tiếc, khán đài ID ${sel.standId} không còn đủ số lượng ghế bạn yêu cầu.`);
+        }
+
+        const seatIds = seats.map(s => s.id);
+        
+        for (const seat of seats) {
+          const ticketResult = await run(
+            `INSERT INTO tickets (user_id, match_id, seat_id, status, ticket_code)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING id, user_id, match_id, seat_id, status, ticket_code, created_at`,
+            [userId, matchId, seat.id, TICKET_STATUS.PENDING, ticketCode]
+          );
+          allBooked.push(ticketResult.rows[0]);
+        }
+
+        await run(
+          `UPDATE seats
+           SET status = 'booked'
+           WHERE id = ANY($1::bigint[])`,
+          [seatIds]
+        );
+      }
       
-      return ticketIds;
+      return allBooked;
     });
 
     for (const ticket of bookedTickets) {

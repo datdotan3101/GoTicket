@@ -136,9 +136,9 @@ export const approvalsService = {
       title: isApprove ? config.approvedTitle : config.rejectedTitle,
       body: isApprove
         ? (approval.scheduled_publish_at
-            ? `Yêu cầu đã được duyệt. Sẽ tự động đăng lúc ${new Date(approval.scheduled_publish_at).toLocaleString("vi-VN")}.`
-            : "Yêu cầu đã được duyệt và đã được đăng.")
-        : (reason || "Yêu cầu bị từ chối."),
+            ? `Your request has been approved. It will be published automatically at ${new Date(approval.scheduled_publish_at).toLocaleString("en-US")}.`
+            : "Your request has been approved and published.")
+        : (reason || "Your request was rejected."),
       relatedId: approval.resource_id,
       relatedType: approval.resource_type
     };

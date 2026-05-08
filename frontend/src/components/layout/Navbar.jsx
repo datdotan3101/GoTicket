@@ -29,9 +29,44 @@ export default function Navbar() {
 
         {/* Central Minimal Nav */}
         <nav className="nav center-nav">
-          <NavLink to={APP_ROUTES.HOME} className={linkClassName}>Home</NavLink>
-          <NavLink to={APP_ROUTES.SPORTS} className={linkClassName}>Sports</NavLink>
-          <NavLink to={APP_ROUTES.NEWS} className={linkClassName}>News</NavLink>
+          {(!user || user.role === ROLES.AUDIENCE) && (
+            <>
+              <NavLink to={APP_ROUTES.HOME} className={linkClassName}>Home</NavLink>
+              <NavLink to={APP_ROUTES.SPORTS} className={linkClassName}>Sports</NavLink>
+              <NavLink to={APP_ROUTES.NEWS} className={linkClassName}>News</NavLink>
+            </>
+          )}
+
+          {user?.role === ROLES.MANAGER && (
+            <>
+              <NavLink to={APP_ROUTES.MANAGER_DASHBOARD} className={linkClassName} end>Dashboard</NavLink>
+              <NavLink to={APP_ROUTES.MANAGER_MATCH_CREATE} className={linkClassName}>Create Match</NavLink>
+              <NavLink to={APP_ROUTES.MANAGER_NOTIFICATIONS} className={linkClassName}>Inbox</NavLink>
+            </>
+          )}
+
+          {user?.role === ROLES.ADMIN && (
+            <>
+              <NavLink to={APP_ROUTES.ADMIN_DASHBOARD} className={linkClassName} end>Dashboard</NavLink>
+              <NavLink to={APP_ROUTES.ADMIN_APPROVALS} className={linkClassName}>Approvals</NavLink>
+              <NavLink to={APP_ROUTES.ADMIN_USERS} className={linkClassName}>Users</NavLink>
+            </>
+          )}
+
+          {user?.role === ROLES.EDITOR && (
+            <>
+              <NavLink to={APP_ROUTES.EDITOR_DASHBOARD} className={linkClassName} end>Dashboard</NavLink>
+              <NavLink to={APP_ROUTES.EDITOR_NEWS_CREATE} className={linkClassName}>Create News</NavLink>
+              <NavLink to={APP_ROUTES.EDITOR_NOTIFICATIONS} className={linkClassName}>Inbox</NavLink>
+            </>
+          )}
+
+          {user?.role === ROLES.CHECKER && (
+            <>
+              <NavLink to={APP_ROUTES.CHECKER_DASHBOARD} className={linkClassName} end>Dashboard</NavLink>
+              <NavLink to={APP_ROUTES.CHECKER_SCAN} className={linkClassName}>Scanner</NavLink>
+            </>
+          )}
         </nav>
 
         {/* Action Tray */}
@@ -55,7 +90,7 @@ export default function Navbar() {
                   {user?.role === ROLES.ADMIN && <Link to={APP_ROUTES.ADMIN_DASHBOARD}>Admin Portal</Link>}
                   <Link to={APP_ROUTES.PROFILE}>My Profile</Link>
                   <Link to={APP_ROUTES.MY_TICKETS}>My Tickets</Link>
-                  <button type="button" onClick={handleLogout}>Đăng xuất</button>
+                  <button type="button" onClick={handleLogout}>Logout</button>
                 </div>
               </div>
             </div>

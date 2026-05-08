@@ -13,11 +13,13 @@ const STADIUM_COLUMNS = [
   { id: 'A3', stand: 'A', tiers: ['T1', 'T2'] },
   { id: 'A4', stand: 'A', tiers: ['T1', 'T2'] },
   { id: 'A5', stand: 'A', tiers: ['T1', 'T2'] },
+  { id: 'B8', stand: 'B', tiers: ['T1'] },
   { id: 'B9', stand: 'B', tiers: ['T1'] },
   { id: 'B10', stand: 'B', tiers: ['T1'] },
   { id: 'B12', stand: 'B', tiers: ['T1'] },
   { id: 'B13', stand: 'B', tiers: ['T1'] },
   { id: 'B14', stand: 'B', tiers: ['T1'] },
+  { id: 'B15', stand: 'B', tiers: ['T1'] },
   { id: 'C', stand: 'C', tiers: ['T1'] },
   { id: 'D', stand: 'D', tiers: ['T1'] },
 ]
@@ -109,7 +111,7 @@ export default function StandConfigPage() {
         </div>
       </div>
 
-      {/* TẦNG 1: Visual Stadium Map */}
+      {/* LEVEL 1: Visual Stadium Map */}
       <div className="dashboard-section-head">
         <h2 className="dashboard-section-title">Visual Seating Plan</h2>
       </div>
@@ -117,7 +119,7 @@ export default function StandConfigPage() {
         <StadiumMap stands={localPreview} blockConfigs={blockConfigs} />
       </div>
 
-      {/* TẦNG 2: Configuration Form */}
+      {/* LEVEL 2: Configuration Form */}
       <div className="config-layout">
         <div className="config-form-section">
           <h3 className="config-sub-title" style={{ marginTop: '0px' }}>Block-Level Configuration</h3>
@@ -147,12 +149,12 @@ export default function StandConfigPage() {
                              <input 
                                type="number" 
                                className="mc-nice-input" 
-                               placeholder="Giá vé" 
-                               style={{ width: '100%', paddingLeft: '32px' }} 
+                               placeholder="Ticket Price" 
+                               style={{ width: '100%', paddingLeft: '45px' }} 
                                value={columnConfigs[col.id]?.price} 
                                onChange={(e) => setColumnConfigs(p => ({ ...p, [col.id]: { ...p[col.id], price: e.target.value } }))} 
                              />
-                             <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '0.9rem', fontWeight: 600 }}>₫</span>
+                             <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '0.75rem', fontWeight: 800 }}>VND</span>
                            </div>
                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                              {col.tiers.map(tier => (
@@ -163,7 +165,7 @@ export default function StandConfigPage() {
                                    onChange={() => toggleTier(col.id, tier)} 
                                    style={{ width: '16px', height: '16px', accentColor: '#4f46e5' }}
                                  />
-                                 Mở bán Tầng {tier.replace('T', '')}
+                                 Enable Level {tier.replace('T', '')}
                                </label>
                              ))}
                            </div>

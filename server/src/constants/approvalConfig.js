@@ -15,21 +15,21 @@ export const APPROVAL_RESOURCE_MAP = {
     table: "matches",
     approvedStatus: "approved",
     rejectedStatus: "rejected",
-    approvedTitle: "Trận đấu của bạn đã được duyệt ✅",
-    rejectedTitle: "Trận đấu của bạn bị từ chối ❌"
+    approvedTitle: "Your match has been approved ✅",
+    rejectedTitle: "Your match has been rejected ❌"
   },
   news: {
     table: "news",
     approvedStatus: "approved",
     rejectedStatus: "rejected",
-    approvedTitle: "Bài viết của bạn đã được duyệt ✅",
-    rejectedTitle: "Bài viết của bạn bị từ chối ❌"
+    approvedTitle: "Your article has been approved ✅",
+    rejectedTitle: "Your article has been rejected ❌"
   },
   user_account: {
     table: "users",
     approvedStatus: true,   // is_approved = true
     rejectedStatus: false,  // is_approved = false
-    approvedTitle: "Tài khoản của bạn đã được kích hoạt ✅",
-    rejectedTitle: "Tài khoản của bạn bị từ chối ❌"
+    approvedTitle: "Your account has been activated ✅",
+    rejectedTitle: "Your account has been rejected ❌"
   }
 };

@@ -10,12 +10,22 @@ import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { format } from 'date-fns'
 
-const INITIAL_STANDS = {
-  A: { price: '', tiers: [{ id: 'T1', active: true }, { id: 'T2', active: true }] },
-  B: { price: '', tiers: [{ id: 'T1', active: true }, { id: 'T2', active: true }] },
-  C: { price: '', tiers: [{ id: 'T1', active: true }] },
-  D: { price: '', tiers: [{ id: 'T1', active: true }] },
-}
+const STADIUM_COLUMNS = [
+  { id: 'A1', stand: 'A', tiers: ['T1', 'T2'] },
+  { id: 'A2', stand: 'A', tiers: ['T1', 'T2'] },
+  { id: 'A3', stand: 'A', tiers: ['T1', 'T2'] },
+  { id: 'A4', stand: 'A', tiers: ['T1', 'T2'] },
+  { id: 'A5', stand: 'A', tiers: ['T1', 'T2'] },
+  { id: 'B8', stand: 'B', tiers: ['T1'] },
+  { id: 'B9', stand: 'B', tiers: ['T1'] },
+  { id: 'B10', stand: 'B', tiers: ['T1'] },
+  { id: 'B12', stand: 'B', tiers: ['T1'] },
+  { id: 'B13', stand: 'B', tiers: ['T1'] },
+  { id: 'B14', stand: 'B', tiers: ['T1'] },
+  { id: 'B15', stand: 'B', tiers: ['T1'] },
+  { id: 'C', stand: 'C', tiers: ['T1'] },
+  { id: 'D', stand: 'D', tiers: ['T1'] },
+]
 
 const STAND_RATIOS = { A: 0.3, B: 0.3, C: 0.2, D: 0.2 }
 
@@ -31,7 +41,13 @@ export default function MatchCreatePage() {
   })
 
   const [totalCapacity, setTotalCapacity] = useState('10000')
-  const [stands, setStands] = useState(INITIAL_STANDS)
+  
+  const [columnConfigs, setColumnConfigs] = useState(
+    STADIUM_COLUMNS.reduce((acc, col) => {
+      acc[col.id] = { price: '', activeTiers: [...col.tiers] }
+      return acc
+    }, {})
+  )
 
   const [stadiums, setStadiums] = useState([])
   const [leagues, setLeagues] = useState([])
@@ -60,28 +76,40 @@ export default function MatchCreatePage() {
     load()
   }, [])
 
-  // Chuyển đổi sang định dạng blockConfigs cho backend dựa trên tỷ lệ và tầng
+  // Convert to blockConfigs format for backend based on ratio and level
   const blockConfigs = useMemo(() => {
     const configs = {}
     const total = Number(totalCapacity) || 0
     
-    Object.keys(stands).forEach(standKey => {
-      const standData = stands[standKey]
-      const standCapacityTotal = Math.floor(total * STAND_RATIOS[standKey])
-      const tierCount = standData.tiers.length
-      const tierCapacity = tierCount > 0 ? Math.floor(standCapacityTotal / tierCount) : 0
+    // Calculate total capacity per main stand (A, B, C, D)
+    const standTotals = {
+      A: Math.floor(total * STAND_RATIOS.A),
+      B: Math.floor(total * STAND_RATIOS.B),
+      C: Math.floor(total * STAND_RATIOS.C),
+      D: Math.floor(total * STAND_RATIOS.D)
+    }
+
+    STADIUM_COLUMNS.forEach(col => {
+      const mainStand = col.stand
+      const columnsInStand = STADIUM_COLUMNS.filter(c => c.stand === mainStand).length
+      const colCapacity = Math.floor(standTotals[mainStand] / columnsInStand)
       
-      standData.tiers.forEach(tier => {
-        const blockId = `${standKey}-${tier.id}`
+      const activeTierCount = columnConfigs[col.id].activeTiers.length
+      const tierCapacity = activeTierCount > 0 ? Math.floor(colCapacity / activeTierCount) : 0
+
+      col.tiers.forEach(tier => {
+        const blockId = `${col.id}-${tier}`
+        const isActive = columnConfigs[col.id].activeTiers.includes(tier)
         configs[blockId] = {
-          price: Number(standData.price) || 0,
-          capacity: tierCapacity,
-          active: tier.active
+          price: Number(columnConfigs[col.id].price) || 0,
+          capacity: isActive ? tierCapacity : 0,
+          active: isActive
         }
       })
     })
+    
     return configs
-  }, [stands, totalCapacity])
+  }, [columnConfigs, totalCapacity])
 
   const validateStep = (currentStep) => {
     if (currentStep === 1) {
@@ -95,12 +123,9 @@ export default function MatchCreatePage() {
       if (!totalCapacity || Number(totalCapacity) <= 0) return 'Please enter a valid total stadium capacity.'
       
       let error = null
-      Object.keys(stands).forEach(sk => {
-        if (!stands[sk].price || Number(stands[sk].price) < 0) {
-          error = `Stand ${sk} must have a valid price.`
-        }
-        if (stands[sk].tiers.length === 0) {
-          error = `Stand ${sk} must have at least one tier.`
+      STADIUM_COLUMNS.forEach(col => {
+        if (!columnConfigs[col.id].price || Number(columnConfigs[col.id].price) < 0) {
+          error = `Block ${col.id} must have a valid price.`
         }
       })
       if (error) return error
@@ -111,44 +136,13 @@ export default function MatchCreatePage() {
     return null
   }
 
-  const handleAddTier = (standKey) => {
-    setStands(prev => {
-      const nextId = `T${prev[standKey].tiers.length + 1}`
-      return {
-        ...prev,
-        [standKey]: {
-          ...prev[standKey],
-          tiers: [...prev[standKey].tiers, { id: nextId, active: true }]
-        }
-      }
+  const toggleTier = (colId, tier) => {
+    setColumnConfigs(prev => {
+      const activeTiers = prev[colId].activeTiers.includes(tier)
+        ? prev[colId].activeTiers.filter(t => t !== tier)
+        : [...prev[colId].activeTiers, tier]
+      return { ...prev, [colId]: { ...prev[colId], activeTiers } }
     })
-  }
-
-  const handleRemoveTier = (standKey, tierId) => {
-    setStands(prev => ({
-      ...prev,
-      [standKey]: {
-        ...prev[standKey],
-        tiers: prev[standKey].tiers.filter(t => t.id !== tierId)
-      }
-    }))
-  }
-
-  const updateStandPrice = (standKey, price) => {
-    setStands(prev => ({
-      ...prev,
-      [standKey]: { ...prev[standKey], price }
-    }))
-  }
-
-  const toggleTierActive = (standKey, tierId) => {
-    setStands(prev => ({
-      ...prev,
-      [standKey]: {
-        ...prev[standKey],
-        tiers: prev[standKey].tiers.map(t => t.id === tierId ? { ...t, active: !t.active } : t)
-      }
-    }))
   }
 
   const handleCreate = async () => {
@@ -356,61 +350,49 @@ export default function MatchCreatePage() {
                   <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '8px' }}>This total will be divided into Stands A, B, C, D automatically.</div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(500px, 1fr))', gap: '30px' }}>
-                  {Object.keys(stands).map(sk => {
-                    const standCapacityTotal = Math.floor(Number(totalCapacity) * STAND_RATIOS[sk])
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                  {['A', 'B', 'C', 'D'].map(standName => {
+                    const columns = STADIUM_COLUMNS.filter(c => c.stand === standName)
+                    if (columns.length === 0) return null
                     return (
-                      <div key={sk} style={{ border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px', background: '#fcfdfe' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                          <div>
-                            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: '#1e1b4b' }}>Stand {sk}</h3>
-                            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f97316' }}>{STAND_RATIOS[sk] * 100}% Ratio • {standCapacityTotal.toLocaleString()} seats</div>
-                          </div>
-                          <div className="mc-input-group" style={{ width: '180px', marginBottom: 0 }}>
-                            <label style={{ fontSize: '0.7rem' }}>PRICE (VND)</label>
-                            <input 
-                              type="number" 
-                              className="mc-nice-input" 
-                              placeholder="Price" 
-                              value={stands[sk].price} 
-                              onChange={e => updateStandPrice(sk, e.target.value)} 
-                            />
-                          </div>
-                        </div>
-
-                        <div style={{ background: '#fff', borderRadius: '12px', padding: '16px', border: '1px solid #f1f5f9' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>TIER MANAGEMENT</span>
-                            <button className="mc-btn mc-btn-secondary" style={{ padding: '4px 12px', fontSize: '0.7rem' }} onClick={() => handleAddTier(sk)}>+ Add Tier</button>
-                          </div>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {stands[sk].tiers.map(t => (
-                              <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: t.active ? '#f8fafc' : '#f1f5f9', borderRadius: '8px', border: t.active ? '1px solid #e2e8f0' : '1px solid transparent' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                  <input 
-                                    type="checkbox" 
-                                    checked={t.active} 
-                                    onChange={() => toggleTierActive(sk, t.id)}
-                                    style={{ width: '18px', height: '18px', accentColor: '#10b981' }}
-                                  />
-                                  <span style={{ fontWeight: 800, color: t.active ? '#1e293b' : '#94a3b8' }}>{sk} - {t.id}</span>
-                                  <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>~{Math.floor(standCapacityTotal / stands[sk].tiers.length)} seats</span>
+                      <div key={standName} style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', gridColumn: '1 / -1' }}>
+                        <h4 style={{ margin: '0 0 16px 0', fontSize: '1.2rem', fontWeight: 800, color: '#1e293b' }}>Stand {standName} <span style={{ fontSize: '0.8rem', color: '#f97316' }}>({STAND_RATIOS[standName] * 100}% Ratio)</span></h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+                          {columns.map(col => {
+                            const isActive = col.tiers.some(t => columnConfigs[col.id]?.activeTiers.includes(t))
+                            return (
+                              <div key={col.id} style={{ 
+                                background: '#fff', padding: '16px', borderRadius: '8px', 
+                                border: `1px solid ${isActive ? '#cbd5e1' : '#e2e8f0'}`,
+                              }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                  <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.1rem' }}>Block {col.id}</span>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: t.active ? '#10b981' : '#94a3b8' }}>
-                                    {t.active ? 'FOR SALE' : 'NOT FOR SALE'}
-                                  </span>
-                                  <button 
-                                    style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1.2rem' }}
-                                    onClick={() => handleRemoveTier(sk, t.id)}
-                                  >
-                                    ×
-                                  </button>
+                                <div style={{ position: 'relative', marginBottom: '16px' }}>
+                                  <input 
+                                    type="number" className="mc-nice-input" placeholder="Ticket Price" 
+                                    style={{ width: '100%', paddingLeft: '45px' }} 
+                                    value={columnConfigs[col.id]?.price} 
+                                    onChange={(e) => setColumnConfigs(p => ({ ...p, [col.id]: { ...p[col.id], price: e.target.value } }))} 
+                                  />
+                                  <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '0.75rem', fontWeight: 800 }}>VND</span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                  {col.tiers.map(tier => (
+                                    <label key={tier} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: '#475569', background: '#f8fafc', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                                      <input 
+                                        type="checkbox" 
+                                        checked={columnConfigs[col.id]?.activeTiers.includes(tier)} 
+                                        onChange={() => toggleTier(col.id, tier)} 
+                                        style={{ width: '16px', height: '16px', accentColor: '#4f46e5' }}
+                                      />
+                                      Enable Level {tier.replace('T', '')}
+                                    </label>
+                                  ))}
                                 </div>
                               </div>
-                            ))}
-                          </div>
+                            )
+                          })}
                         </div>
                       </div>
                     )
@@ -466,21 +448,28 @@ export default function MatchCreatePage() {
               <div>
                 <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '12px' }}>STAND PRICING & RATIOS</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  {Object.keys(stands).map(sk => (
-                    <div key={sk} style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                  {['A', 'B', 'C', 'D'].map(standName => {
+                    const columns = STADIUM_COLUMNS.filter(c => c.stand === standName)
+                    const activeBlocks = columns.reduce((acc, col) => acc + columnConfigs[col.id].activeTiers.length, 0)
+                    const standPrices = columns.map(c => Number(columnConfigs[c.id].price)).filter(p => p > 0)
+                    const standPriceMin = standPrices.length ? Math.min(...standPrices) : 0
+                    const standPriceMax = standPrices.length ? Math.max(...standPrices) : 0
+                    
+                    return (
+                    <div key={standName} style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                        <span style={{ fontWeight: 800, color: '#1e293b' }}>Stand {sk}</span>
-                        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>{STAND_RATIOS[sk]*100}% Ratio</span>
+                        <span style={{ fontWeight: 800, color: '#1e293b' }}>Stand {standName}</span>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>{STAND_RATIOS[standName]*100}% Ratio</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                        <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{Math.floor(Number(totalCapacity) * STAND_RATIOS[sk]).toLocaleString()} seats</span>
-                        <span style={{ fontWeight: 900, color: '#f97316' }}>{Number(stands[sk].price).toLocaleString()} ₫</span>
+                        <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{Math.floor(Number(totalCapacity) * STAND_RATIOS[standName]).toLocaleString()} seats</span>
+                        <span style={{ fontWeight: 900, color: '#f97316' }}>{standPriceMin === standPriceMax ? standPriceMin.toLocaleString() : `${standPriceMin.toLocaleString()} - ${standPriceMax.toLocaleString()}`} VND</span>
                       </div>
                       <div style={{ marginTop: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '6px', fontSize: '0.65rem', color: '#94a3b8' }}>
-                        Active Tiers: {stands[sk].tiers.filter(t => t.active).map(t => t.id).join(', ') || 'None'}
+                        Active Blocks: {activeBlocks}
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               </div>
             </div>

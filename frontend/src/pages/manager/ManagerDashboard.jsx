@@ -25,8 +25,10 @@ import { APP_ROUTES } from '../../constants/routes'
 import { dashboardService } from '../../services/dashboardService'
 import { matchService } from '../../services/matchService'
 import { stadiumService } from '../../services/stadiumService'
+import { notificationService } from '../../services/notificationService'
 import { unwrapData } from '../../utils/apiData'
 import { formatVND } from '../../utils/formatCurrency'
+import { formatDateTime } from '../../utils/formatDate'
 
 const MOCK_DATA = {
   summary: {
@@ -83,6 +85,7 @@ export default function ManagerDashboard() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [stadiums, setStadiums] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
 
   // Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -99,7 +102,18 @@ export default function ManagerDashboard() {
   useEffect(() => {
     fetchAll()
     fetchStadiums()
+    fetchNotifications()
   }, [])
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await notificationService.getAll()
+      const notifs = unwrapData(res) || []
+      setUnreadCount(notifs.filter(n => !n.is_read).length)
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
   const fetchAll = async () => {
     setLoading(true)
@@ -186,13 +200,29 @@ export default function ManagerDashboard() {
           <p className="dashboard-subtitle">Track your matches performance and manage ticket sales</p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <Link className="mc-btn mc-btn-ghost" to={APP_ROUTES.MANAGER_NOTIFICATIONS}>
+          <Link className="mc-btn mc-btn-ghost" to={APP_ROUTES.MANAGER_NOTIFICATIONS} style={{ position: 'relative' }}>
             <Bell size={18} style={{ marginRight: '8px' }} />
             Notifications
-          </Link>
-          <Link className="mc-btn mc-btn-primary" to={APP_ROUTES.MANAGER_MATCH_CREATE}>
-            <Plus size={18} style={{ marginRight: '8px' }} />
-            Create Match
+            {unreadCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-5px',
+                right: '-5px',
+                background: '#ef4444',
+                color: '#fff',
+                fontSize: '0.65rem',
+                fontWeight: 900,
+                width: '18px',
+                height: '18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                border: '2px solid #fff'
+              }}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </Link>
         </div>
       </div>
@@ -304,7 +334,7 @@ export default function ManagerDashboard() {
               <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '0.75rem', fontWeight: 600 }}>
                   <Calendar size={14} />
-                  <span>{match.match_date ? new Date(match.match_date).toLocaleDateString() : 'N/A'}</span>
+                  <span>{formatDateTime(match.match_date, 'dd/MM/yyyy')}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '0.75rem', fontWeight: 600 }}>
                   <Clock size={14} />

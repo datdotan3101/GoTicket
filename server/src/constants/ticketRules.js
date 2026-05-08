@@ -1,4 +1,4 @@
-export const MAX_SEATS_PER_ORDER = 6;
+export const MAX_SEATS_PER_ORDER = 10;
 export const REMINDER_MINUTES_BEFORE = 60;
 
 // Object version — dùng trong validation schemas

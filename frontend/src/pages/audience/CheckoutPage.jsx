@@ -245,7 +245,12 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
   }
 
   const totalAmount = useMemo(
-    () => (Number(checkoutData?.price) || 0) * (Number(checkoutData?.quantity) || 0),
+    () => {
+      if (checkoutData?.selections) {
+        return checkoutData.selections.reduce((acc, s) => acc + s.price * s.quantity, 0)
+      }
+      return (Number(checkoutData?.price) || 0) * (Number(checkoutData?.quantity) || 0)
+    },
     [checkoutData],
   )
 
@@ -255,7 +260,7 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
   }, [clientSecret, totalAmount])
 
   const createPendingTickets = useCallback(async () => {
-    if (!checkoutData?.matchId || !checkoutData?.standId) {
+    if (!checkoutData?.matchId || (!checkoutData?.standId && !checkoutData?.selections)) {
       toast.error('Invalid payment data.')
       if (!onBackProp) navigate('/')
       return
@@ -265,6 +270,7 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
       setIsInitializing(true)
       const bookResponse = await ticketService.book({
         matchId: checkoutData.matchId,
+        selections: checkoutData.selections,
         standId: checkoutData.standId,
         quantity: checkoutData.quantity,
       })
@@ -323,14 +329,33 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
                   <span className="label">Match</span>
                   <span className="value">{checkoutData?.matchName || 'Soccer Match'}</span>
                 </div>
-                <div className="detail-item">
-                  <span className="label">Section</span>
-                  <span className="value highlight">{checkoutData?.standName}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Quantity</span>
-                  <span className="value">{checkoutData?.quantity} tickets</span>
-                </div>
+                {checkoutData?.selections ? checkoutData.selections.map((sel, idx) => (
+                  <div key={idx} style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '12px', marginTop: '12px' }}>
+                    <div className="detail-item">
+                      <span className="label">Section</span>
+                      <span className="value highlight">{sel.standName}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="label">Quantity</span>
+                      <span className="value">{sel.quantity} tickets</span>
+                    </div>
+                    <div className="detail-item" style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                      <span className="label">Subtotal</span>
+                      <span>{formatVND(sel.price * sel.quantity)}</span>
+                    </div>
+                  </div>
+                )) : (
+                  <>
+                    <div className="detail-item">
+                      <span className="label">Section</span>
+                      <span className="value highlight">{checkoutData?.standName}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="label">Quantity</span>
+                      <span className="value">{checkoutData?.quantity} tickets</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="summary-total">

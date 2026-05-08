@@ -16,6 +16,7 @@ import {
 import { leagueService } from '../../services/leagueService'
 import { sportService } from '../../services/sportService'
 import { unwrapData } from '../../utils/apiData'
+import { formatDateTime } from '../../utils/formatDate'
 
 export default function LeagueManagePage() {
   const [leagues, setLeagues] = useState([])
@@ -212,11 +213,11 @@ export default function LeagueManagePage() {
                 <div className="league-card-dates">
                   <div className="league-date-item">
                     <Calendar size={14} />
-                    <span>Start: {league.start_date ? new Date(league.start_date).toLocaleDateString() : 'N/A'}</span>
+                    <span>Start: {formatDateTime(league.start_date, 'dd/MM/yyyy')}</span>
                   </div>
                   <div className="league-date-item">
                     <Calendar size={14} />
-                    <span>End: {league.end_date ? new Date(league.end_date).toLocaleDateString() : 'N/A'}</span>
+                    <span>End: {formatDateTime(league.end_date, 'dd/MM/yyyy')}</span>
                   </div>
                 </div>
               </div>
