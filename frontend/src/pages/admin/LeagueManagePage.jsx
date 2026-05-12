@@ -9,14 +9,14 @@ import {
   Trash2, 
   Calendar, 
   Trophy, 
-  Activity,
-  X,
-  AlertTriangle
+  Activity
 } from 'lucide-react'
 import { leagueService } from '../../services/leagueService'
 import { sportService } from '../../services/sportService'
 import { unwrapData } from '../../utils/apiData'
 import { formatDateTime } from '../../utils/formatDate'
+import FormModal from '../../components/ui/FormModal'
+import ConfirmModal from '../../components/ui/ConfirmModal'
 
 export default function LeagueManagePage() {
   const [leagues, setLeagues] = useState([])
@@ -238,127 +238,100 @@ export default function LeagueManagePage() {
       )}
 
       {/* Create/Edit Modal */}
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2 className="modal-title">{editingLeague ? 'Edit League' : 'Create New League'}</h2>
-              <button className="modal-close" onClick={() => setIsModalOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div className="modal-body">
-                <div className="mc-details-grid" style={{ gridTemplateColumns: '1fr' }}>
-                  <div className="mc-input-group">
-                    <label>LEAGUE NAME</label>
-                    <input 
-                      className="mc-nice-input"
-                      placeholder="e.g. Premier League" 
-                      value={form.name} 
-                      onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} 
-                      required 
-                    />
-                  </div>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                    <div className="mc-input-group">
-                      <label>SPORT</label>
-                      <select 
-                        className="mc-nice-input"
-                        value={form.sportId} 
-                        onChange={(e) => setForm((p) => ({ ...p, sportId: e.target.value }))} 
-                        required
-                      >
-                        <option value="">Select sport</option>
-                        {sports.map((sport) => (
-                          <option key={sport.id} value={sport.id}>{sport.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="mc-input-group">
-                      <label>SEASON</label>
-                      <input 
-                        className="mc-nice-input"
-                        placeholder="e.g. 2023-24" 
-                        value={form.season} 
-                        onChange={(e) => setForm((p) => ({ ...p, season: e.target.value }))} 
-                      />
-                    </div>
-                  </div>
+      <FormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmit}
+        title={editingLeague ? 'Edit League' : 'Create New League'}
+        submitLabel={editingLeague ? 'Save Changes' : 'Create League'}
+        submitDisabled={editingLeague && !isFormChanged()}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>League Name</label>
+          <input 
+            placeholder="e.g. Premier League" 
+            value={form.name} 
+            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} 
+            required 
+            style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', fontSize: '1rem' }}
+          />
+        </div>
 
-                  <div className="mc-input-group">
-                    <label>LOGO URL</label>
-                    <input 
-                      className="mc-nice-input"
-                      placeholder="https://example.com/logo.png" 
-                      value={form.logoUrl} 
-                      onChange={(e) => setForm((p) => ({ ...p, logoUrl: e.target.value }))} 
-                    />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                    <div className="mc-input-group">
-                      <label>START DATE</label>
-                      <DatePicker
-                        selected={form.startDate}
-                        onChange={(date) => setForm((p) => ({ ...p, startDate: date }))}
-                        className="mc-nice-input"
-                        placeholderText="Select start date"
-                        dateFormat="dd/MM/yyyy"
-                      />
-                    </div>
-                    <div className="mc-input-group">
-                      <label>END DATE</label>
-                      <DatePicker
-                        selected={form.endDate}
-                        onChange={(date) => setForm((p) => ({ ...p, endDate: date }))}
-                        className="mc-nice-input"
-                        placeholderText="Select end date"
-                        dateFormat="dd/MM/yyyy"
-                        minDate={form.startDate}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="mc-btn mc-btn-ghost" onClick={() => setIsModalOpen(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="mc-btn mc-btn-primary" disabled={editingLeague && !isFormChanged()}>
-                  {editingLeague ? 'Save Changes' : 'Create League'}
-                </button>
-              </div>
-            </form>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Sport</label>
+            <select 
+              value={form.sportId} 
+              onChange={(e) => setForm((p) => ({ ...p, sportId: e.target.value }))} 
+              required
+              style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', fontSize: '1rem' }}
+            >
+              <option value="">Select sport</option>
+              {sports.map((sport) => (
+                <option key={sport.id} value={sport.id}>{sport.name}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Season</label>
+            <input 
+              placeholder="e.g. 2023-24" 
+              value={form.season} 
+              onChange={(e) => setForm((p) => ({ ...p, season: e.target.value }))}
+              style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', fontSize: '1rem' }}
+            />
           </div>
         </div>
-      )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Logo URL</label>
+          <input 
+            placeholder="https://example.com/logo.png" 
+            value={form.logoUrl} 
+            onChange={(e) => setForm((p) => ({ ...p, logoUrl: e.target.value }))}
+            style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', fontSize: '1rem' }}
+          />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Start Date</label>
+            <DatePicker
+              selected={form.startDate}
+              onChange={(date) => setForm((p) => ({ ...p, startDate: date }))}
+              placeholderText="Select start date"
+              dateFormat="dd/MM/yyyy"
+              wrapperClassName="datepicker-full-width"
+              className="datepicker-input"
+              style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', fontSize: '1rem', width: '100%' }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>End Date</label>
+            <DatePicker
+              selected={form.endDate}
+              onChange={(date) => setForm((p) => ({ ...p, endDate: date }))}
+              placeholderText="Select end date"
+              dateFormat="dd/MM/yyyy"
+              minDate={form.startDate}
+              wrapperClassName="datepicker-full-width"
+              className="datepicker-input"
+              style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', fontSize: '1rem', width: '100%' }}
+            />
+          </div>
+        </div>
+      </FormModal>
 
       {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '400px' }}>
-            <div className="modal-body" style={{ textAlign: 'center', paddingTop: '40px' }}>
-              <div style={{ background: '#fee2e2', color: '#ef4444', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyCenter: 'center', margin: '0 auto 20px', justifyContent: 'center' }}>
-                <AlertTriangle size={32} />
-              </div>
-              <h2 className="modal-title" style={{ marginBottom: '10px' }}>Confirm Delete</h2>
-              <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: '1.5' }}>
-                Are you sure you want to delete <strong>{leagueToDelete?.name}</strong>? This action cannot be undone.
-              </p>
-            </div>
-            <div className="modal-footer" style={{ justifyContent: 'center', paddingBottom: '30px' }}>
-              <button className="mc-btn mc-btn-ghost" onClick={() => setIsDeleteModalOpen(false)}>
-                Cancel
-              </button>
-              <button className="mc-btn" style={{ background: '#ef4444', color: '#fff' }} onClick={handleDelete}>
-                Delete League
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        title="Confirm Delete"
+        message={<>Are you sure you want to delete <strong>{leagueToDelete?.name}</strong>? This action cannot be undone.</>}
+        confirmLabel="Delete League"
+        variant="danger"
+      />
     </section>
   )
 }

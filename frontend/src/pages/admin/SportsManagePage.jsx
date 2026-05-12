@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { sportService } from '../../services/sportService'
-import { uploadService } from '../../services/uploadService'
 import { unwrapData } from '../../utils/apiData'
+import FormModal from '../../components/ui/FormModal'
+import ConfirmModal from '../../components/ui/ConfirmModal'
+import FileUploadField from '../../components/ui/FileUploadField'
 
 export default function SportsManagePage() {
   const [sports, setSports] = useState([])
@@ -10,7 +12,7 @@ export default function SportsManagePage() {
   const [initialForm, setInitialForm] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [confirmModal, setConfirmModal] = useState({ show: false, type: null, target: null })
-  const [uploading, setUploading] = useState(false)
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchSports = async () => {
@@ -60,23 +62,6 @@ export default function SportsManagePage() {
     }
   }
 
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0]
-    if (!file) return
-
-    setUploading(true)
-    try {
-      const response = await uploadService.uploadFile(file)
-      const { url } = unwrapData(response)
-      setForm((p) => ({ ...p, bannerUrl: url }))
-      toast.success('Banner uploaded.')
-    } catch (error) {
-      toast.error('Upload failed.')
-    } finally {
-      setUploading(false)
-    }
-  }
-
   const editSport = (sport) => {
     const sportData = { 
       name: sport.name, 
@@ -86,13 +71,14 @@ export default function SportsManagePage() {
     setEditingId(sport.id)
     setForm(sportData)
     setInitialForm(sportData)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setIsFormModalOpen(true)
   }
 
   const clearForm = () => {
     setEditingId(null)
     setInitialForm(null)
     setForm({ name: '', slug: '', bannerUrl: '' })
+    setIsFormModalOpen(false)
   }
 
   const hasChanges = () => {
@@ -119,29 +105,40 @@ export default function SportsManagePage() {
 
   return (
     <section className="container page" style={{ border: 'none', background: 'transparent', paddingBottom: '60px' }}>
-      <div className="section-head" style={{ marginBottom: '40px' }}>
+      <div className="section-head" style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1 style={{ fontSize: '3rem', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '-2px', color: '#111827', lineHeight: 1, margin: 0 }}>Sports</h1>
           <p className="section-subtitle" style={{ fontSize: '1rem', color: '#6b7280', marginTop: '8px' }}>
             Manage sports categories and their visual representations.
           </p>
         </div>
+        <button 
+          onClick={() => { clearForm(); setIsFormModalOpen(true); }}
+          style={{ padding: '14px 28px', borderRadius: '12px', background: '#111827', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer', fontSize: '0.9rem', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
+        >
+          + Add Category
+        </button>
       </div>
 
-      <div className="card" style={{ padding: '32px', borderRadius: '24px', border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.04)', background: '#fff', marginBottom: '48px' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '24px', color: '#111827' }}>
-          {editingId ? 'Edit Sport Category' : 'Create New Category'}
-        </h2>
-        <form className="form" onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+      {/* Form Modal */}
+      <FormModal
+        isOpen={isFormModalOpen}
+        onClose={clearForm}
+        onSubmit={handleSubmit}
+        title={editingId ? 'Edit Sport Category' : 'Create New Category'}
+        submitLabel={editingId ? 'Save Changes' : 'Create Sport'}
+        submitDisabled={!hasChanges()}
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b' }}>Sport Name</label>
+            <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Sport Name</label>
             <input 
               placeholder="e.g. Football" 
               value={form.name} 
               onChange={(e) => {
                 const name = e.target.value;
                 const slug = name.toLowerCase()
-                  .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove Vietnamese tones
+                  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
                   .replace(/[đĐ]/g, 'd')
                   .replace(/([^0-9a-z-\s])/g, '')
                   .replace(/(\s+)/g, '-')
@@ -150,101 +147,35 @@ export default function SportsManagePage() {
                 setForm((p) => ({ ...p, name, slug }));
               }} 
               required 
-              style={{ padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}
+              style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b' }}>Slug</label>
+            <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Slug</label>
             <input 
               placeholder="e.g. football" 
               value={form.slug} 
               onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))} 
               required 
-              style={{ padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}
+              style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }}
             />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', gridColumn: 'span 2' }}>
-            <label style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b' }}>Banner Image</label>
-            <div style={{ 
-              border: '2px dashed #e2e8f0', 
-              borderRadius: '12px', 
-              padding: '24px', 
-              textAlign: 'center',
-              background: '#f8fafc',
-              position: 'relative',
-              cursor: 'pointer'
-            }}>
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={handleFileUpload} 
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} 
-              />
-              <span style={{ fontSize: '0.9rem', color: '#64748b' }}>
-                {uploading ? '⏳ Uploading...' : '📁 Click to upload or drag & drop'}
-              </span>
-              {form.bannerUrl && (
-                <div style={{ marginTop: '12px', fontSize: '0.75rem', color: '#166534', fontWeight: 700 }}>
-                  ✓ File ready: {form.bannerUrl.split('/').pop()}
-                </div>
-              )}
-            </div>
+        </div>
 
-            {form.bannerUrl && (
-              <div style={{ 
-                marginTop: '12px', 
-                borderRadius: '16px', 
-                overflow: 'hidden', 
-                height: '150px', 
-                border: '4px solid #f1f5f9',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                background: '#f8fafc',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative'
-              }}>
-                <img 
-                  src={form.bannerUrl} 
-                  alt="Banner Preview" 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 1 }}
-                  onError={(e) => { e.target.style.opacity = 0; }}
-                  onLoad={(e) => { e.target.style.opacity = 1; }}
-                />
-              </div>
-            )}
-          </div>
-          <div style={{ display: 'flex', gap: '12px', gridColumn: 'span 2' }}>
-            <button 
-              type="submit" 
-              className="mc-btn mc-btn-primary" 
-              disabled={!hasChanges()}
-              style={{ 
-                flex: 2, 
-                padding: '14px',
-                opacity: !hasChanges() ? 0.5 : 1,
-                cursor: !hasChanges() ? 'not-allowed' : 'pointer'
-              }}
-            >
-              {editingId ? 'Update Sport' : 'Create Sport'}
-            </button>
-            {editingId && (
-              <button 
-                type="button" 
-                onClick={clearForm}
-                className="mc-btn mc-btn-secondary" 
-                style={{ flex: 1, padding: '14px', background: '#f3f4f6', color: '#4b5563', border: 'none' }}
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-        </form>
-      </div>
+        <FileUploadField
+          label="Banner Image"
+          value={form.bannerUrl}
+          onChange={(url) => setForm((p) => ({ ...p, bannerUrl: url }))}
+          previewType="banner"
+          icon="🖼️"
+          placeholder="Click or drag & drop banner image"
+        />
+      </FormModal>
 
+      {/* Sport Cards */}
       <div className="cards-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
         {sports.map((sport) => (
-          <article className="card" key={sport.id} style={{ padding: '0', overflow: 'hidden', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', borderRadius: '20px', background: '#fff' }}>
+          <article className="card" key={sport.id} style={{ padding: '0', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', borderRadius: '20px', background: '#fff' }}>
             {sport.banner_url ? (
               <div style={{ width: '100%', height: '140px', background: `url(${sport.banner_url}) center/cover` }} />
             ) : (
@@ -283,7 +214,7 @@ export default function SportsManagePage() {
                   borderRadius: '10px', 
                   background: 'transparent', 
                   color: '#dc2626', 
-                  border: '1px solid #fee2e2',
+                  border: '1px solid #fca5a5',
                   fontWeight: 700,
                   fontSize: '0.8rem',
                   cursor: 'pointer'
@@ -296,41 +227,18 @@ export default function SportsManagePage() {
         ))}
       </div>
 
-      {confirmModal.show && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-        }}>
-          <div className="card" style={{ padding: '32px', maxWidth: '400px', width: '90%', borderRadius: '24px', border: 'none', background: '#fff', textAlign: 'center' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '16px' }}>
-              {confirmModal.type === 'delete' ? 'Delete Sport?' : 'Update Sport?'}
-            </h2>
-            <p style={{ color: '#64748b', marginBottom: '32px', fontSize: '0.95rem' }}>
-              {confirmModal.type === 'delete' 
-                ? 'This action is permanent and will remove this sport from the system.' 
-                : 'Are you sure you want to save these changes?'}
-            </p>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button 
-                onClick={() => confirmModal.type === 'delete' ? executeDelete(confirmModal.target) : executeSubmit()}
-                className="mc-btn mc-btn-primary" 
-                style={{ flex: 1, padding: '12px', background: confirmModal.type === 'delete' ? '#dc2626' : '#111827' }}
-              >
-                Confirm
-              </button>
-              <button 
-                onClick={() => setConfirmModal({ show: false, type: null, target: null })}
-                className="mc-btn mc-btn-secondary" 
-                style={{ flex: 1, padding: '12px' }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.show}
+        onClose={() => setConfirmModal({ show: false, type: null, target: null })}
+        onConfirm={() => confirmModal.type === 'delete' ? executeDelete(confirmModal.target) : executeSubmit()}
+        title={confirmModal.type === 'delete' ? 'Delete Sport?' : 'Update Sport?'}
+        message={confirmModal.type === 'delete'
+          ? 'This action is permanent and will remove this sport from the system.'
+          : 'Are you sure you want to save these changes?'}
+        confirmLabel="Confirm"
+        variant={confirmModal.type === 'delete' ? 'danger' : 'default'}
+      />
     </section>
   )
 }
-

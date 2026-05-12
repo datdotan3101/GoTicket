@@ -2,7 +2,9 @@ import { Router } from "express";
 import { ROLES } from "../../constants/roles.js";
 import { auth } from "../../middlewares/auth.js";
 import { requireRoles } from "../../middlewares/roles.js";
-import { getUsers, getPendingUsers, getUserById, toggleUserActive, updateUserRole } from "./users.controller.js";
+import { runValidation } from "../../middlewares/validate.js";
+import { getUsers, getPendingUsers, getUserById, toggleUserActive, updateUserRole, createUser } from "./users.controller.js";
+import { createUserRules } from "./users.validation.js";
 
 const router = Router();
 
@@ -49,6 +51,35 @@ const router = Router();
  *         description: "Success"
  */
 router.get("/", auth, requireRoles(ROLES.ADMIN), getUsers);
+
+/**
+ * @swagger
+ * /api/users:
+ *   post:
+ *     summary: "Admin create user directly (status active & approved)"
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password, fullName, role]
+ *             properties:
+ *               email: { type: string, format: email }
+ *               password: { type: string, minLength: 6 }
+ *               fullName: { type: string }
+ *               role: { type: string, enum: [admin, manager, editor, audience, checker] }
+ *               clubId: { type: integer }
+ *     responses:
+ *       201:
+ *         description: "User created"
+ *       400:
+ *         description: "Invalid data"
+ *       409:
+ *         description: "Email already exists"
+ */
+router.post("/", auth, requireRoles(ROLES.ADMIN), runValidation(createUserRules), createUser);
 
 /**
  * @swagger

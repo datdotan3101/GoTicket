@@ -45,7 +45,8 @@ const UserManagePage = lazy(() => import('./pages/admin/UserManagePage'))
 const SportsManagePage = lazy(() => import('./pages/admin/SportsManagePage'))
 const LeagueManagePage = lazy(() => import('./pages/admin/LeagueManagePage'))
 const RevenueReportPage = lazy(() => import('./pages/admin/RevenueReportPage'))
-const ApprovedMatchesPage = lazy(() => import('./pages/admin/ApprovedMatchesPage'))
+const MatchManagePage = lazy(() => import('./pages/admin/MatchManagePage'))
+const ClubManagePage = lazy(() => import('./pages/admin/ClubManagePage'))
 
 export default function App() {
   return (
@@ -103,9 +104,11 @@ export default function App() {
                 <Route path={APP_ROUTES.ADMIN_DASHBOARD} element={<AdminDashboard />} />
                 <Route path={APP_ROUTES.ADMIN_APPROVALS} element={<ApprovalsPage />} />
                 <Route path={APP_ROUTES.ADMIN_USERS} element={<UserManagePage />} />
+                <Route path={APP_ROUTES.ADMIN_MANAGERS} element={<UserManagePage />} />
                 <Route path={APP_ROUTES.ADMIN_SPORTS} element={<SportsManagePage />} />
                 <Route path={APP_ROUTES.ADMIN_LEAGUES} element={<LeagueManagePage />} />
-                <Route path={APP_ROUTES.ADMIN_MATCHES} element={<ApprovedMatchesPage />} />
+                <Route path={APP_ROUTES.ADMIN_MATCHES} element={<MatchManagePage />} />
+                <Route path={APP_ROUTES.ADMIN_CLUBS} element={<ClubManagePage />} />
                 <Route path={APP_ROUTES.ADMIN_REVENUE_REPORT} element={<RevenueReportPage />} />
               </Route>
             </Route>

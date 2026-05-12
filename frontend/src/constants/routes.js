@@ -31,8 +31,10 @@ export const APP_ROUTES = {
   ADMIN_DASHBOARD: '/admin',
   ADMIN_APPROVALS: '/admin/approvals',
   ADMIN_USERS: '/admin/users',
+  ADMIN_MANAGERS: '/admin/managers',
   ADMIN_SPORTS: '/admin/sports',
   ADMIN_LEAGUES: '/admin/leagues',
+  ADMIN_CLUBS: '/admin/clubs',
   ADMIN_REVENUE_REPORT: '/admin/revenue-report',
   ADMIN_MATCHES: '/admin/matches',
 }

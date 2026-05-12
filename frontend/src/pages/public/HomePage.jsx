@@ -68,18 +68,6 @@ export default function HomePage() {
         <div className="hero-content container">
           <span className="hero-badge">OFFICIAL TICKETING PARTNER</span>
           <h1 className="hero-title">YOUR FRONT ROW<br />SEAT AWAITS.</h1>
-          
-          <div className="hero-search-box">
-            <div className="hs-input-wrap hs-border-r">
-              <span>🔍</span>
-              <input type="text" placeholder="Search by team, league..." />
-            </div>
-            <div className="hs-input-wrap">
-              <span>📍</span>
-              <input type="text" placeholder="Location" />
-            </div>
-            <button className="hs-submit">Find Seats</button>
-          </div>
         </div>
       </section>
 

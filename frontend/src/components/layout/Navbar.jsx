@@ -45,13 +45,7 @@ export default function Navbar() {
             </>
           )}
 
-          {user?.role === ROLES.ADMIN && (
-            <>
-              <NavLink to={APP_ROUTES.ADMIN_DASHBOARD} className={linkClassName} end>Dashboard</NavLink>
-              <NavLink to={APP_ROUTES.ADMIN_APPROVALS} className={linkClassName}>Approvals</NavLink>
-              <NavLink to={APP_ROUTES.ADMIN_USERS} className={linkClassName}>Users</NavLink>
-            </>
-          )}
+
 
           {user?.role === ROLES.EDITOR && (
             <>

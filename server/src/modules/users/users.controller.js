@@ -45,3 +45,15 @@ export const toggleUserActive = asyncHandler(async (req, res) => {
   if (!data) return sendError(res, "Không tìm thấy user.", HTTP_STATUS.NOT_FOUND);
   return sendSuccess(res, data);
 });
+
+/**
+ * POST /api/users — Admin tạo user trực tiếp
+ */
+export const createUser = asyncHandler(async (req, res) => {
+  try {
+    const data = await usersService.createDirect(req.body);
+    return sendSuccess(res, data, HTTP_STATUS.CREATED);
+  } catch (err) {
+    return sendError(res, err.message, err.status || HTTP_STATUS.BAD_REQUEST);
+  }
+});

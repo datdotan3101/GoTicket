@@ -3,6 +3,17 @@ import { useEffect, useState } from 'react'
 import { APP_ROUTES } from '../../constants/routes'
 import { approvalsService } from '../../services/approvalsService'
 import { unwrapData } from '../../utils/apiData'
+import { 
+  LayoutDashboard, 
+  ClipboardCheck, 
+  Users, 
+  Trophy, 
+  Activity, 
+  Medal,
+  PieChart,
+  Shield,
+  UserCog
+} from 'lucide-react'
 
 export default function AdminNavbar() {
   const location = useLocation()
@@ -11,7 +22,7 @@ export default function AdminNavbar() {
   useEffect(() => {
     const fetchPending = async () => {
       try {
-        const response = await approvalsService.getPending()
+        const response = await approvalsService.getPending({ type: 'match' })
         const data = unwrapData(response) || []
         setPendingCount(data.length)
       } catch {
@@ -20,49 +31,108 @@ export default function AdminNavbar() {
     }
 
     fetchPending()
-    const interval = setInterval(fetchPending, 30000) // Refresh every 30s
+    const interval = setInterval(fetchPending, 30000)
     return () => clearInterval(interval)
   }, [])
 
+  const menuSections = [
+    {
+      title: 'MENU',
+      items: [
+        { name: 'Dashboard', path: APP_ROUTES.ADMIN_DASHBOARD, icon: <LayoutDashboard size={22} strokeWidth={1.25} /> },
+        { name: 'Revenue Report', path: APP_ROUTES.ADMIN_REVENUE_REPORT, icon: <PieChart size={22} strokeWidth={1.25} /> }
+      ]
+    },
+    {
+      title: 'SPORT MANAGEMENT',
+      items: [
+        { name: 'Matches', path: APP_ROUTES.ADMIN_MATCHES, icon: <Trophy size={22} strokeWidth={1.25} />, badge: pendingCount },
+        { name: 'Clubs', path: APP_ROUTES.ADMIN_CLUBS, icon: <Shield size={22} strokeWidth={1.25} /> },
+        { name: 'Sports', path: APP_ROUTES.ADMIN_SPORTS, icon: <Activity size={22} strokeWidth={1.25} /> },
+        { name: 'Leagues', path: APP_ROUTES.ADMIN_LEAGUES, icon: <Medal size={22} strokeWidth={1.25} /> }
+      ]
+    },
+    {
+      title: 'USER MANAGEMENT',
+      items: [
+        { name: 'Account Manager', path: APP_ROUTES.ADMIN_MANAGERS, icon: <UserCog size={22} strokeWidth={1.25} /> },
+        { name: 'Users', path: APP_ROUTES.ADMIN_USERS, icon: <Users size={22} strokeWidth={1.25} /> }
+      ]
+    }
+  ]
+
   return (
-    <div className="admin-sub-nav" style={{ 
-      background: '#111827', 
-      padding: '12px 0', 
-      borderBottom: '1px solid #374151',
-      position: 'sticky',
-      top: 0,
-      zIndex: 50
+    <div style={{
+      width: '280px',
+      backgroundColor: '#ffffff',
+      borderRight: '1px solid #e5e7eb',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: '24px 0',
+      minHeight: '100%',
     }}>
-      <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ display: 'flex', gap: '32px' }}>
-          <Link to={APP_ROUTES.ADMIN_DASHBOARD} style={getLinkStyle(location.pathname === APP_ROUTES.ADMIN_DASHBOARD)}>Dashboard</Link>
-          <Link to={APP_ROUTES.ADMIN_APPROVALS} style={{ ...getLinkStyle(location.pathname === APP_ROUTES.ADMIN_APPROVALS), display: 'flex', alignItems: 'center', gap: '6px' }}>
-            Approvals
-            {pendingCount > 0 && (
-              <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.65rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 900, lineHeight: 1 }}>
-                {pendingCount}
-              </span>
-            )}
-          </Link>
-          <Link to={APP_ROUTES.ADMIN_USERS} style={getLinkStyle(location.pathname === APP_ROUTES.ADMIN_USERS)}>Users</Link>
-          <Link to={APP_ROUTES.ADMIN_MATCHES} style={getLinkStyle(location.pathname === APP_ROUTES.ADMIN_MATCHES)}>Matches</Link>
-          <Link to={APP_ROUTES.ADMIN_SPORTS} style={getLinkStyle(location.pathname === APP_ROUTES.ADMIN_SPORTS)}>Sports</Link>
-          <Link to={APP_ROUTES.ADMIN_LEAGUES} style={getLinkStyle(location.pathname === APP_ROUTES.ADMIN_LEAGUES)}>Leagues</Link>
+      {menuSections.map((section, idx) => (
+        <div key={idx} style={{ marginBottom: '24px' }}>
+          <div style={{
+            color: '#3b82f6', // Matches the blue color in the image
+            fontSize: '0.8rem',
+            fontWeight: '700',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            padding: '0 24px',
+            marginBottom: '16px'
+          }}>
+            {section.title}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {section.items.map((item, itemIdx) => {
+              const isActive = location.pathname === item.path
+              return (
+                <Link
+                  key={itemIdx}
+                  to={item.path}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '14px 24px',
+                    textDecoration: 'none',
+                    color: isActive ? '#000000' : '#374151',
+                    backgroundColor: isActive ? '#f3f4f6' : 'transparent',
+                    fontWeight: isActive ? '600' : '400',
+                    transition: 'all 0.2s ease',
+                    borderLeft: isActive ? '4px solid #3b82f6' : '4px solid transparent'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.backgroundColor = '#f9fafb'
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.backgroundColor = 'transparent'
+                  }}
+                >
+                  <span style={{ marginRight: '16px', color: isActive ? '#3b82f6' : '#6b7280', display: 'flex', alignItems: 'center' }}>
+                    {item.icon}
+                  </span>
+                  <span style={{ fontSize: '0.95rem', flex: 1 }}>{item.name}</span>
+                  
+                  {item.badge > 0 && (
+                    <span style={{
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      lineHeight: 1
+                    }}>
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      ))}
     </div>
   )
-}
-
-function getLinkStyle(isActive) {
-  return {
-    color: isActive ? '#fff' : '#9ca3af',
-    fontSize: '0.75rem',
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    borderBottom: isActive ? '2px solid #fbbf24' : '2px solid transparent',
-    paddingBottom: '4px',
-    transition: 'all 0.2s'
-  }
 }

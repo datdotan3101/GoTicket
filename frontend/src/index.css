@@ -398,8 +398,8 @@ textarea { width: 100%; font-family: inherit; }
 .trust-image { width: 100%; height: auto; object-fit: cover; aspect-ratio: 4/5; box-shadow: 0 20px 40px rgba(0,0,0,0.1); display: block;}
 
 /* Footer Overrides */
-.footer-dark { background: #0b0f19; color: #9ca3af; padding: 60px 0 40px 0; margin-top: 40px;}
-.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 2fr; gap: 40px; }
+.footer-dark { background: #0b0f19; color: #9ca3af; padding: 24px 0 16px 0; margin-top: 0; }
+.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 2fr; gap: 20px; }
 .footer-col { display: flex; flex-direction: column; gap: 12px; }
 .footer-head { color: #ffffff; font-size: 0.75rem; font-weight: 800; letter-spacing: 1px; margin-bottom: 12px; margin-top: 0;}
 .footer-col a { color: #d1d5db; transition: color 0.2s; font-weight: 500; font-size: 0.85rem;}
@@ -1071,6 +1071,8 @@ textarea { width: 100%; font-family: inherit; }
   .qr-container { align-items: center; padding-left: 0; }
   .control-details { padding-left: 0; align-items: center; width: 100%; }
   .detail-row { align-items: center; width: 100%; }
+  .ticket-footer-row { margin-top: 16px; }
+  .footer-cell { padding: 8px; }
 }
 
 .payment-inputs { display: flex; flex-direction: column; gap: 24px; margin-bottom: 32px; }

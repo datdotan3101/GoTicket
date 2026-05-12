@@ -1,6 +1,7 @@
 import { query } from "../../config/db.js";
 import { getPagination, buildPaginatedResponse } from "../../utils/pagination.js";
 import { ROLES } from "../../constants/roles.js";
+import bcrypt from "bcryptjs";
 
 const ALLOWED_ROLES = Object.values(ROLES);
 
@@ -130,5 +131,39 @@ export const usersService = {
        ORDER BY a.created_at ASC`
     );
     return result.rows;
+  },
+
+  /**
+   * Tạo tài khoản trực tiếp (Dành cho Admin).
+   */
+  async createDirect({ email, password, fullName, role, clubId }) {
+    if (!ALLOWED_ROLES.includes(role)) {
+      throw new Error(`Role không hợp lệ. Cho phép: ${ALLOWED_ROLES.join(", ")}`);
+    }
+
+    if (role === ROLES.MANAGER && !clubId) {
+      throw new Error("Manager phải được gán vào một câu lạc bộ.");
+    }
+
+    // Check email exists
+    const exist = await query(`SELECT id FROM users WHERE email = $1`, [email]);
+    if (exist.rows.length > 0) {
+      const err = new Error("Email đã tồn tại.");
+      err.status = 409;
+      throw err;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
+    const effectiveClubId = role === ROLES.MANAGER ? (clubId || null) : null;
+
+    const result = await query(
+      `INSERT INTO users (email, password_hash, full_name, role, club_id, is_active, is_approved)
+       VALUES ($1, $2, $3, $4, $5, true, true)
+       RETURNING id, email, full_name, role, club_id, is_active, is_approved`,
+      [email, hashedPassword, fullName, role, effectiveClubId]
+    );
+    return result.rows[0];
   }
 };

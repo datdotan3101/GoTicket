@@ -5,11 +5,11 @@ export default function Footer() {
     <footer className="footer-dark">
       <div className="container footer-grid">
         <div className="footer-col brand-col">
-          <h2 className="brand mb-2 text-white text-xl uppercase tracking-tighter">GOTICKET</h2>
-          <p className="text-light-dim text-sm mt-3">
-            Premium sports editorial and ticketing destination. Experience the arena like never before with exclusive access to world-class events.
+          <h2 className="brand mb-1 text-white text-lg uppercase tracking-tighter">GOTICKET</h2>
+          <p className="text-light-dim text-xs mt-2 leading-relaxed">
+            Premium sports editorial and ticketing destination.
           </p>
-          <p className="copy-text text-xs mt-12">&copy; 2026 GoTicket Editorial. All rights reserved.</p>
+          <p className="copy-text text-xs mt-6">&copy; 2026 GoTicket Editorial. All rights reserved.</p>
         </div>
 
         <div className="footer-col text-sm">
@@ -30,9 +30,9 @@ export default function Footer() {
         <div className="footer-col news-col">
           <h4 className="footer-head">NEWSLETTER</h4>
           <p className="text-light-dim text-xs mb-3">Get the latest match alerts.</p>
-          <div className="newsletter-form">
-            <input type="email" placeholder="Email Address" className="newsletter-input" />
-            <button type="submit" className="newsletter-btn">➤</button>
+          <div className="newsletter-form h-9">
+            <input type="email" placeholder="Email Address" className="newsletter-input text-xs" />
+            <button type="submit" className="newsletter-btn px-3 text-xs">➤</button>
           </div>
         </div>
       </div>

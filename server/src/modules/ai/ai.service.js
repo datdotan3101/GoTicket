@@ -63,6 +63,8 @@ export const aiService = {
    * @param {Array<{role: string, content: string}>} messages - Lịch sử chat từ client
    */
   async chat(userId, messages) {
+    const OLLAMA_URL = process.env.OLLAMA_BASE_URL;
+    const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.1:8b";
     const groq = getGroq();
 
     // Lấy context trận đấu hiện tại (không fail nếu DB lỗi)
@@ -73,47 +75,96 @@ export const aiService = {
       // Bỏ qua nếu DB chưa sẵn sàng
     }
 
-    if (!groq) {
-      const lastMsg = messages[messages.length - 1]?.content?.toLowerCase() || "";
-      let reply = "Xin chào! Tôi có thể giúp bạn tìm lịch thi đấu hoặc đặt vé. Vui lòng hỏi tôi về 'lịch thi đấu', 'trận đấu sắp tới' hoặc 'đặt vé' nhé.";
-      
-      if (lastMsg.includes("đặt vé") || lastMsg.includes("mua vé")) {
-         const activeResult = await query("SELECT id FROM matches WHERE status IN ('published', 'upcoming') AND match_date > NOW() ORDER BY match_date ASC LIMIT 1");
-         if (activeResult.rows.length > 0) {
-            reply = `Tuyệt vời, bạn có thể bắt đầu đặt vé ngay! Dẫn đến /checkout?match=${activeResult.rows[0].id}`;
-         } else {
-            reply = "Hiện tại chưa có trận đấu nào đang mở bán. Bạn vui lòng quay lại sau nhé!";
-         }
-      } else if (lastMsg.includes("lịch") || lastMsg.includes("trận đấu") || lastMsg.includes("sắp tới")) {
-         reply = matchContext.userText ? `Dưới đây là lịch thi đấu sắp tới:\n\n${matchContext.userText}\n\nBạn muốn đặt vé trận nào không? (Ví dụ: "đặt vé")` : "Hiện tại chưa có trận đấu nào sắp tới.";
-      } else if (lastMsg.includes("chào") || lastMsg.includes("hi")) {
-         reply = "Chào bạn! Mình là trợ lý GoTicket (Offline mode). Bạn cần tìm trận đấu hay đặt vé hôm nay?";
-      }
-
-      return {
-        message: reply,
-        usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }
-      };
-    }
-
-    const systemMessage = {
-      role: "system",
-      content: SYSTEM_PROMPT + matchContext.aiContext
-    };
-
-    // Giới hạn lịch sử tránh vượt context window
+    const systemPrompt = SYSTEM_PROMPT + matchContext.aiContext;
     const recentMessages = messages.slice(-10);
 
-    const completion = await groq.chat.completions.create({
-      model: GROQ_MODEL,
-      messages: [systemMessage, ...recentMessages],
-      max_tokens: MAX_TOKENS,
-      temperature: 0.7
-    });
+    // 1. ƯU TIÊN OLLAMA (Local AI)
+    if (OLLAMA_URL) {
+      try {
+        // Fix Node.js IPv6 resolution issue with localhost
+        const safeUrl = OLLAMA_URL.replace('localhost', '127.0.0.1');
+        const response = await fetch(`${safeUrl}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: OLLAMA_MODEL,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...recentMessages
+            ],
+            stream: false,
+            options: {
+              temperature: 0.7,
+              num_predict: MAX_TOKENS
+            }
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return {
+            message: data.message?.content || "",
+            usage: {
+              prompt_tokens: data.prompt_eval_count || 0,
+              completion_tokens: data.eval_count || 0,
+              total_tokens: (data.prompt_eval_count || 0) + (data.eval_count || 0)
+            },
+            provider: "ollama"
+          };
+        } else {
+          console.error(`Ollama returned status ${response.status}`);
+        }
+      } catch (error) {
+        console.error("Ollama connection failed, falling back...", error.message);
+      }
+    }
+
+    // 2. FALLBACK SANG GROQ (Cloud AI)
+    if (groq) {
+      try {
+        const systemMessage = {
+          role: "system",
+          content: systemPrompt
+        };
+
+        const completion = await groq.chat.completions.create({
+          model: GROQ_MODEL,
+          messages: [systemMessage, ...recentMessages],
+          max_tokens: MAX_TOKENS,
+          temperature: 0.7
+        });
+
+        return {
+          message: completion.choices[0]?.message?.content ?? "",
+          usage: completion.usage,
+          provider: "groq"
+        };
+      } catch (groqError) {
+        console.error("Groq connection failed, falling back to offline mode...", groqError.message);
+      }
+    }
+
+    // 3. FALLBACK CUỐI CÙNG (Offline Rule-based)
+    const lastMsg = messages[messages.length - 1]?.content?.toLowerCase() || "";
+    let reply = "Xin chào! Tôi có thể giúp bạn tìm lịch thi đấu hoặc đặt vé. Vui lòng hỏi tôi về 'lịch thi đấu', 'trận đấu sắp tới' hoặc 'đặt vé' nhé.";
+    
+    if (lastMsg.includes("đặt vé") || lastMsg.includes("mua vé")) {
+       const activeResult = await query("SELECT id FROM matches WHERE status IN ('published', 'upcoming') AND match_date > NOW() ORDER BY match_date ASC LIMIT 1");
+       if (activeResult.rows.length > 0) {
+          reply = `Tuyệt vời, bạn có thể bắt đầu đặt vé ngay! Dẫn đến /checkout?match=${activeResult.rows[0].id}`;
+       } else {
+          reply = "Hiện tại chưa có trận đấu nào đang mở bán. Bạn vui lòng quay lại sau nhé!";
+       }
+    } else if (lastMsg.includes("lịch") || lastMsg.includes("trận đấu") || lastMsg.includes("sắp tới")) {
+       reply = matchContext.userText ? `Dưới đây là lịch thi đấu sắp tới:\n\n${matchContext.userText}\n\nBạn muốn đặt vé trận nào không? (Ví dụ: "đặt vé")` : "Hiện tại chưa có trận đấu nào sắp tới.";
+    } else if (lastMsg.includes("chào") || lastMsg.includes("hi")) {
+       reply = "Chào bạn! Mình là trợ lý GoTicket (Offline mode). Bạn cần tìm trận đấu hay đặt vé hôm nay?";
+    }
 
     return {
-      message: completion.choices[0]?.message?.content ?? "",
-      usage: completion.usage
+      message: reply,
+      usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+      provider: "offline"
     };
   },
 

@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
+import { APP_ROUTES } from '../../constants/routes'
 import toast from 'react-hot-toast'
 import { 
   Search, UserPlus, Edit2, Lock, Unlock, 
-  Bell, Check, X, Info, Calendar, Clock, Gauge, TrendingUp, AlertCircle, Users
+  X, TrendingUp, AlertCircle, Users
 } from 'lucide-react'
+import { ROLES } from '../../constants/roles'
 import { userService } from '../../services/userService'
 import { approvalsService } from '../../services/approvalsService'
+import { clubService } from '../../services/clubService'
 import { unwrapData } from '../../utils/apiData'
 import { formatDateTime } from '../../utils/formatDate'
-
-const RECENT_ACTIVITY = [
-  { id: 1, type: 'approve', message: 'Admin-02 approved "Rock Festival 2023"', time: 'Today, 09:15 AM' },
-  { id: 2, type: 'reject', message: 'Rejected Stadium Config update: My Dinh Stadium', time: 'Yesterday, 17:40 PM' }
-]
 
 const getInitials = (name) => {
   if (!name) return 'UN'
@@ -29,21 +28,34 @@ const getAvatarColor = (initials) => {
 }
 
 export default function UserManagePage() {
+  const location = useLocation()
+  const isManagerMode = location.pathname === APP_ROUTES.ADMIN_MANAGERS
+  
   const [users, setUsers] = useState([])
   const [pendingMatches, setPendingMatches] = useState([])
+  const [clubs, setClubs] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
+  const [roleFilter, setRoleFilter] = useState('all')
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null })
+  
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [addForm, setAddForm] = useState({ fullName: '', email: '', password: '', role: ROLES.MANAGER, clubId: '' })
+  const [addFormErrors, setAddFormErrors] = useState({})
 
   useEffect(() => {
     const fetchInitial = async () => {
       try {
-        const [usersRes, approvalsRes] = await Promise.all([
+        const [usersRes, approvalsRes, clubsRes] = await Promise.all([
           userService.getAll({ limit: 100 }),
-          approvalsService.getPending({ type: 'match' })
+          approvalsService.getPending({ type: 'match' }),
+          clubService.getAll({ limit: 100 })
         ])
         const usersPayload = unwrapData(usersRes)
         setUsers(usersPayload?.data ?? usersPayload ?? [])
         setPendingMatches(unwrapData(approvalsRes) || [])
+        
+        const clubsPayload = unwrapData(clubsRes)
+        setClubs(clubsPayload?.data ?? clubsPayload ?? [])
       } catch (err) {
         console.error(err)
       }
@@ -106,7 +118,55 @@ export default function UserManagePage() {
     }
   }
 
-  const filteredUsers = users.filter(u => 
+  const validateForm = () => {
+    const errors = {}
+    if (!addForm.fullName.trim()) errors.fullName = "Full Name is required."
+    else if (addForm.fullName.length > 255) errors.fullName = "Full Name exceeds 255 characters."
+    
+    if (!addForm.email.trim()) errors.email = "Email is required."
+    else if (!/\S+@\S+\.\S+/.test(addForm.email)) errors.email = "Invalid email format."
+    
+    if (!addForm.password) errors.password = "Password is required."
+    else if (addForm.password.length < 6) errors.password = "Password must be at least 6 characters."
+    else if (addForm.password.length > 100) errors.password = "Password exceeds 100 characters."
+
+    if (addForm.role === ROLES.MANAGER && !addForm.clubId) {
+      errors.clubId = "Please assign a club for Manager role."
+    }
+    
+    setAddFormErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleAddUser = async (e) => {
+    e.preventDefault()
+    if (!validateForm()) return
+    
+    try {
+      await userService.create(addForm)
+      toast.success("User created successfully.")
+      setIsAddModalOpen(false)
+      setAddForm({ fullName: '', email: '', password: '', role: ROLES.MANAGER, clubId: '' })
+      setAddFormErrors({})
+      refreshUsers()
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to create user.')
+    }
+  }
+
+  const displayUsers = users.filter(u => {
+    const userRole = u.role?.toLowerCase()
+    const matchesRoleFilter = roleFilter === 'all' || userRole === roleFilter.toLowerCase()
+    
+    if (isManagerMode) {
+      const managerRoles = [ROLES.MANAGER, ROLES.ADMIN, ROLES.EDITOR, ROLES.CHECKER]
+      return matchesRoleFilter && managerRoles.includes(userRole)
+    } else {
+      return userRole === ROLES.AUDIENCE || !u.role
+    }
+  })
+
+  const filteredUsers = displayUsers.filter(u => 
     (u.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) || 
     (u.email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   )
@@ -127,7 +187,7 @@ export default function UserManagePage() {
       {/* Header */}
       <div style={{ marginBottom: '32px' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#0f172a', margin: '0 0 12px 0', letterSpacing: '-0.5px' }}>
-          User Management & Approvals
+          {isManagerMode ? 'Staff & Account Management' : 'User Management'}
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '4px', height: '20px', background: '#f97316', borderRadius: '2px' }}></div>
@@ -142,62 +202,28 @@ export default function UserManagePage() {
         {/* Total Users */}
         <div style={{ background: '#fff', borderRadius: '16px', padding: '24px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
           <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>
-            TOTAL USERS
+            {isManagerMode ? 'TOTAL STAFF' : 'TOTAL USERS'}
           </div>
           <div style={{ fontSize: '3rem', fontWeight: 900, color: '#0f172a', lineHeight: 1, marginBottom: '12px' }}>
-            {users.length.toLocaleString()}
+            {displayUsers.length.toLocaleString()}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', fontSize: '0.9rem', fontWeight: 700 }}>
             <TrendingUp size={16} />
             <span>+12% this month</span>
           </div>
         </div>
-
-        {/* Pending Matches */}
-        <div style={{ background: '#fff', borderRadius: '16px', padding: '24px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>
-            PENDING MATCHES
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
-            <div style={{ fontSize: '3rem', fontWeight: 900, color: '#ea580c', lineHeight: 1 }}>
-              {pendingMatchesCount}
-            </div>
-          </div>
-          <div>
-            <span style={{ display: 'inline-block', background: '#ffedd5', color: '#c2410c', padding: '4px 12px', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 800 }}>
-              Needs action
-            </span>
-          </div>
-        </div>
-
-        {/* Operational Capacity */}
-        <div style={{ background: '#0f172a', borderRadius: '16px', padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)' }}>
-          <div style={{ flex: 1, paddingRight: '20px' }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>
-              OPERATIONAL CAPACITY
-            </div>
-            <div style={{ width: '100%', height: '8px', background: '#334155', borderRadius: '4px', marginBottom: '16px', overflow: 'hidden' }}>
-              <div style={{ width: '85%', height: '100%', background: '#f97316', borderRadius: '4px' }}></div>
-            </div>
-            <div style={{ color: '#fff', fontSize: '1rem', fontWeight: 700 }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: 900, marginRight: '8px' }}>85%</span>
-              <span style={{ color: '#94a3b8' }}>System Efficiency</span>
-            </div>
-          </div>
-          <div style={{ width: '64px', height: '64px', background: '#1e293b', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-            <Gauge size={32} />
-          </div>
-        </div>
       </div>
 
       {/* Main Content Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
         {/* Left Column: Staff List */}
         <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <Users size={24} color="#0f172a" />
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>Staff List</h2>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+                {isManagerMode ? 'Account Managers' : 'Registered Users'}
+              </h2>
             </div>
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
               <div style={{ position: 'relative' }}>
@@ -210,7 +236,22 @@ export default function UserManagePage() {
                   style={{ padding: '10px 16px 10px 36px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '0.9rem', width: '200px' }}
                 />
               </div>
-              <button style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#0f172a', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}>
+              {isManagerMode && (
+                <select 
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  style={{ padding: '10px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '0.9rem', background: '#fff', cursor: 'pointer', color: '#475569', fontWeight: 600 }}
+                >
+                  <option value="all">All Roles</option>
+                  <option value={ROLES.ADMIN}>Admins</option>
+                  <option value={ROLES.MANAGER}>Managers</option>
+                  <option value={ROLES.EDITOR}>Editors</option>
+                  <option value={ROLES.CHECKER}>Checkers</option>
+                </select>
+              )}
+              <button 
+                onClick={() => { setIsAddModalOpen(true); setAddFormErrors({}); }}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#0f172a', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}>
                 <UserPlus size={18} />
                 Add New
               </button>
@@ -223,6 +264,9 @@ export default function UserManagePage() {
                 <tr>
                   <th style={{ textAlign: 'left', padding: '16px 0', fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>NAME / EMAIL</th>
                   <th style={{ textAlign: 'left', padding: '16px 0', fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>ROLE</th>
+                  {isManagerMode && (
+                    <th style={{ textAlign: 'left', padding: '16px 0', fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>CLUB</th>
+                  )}
                   <th style={{ textAlign: 'left', padding: '16px 0', fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>STATUS</th>
                   <th style={{ textAlign: 'right', padding: '16px 0', fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>ACTIONS</th>
                 </tr>
@@ -245,10 +289,17 @@ export default function UserManagePage() {
                         </div>
                       </td>
                       <td style={{ padding: '16px 0' }}>
-                        <span style={{ background: user.role === 'MANAGER' ? '#dbeafe' : '#f1f5f9', color: user.role === 'MANAGER' ? '#1e3a8a' : '#475569', padding: '4px 12px', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>
+                        <span style={{ background: (user.role === ROLES.MANAGER || user.role === 'MANAGER') ? '#dbeafe' : '#f1f5f9', color: (user.role === ROLES.MANAGER || user.role === 'MANAGER') ? '#1e3a8a' : '#475569', padding: '4px 12px', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>
                           {user.role}
                         </span>
                       </td>
+                      {isManagerMode && (
+                        <td style={{ padding: '16px 0' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569' }}>
+                            {user.club_name || clubs.find(c => c.id === user.club_id)?.name || '—'}
+                          </span>
+                        </td>
+                      )}
                       <td style={{ padding: '16px 0' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: user.is_active ? '#10b981' : '#ef4444' }}></div>
@@ -285,100 +336,8 @@ export default function UserManagePage() {
             onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
             onMouseOut={(e) => e.currentTarget.style.background = '#f8fafc'}
           >
-            View All Users
+            View All {isManagerMode ? 'Staff' : 'Users'}
           </button>
-        </div>
-
-        {/* Right Column: Approvals & Activity */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
-          {/* Match Approvals */}
-          <div style={{ background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-              <Bell size={20} color="#ea580c" />
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>Match Approvals</h2>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {pendingMatches.slice(0, 2).map((match, idx) => (
-                <div key={match.id} style={{ 
-                  background: '#fff', 
-                  borderRadius: '12px', 
-                  border: idx === 0 ? '2px dashed #f97316' : '1px solid #e2e8f0', 
-                  padding: '16px',
-                  boxShadow: idx === 0 ? '0 4px 10px rgba(249, 115, 22, 0.1)' : 'none'
-                }}>
-                  <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-                    <div style={{ width: '80px', height: '80px', borderRadius: '8px', background: '#f1f5f9', backgroundImage: `url(${match.thumbnail_url || 'https://images.unsplash.com/photo-1518605368461-1ee0676644ec?w=200'})`, backgroundSize: 'cover', backgroundPosition: 'center', flexShrink: 0 }}></div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
-                        <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a', margin: '0 0 4px 0', lineHeight: 1.3 }}>
-                          {match.home_team} vs {match.away_team}
-                        </h3>
-                        {idx === 0 && <span style={{ background: '#f97316', color: '#fff', fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>NEW</span>}
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '8px' }}>{match.stadium_name || 'Stadium'}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#0f172a', fontWeight: 600 }}>
-                        <Calendar size={14} />
-                        {match.match_date ? formatDateTime(match.match_date) : 'TBA'}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {idx === 0 && (
-                    <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-                      <button onClick={() => handleApproveMatch(match.id)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#10b981', color: '#fff', border: 'none', padding: '10px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>
-                        <Check size={16} /> Approve
-                      </button>
-                      <button onClick={() => handleRejectMatch(match.id)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#ef4444', color: '#fff', border: 'none', padding: '10px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>
-                        <X size={16} /> Reject
-                      </button>
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
-                    <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.6rem', fontWeight: 800 }}>
-                      {(match.submitted_by_name || 'A')[0]}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                      Created by <span style={{ fontWeight: 700, color: '#0f172a' }}>{match.submitted_by_name || 'Admin'}</span> • 10 mins ago
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {pendingMatches.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '30px', background: '#fff', borderRadius: '12px', color: '#94a3b8' }}>
-                  No pending approvals.
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div style={{ background: '#0f172a', borderRadius: '16px', padding: '24px', color: '#fff' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-              <Clock size={20} color="#f97316" />
-              <h2 style={{ fontSize: '1rem', fontWeight: 900, color: '#fff', margin: 0, textTransform: 'uppercase', letterSpacing: '1px' }}>Recent Activity</h2>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {RECENT_ACTIVITY.map(activity => (
-                <div key={activity.id} style={{ display: 'flex', gap: '16px' }}>
-                  <div style={{ width: '3px', background: activity.type === 'approve' ? '#10b981' : '#ef4444', borderRadius: '2px' }}></div>
-                  <div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '6px', lineHeight: 1.4 }}>
-                      {activity.message}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                      {activity.time}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
         </div>
       </div>
 
@@ -404,7 +363,62 @@ export default function UserManagePage() {
           </div>
         </div>
       )}
+
+      {/* Add User Modal */}
+      {isAddModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#fff', padding: '32px', borderRadius: '20px', maxWidth: '500px', width: '100%', boxShadow: '0 20px 50px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>Add New Member</h2>
+              <button onClick={() => setIsAddModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                <X size={24} />
+              </button>
+            </div>
+            <form noValidate onSubmit={handleAddUser} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Full Name *</label>
+                <input type="text" maxLength={255} value={addForm.fullName} onChange={e => {setAddForm({...addForm, fullName: e.target.value}); setAddFormErrors(prev => ({...prev, fullName: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${addFormErrors.fullName ? '#ef4444' : '#e2e8f0'}`, outline: 'none' }} placeholder="John Doe" />
+                {addFormErrors.fullName && <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '6px', fontWeight: 600 }}>{addFormErrors.fullName}</div>}
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Email *</label>
+                <input type="email" maxLength={255} value={addForm.email} onChange={e => {setAddForm({...addForm, email: e.target.value}); setAddFormErrors(prev => ({...prev, email: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${addFormErrors.email ? '#ef4444' : '#e2e8f0'}`, outline: 'none' }} placeholder="john@example.com" />
+                {addFormErrors.email && <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '6px', fontWeight: 600 }}>{addFormErrors.email}</div>}
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Password *</label>
+                <input type="password" minLength={6} maxLength={100} value={addForm.password} onChange={e => {setAddForm({...addForm, password: e.target.value}); setAddFormErrors(prev => ({...prev, password: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${addFormErrors.password ? '#ef4444' : '#e2e8f0'}`, outline: 'none' }} placeholder="Min 6 characters" />
+                {addFormErrors.password && <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '6px', fontWeight: 600 }}>{addFormErrors.password}</div>}
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Role</label>
+                <select value={addForm.role} onChange={e => {setAddForm({...addForm, role: e.target.value, clubId: ''}); setAddFormErrors(prev => ({...prev, clubId: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', background: '#fff' }}>
+                  <option value={ROLES.MANAGER}>Manager</option>
+                  <option value={ROLES.ADMIN}>Admin</option>
+                  <option value={ROLES.EDITOR}>Editor</option>
+                  <option value={ROLES.CHECKER}>Checker</option>
+                </select>
+              </div>
+              {addForm.role === ROLES.MANAGER && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Assign Club *</label>
+                  <select value={addForm.clubId} onChange={e => {setAddForm({...addForm, clubId: e.target.value}); setAddFormErrors(prev => ({...prev, clubId: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${addFormErrors.clubId ? '#ef4444' : '#e2e8f0'}`, outline: 'none', background: '#fff' }}>
+                    <option value="">Select a club...</option>
+                    {clubs.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                  {addFormErrors.clubId && <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '6px', fontWeight: 600 }}>{addFormErrors.clubId}</div>}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                <button type="button" onClick={() => setIsAddModalOpen(false)} style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#f1f5f9', color: '#475569', fontWeight: 700, border: 'none', cursor: 'pointer' }}>Cancel</button>
+                <button type="submit" style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#0f172a', color: '#fff', fontWeight: 700, border: 'none', cursor: 'pointer' }}>Create Member</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   )
 }
-

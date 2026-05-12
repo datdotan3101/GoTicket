@@ -51,7 +51,7 @@ export default function SportPage() {
   const groupedSchedule = useMemo(() => {
     const groups = {}
     scheduleMatches.forEach(m => {
-      const dateKey = new Date(m.match_date).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })
+      const dateKey = new Date(m.match_date).toLocaleDateString('en-US', { weekday: 'long', month: '2-digit', day: '2-digit', year: 'numeric' })
       if (!groups[dateKey]) groups[dateKey] = []
       groups[dateKey].push(m)
     })
@@ -117,7 +117,7 @@ export default function SportPage() {
                 <div className="schedule-day-matches">
                   {dayMatches.map(match => {
                     const matchTime = new Date(match.match_date)
-                    const timeStr = matchTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+                    const timeStr = matchTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
                     const isPast = matchTime < new Date()
 
                     const CardWrapper = isPast ? 'div' : Link
