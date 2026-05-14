@@ -260,6 +260,14 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
   }, [clientSecret, totalAmount])
 
   const createPendingTickets = useCallback(async () => {
+    // If booking was already created by the AI chatbot, skip booking + intent creation
+    if (checkoutData?._fromChatbot && checkoutData?._ticketIds && checkoutData?._clientSecret) {
+      setTicketIds(checkoutData._ticketIds)
+      setClientSecret(checkoutData._clientSecret)
+      setIsInitializing(false)
+      return
+    }
+
     if (!checkoutData?.matchId || (!checkoutData?.standId && !checkoutData?.selections)) {
       toast.error('Invalid payment data.')
       if (!onBackProp) navigate('/')

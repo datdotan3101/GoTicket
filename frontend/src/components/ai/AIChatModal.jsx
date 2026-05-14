@@ -4,16 +4,128 @@ import { useChatStore } from '../../store/chatStore'
 import { aiService } from '../../services/aiService'
 import { unwrapData } from '../../utils/apiData'
 
+const formatVND = (amount = 0) => {
+  const formatted = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(amount) || 0)
+  return `${formatted} VND`
+}
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '--'
+  return new Date(dateStr).toLocaleString('vi-VN', { 
+    weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit', 
+    hour: '2-digit', minute: '2-digit' 
+  })
+}
+
+/* ─── MATCH CARD ─── */
+function MatchCard({ match, onSelect }) {
+  return (
+    <div className="ai-match-card" onClick={() => onSelect(match)}>
+      <div className="ai-match-card-teams">
+        <span className="ai-match-team">{match.homeTeam}</span>
+        <span className="ai-match-vs">VS</span>
+        <span className="ai-match-team">{match.awayTeam}</span>
+      </div>
+      <div className="ai-match-card-info">
+        <span>📅 {formatDate(match.matchDate)}</span>
+        <span>🏟️ {match.stadiumName || 'N/A'}</span>
+        {match.availableSeats > 0 && <span>🎫 Còn {match.availableSeats} vé</span>}
+      </div>
+      <button type="button" className="ai-match-card-btn">Chọn trận này</button>
+    </div>
+  )
+}
+
+/* ─── STAND LIST CARD ─── */
+function StandListCard({ data, onSelectStand }) {
+  if (!data?.stands) return null
+  return (
+    <div className="ai-stand-card">
+      <div className="ai-stand-card-header">
+        🏟️ {data.match.homeTeam} vs {data.match.awayTeam}
+      </div>
+      <div className="ai-stand-card-list">
+        {data.stands.map(stand => (
+          <div key={stand.id} className="ai-stand-item">
+            <div className="ai-stand-item-info">
+              <span className="ai-stand-name">{stand.name}</span>
+              <span className="ai-stand-price">{formatVND(stand.price)}</span>
+              <span className="ai-stand-seats">{stand.availableSeats > 0 ? `Còn ${stand.availableSeats} ghế` : 'Hết chỗ'}</span>
+            </div>
+            {stand.availableSeats > 0 && (
+              <button
+                type="button"
+                className="ai-stand-select-btn"
+                onClick={() => onSelectStand(data.match, stand)}
+              >
+                Chọn
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ─── BOOKING SUCCESS CARD ─── */
+function BookingCard({ data, onCheckout }) {
+  if (!data) return null
+  return (
+    <div className="ai-booking-card">
+      <div className="ai-booking-card-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        Đặt vé thành công!
+      </div>
+      <div className="ai-booking-card-body">
+        <div className="ai-booking-row">
+          <span>Trận đấu</span>
+          <strong>{data.matchName}</strong>
+        </div>
+        <div className="ai-booking-row">
+          <span>Ngày giờ</span>
+          <strong>{formatDate(data.matchDate)}</strong>
+        </div>
+        <div className="ai-booking-row">
+          <span>Sân vận động</span>
+          <strong>{data.stadiumName || 'N/A'}</strong>
+        </div>
+        <div className="ai-booking-row">
+          <span>Khán đài</span>
+          <strong>{data.standName}</strong>
+        </div>
+        <div className="ai-booking-row">
+          <span>Số lượng</span>
+          <strong>{data.quantity} vé</strong>
+        </div>
+        <div className="ai-booking-row ai-booking-total">
+          <span>Tổng cộng</span>
+          <strong>{formatVND(data.totalAmount)}</strong>
+        </div>
+      </div>
+      <button
+        type="button"
+        className="ai-booking-checkout-btn"
+        onClick={() => onCheckout(data)}
+      >
+        💳 Thanh toán ngay
+      </button>
+      <p className="ai-booking-note">Vé đang được giữ tạm. Vui lòng thanh toán để hoàn tất.</p>
+    </div>
+  )
+}
+
 export default function AIChatModal({ onClose }) {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messages = useChatStore((state) => state.messages)
   const pushMessage = useChatStore((state) => state.pushMessage)
   const clearMessages = useChatStore((state) => state.clearMessages)
-  
+  const setPendingBooking = useChatStore((state) => state.setPendingBooking)
+
   const messagesEndRef = useRef(null)
   const navigate = useNavigate()
-  
+
   const lastSubmitTimeRef = useRef(0)
 
   useEffect(() => {
@@ -32,16 +144,21 @@ export default function AIChatModal({ onClose }) {
     setInput('')
     setIsLoading(true)
 
-    const newMessages = [...messages, { role: 'user', content: trimmed }];
-    
+    const newMessages = [...messages, { role: 'user', content: trimmed }]
+
     try {
       const response = await aiService.chat(newMessages)
       const data = unwrapData(response)
-      
+
       if (data && data.reply) {
-         pushMessage({ role: 'assistant', content: data.reply })
+        pushMessage({
+          role: 'assistant',
+          content: data.reply,
+          action: data.action || 'none',
+          data: data.data || null
+        })
       } else {
-         pushMessage({ role: 'assistant', content: 'Xin lỗi, tôi không thể xử lý yêu cầu lúc này.' })
+        pushMessage({ role: 'assistant', content: 'Xin lỗi, tôi không thể xử lý yêu cầu lúc này.' })
       }
     } catch (err) {
       pushMessage({ role: 'assistant', content: 'Có lỗi xảy ra khi kết nối máy chủ AI. Vui lòng thử lại sau.' })
@@ -55,29 +172,82 @@ export default function AIChatModal({ onClose }) {
     submitMessage(input)
   }
 
-  const renderMessageContent = (content) => {
-    const checkoutRegex = /\/checkout\?match=\S+/g
-    const matches = content.match(checkoutRegex)
+  /* ── Action handlers for interactive cards ── */
+  const handleSelectMatch = (match) => {
+    submitMessage(`Tôi muốn xem khán đài và giá vé trận ${match.homeTeam} vs ${match.awayTeam}`)
+  }
 
-    if (matches && matches.length > 0) {
-      const link = matches[0]
-      const text = content.replace(link, '')
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <span>{text.replace('Dẫn đến', '').trim()}</span>
-          <button 
-            type="button"
-            className="link-button"
-            style={{ width: '100%', textAlign: 'center', background: '#059669' }}
-            onClick={() => navigate(link)}
-          >
-            Tiến hành Đặt vé
-          </button>
-        </div>
-      )
-    }
+  const handleSelectStand = (match, stand) => {
+    submitMessage(`Đặt cho tôi 1 vé khán đài ${stand.name} trận ${match.homeTeam} vs ${match.awayTeam}`)
+  }
 
-    return <span>{content}</span>
+  const handleCheckout = (bookingData) => {
+    setPendingBooking(bookingData)
+    onClose()
+    navigate('/audience/checkout', {
+      state: {
+        matchId: bookingData.matchId,
+        matchName: bookingData.matchName,
+        selections: [{
+          standId: bookingData.standId,
+          standName: bookingData.standName,
+          quantity: bookingData.quantity,
+          price: bookingData.standPrice
+        }],
+        _fromChatbot: true,
+        _ticketIds: bookingData.ticketIds,
+        _clientSecret: bookingData.clientSecret
+      }
+    })
+  }
+
+  /* ── Render message content with interactive cards ── */
+  const renderMessageContent = (msg) => {
+    const { content, action, data } = msg
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {content && <span className="ai-msg-text">{content}</span>}
+
+        {/* Match list cards */}
+        {action === 'show_matches' && Array.isArray(data) && data.length > 0 && (
+          <div className="ai-match-cards-list">
+            {data.map(match => (
+              <MatchCard key={match.id} match={match} onSelect={handleSelectMatch} />
+            ))}
+          </div>
+        )}
+
+        {/* Availability card */}
+        {action === 'show_availability' && data && (
+          <StandListCard data={data} onSelectStand={handleSelectStand} />
+        )}
+
+        {/* Booking created card */}
+        {action === 'booking_created' && data && (
+          <BookingCard data={data} onCheckout={handleCheckout} />
+        )}
+
+        {/* Legacy: checkout link fallback */}
+        {!action && content && (() => {
+          const checkoutRegex = /\/checkout\?match=\S+/g
+          const matches = content.match(checkoutRegex)
+          if (matches && matches.length > 0) {
+            return (
+              <button
+                type="button"
+                className="link-button"
+                style={{ width: '100%', textAlign: 'center', background: '#059669' }}
+                onClick={() => navigate(matches[0])}
+              >
+                Tiến hành Đặt vé
+              </button>
+            )
+          }
+          return null
+        })()}
+      </div>
+    )
   }
 
   return (
@@ -93,8 +263,8 @@ export default function AIChatModal({ onClose }) {
             </svg>
           </div>
           <div className="ai-modal-title-wrapper">
-            <h3 className="ai-modal-title">GoTicket Assistant</h3>
-            <span className="ai-modal-status">Trực tuyến</span>
+            <h3 className="ai-modal-title">GoTicket Advisor</h3>
+            <span className="ai-modal-status">Tư vấn viên trực tuyến</span>
           </div>
         </div>
         <div className="ai-modal-actions">
@@ -110,14 +280,14 @@ export default function AIChatModal({ onClose }) {
       <div className="ai-modal-body">
         {messages.length === 0 ? (
           <div className="ai-welcome-container">
-            <div className="ai-waving">👋</div>
+            <div className="ai-waving">🎫</div>
             <div className="ai-welcome-text">
-              Xin chào! Mình là trợ lý AI của GoTicket. Mình có thể giúp gì cho bạn?
+              Xin chào! Mình là tư vấn viên GoTicket. Mình có thể giúp bạn tìm trận đấu và đặt vé ngay trong chat!
             </div>
             <div className="ai-quick-actions">
-              <button type="button" onClick={() => submitMessage('Tôi muốn xem lịch thi đấu')} className="ai-quick-btn">📅 Lịch thi đấu</button>
-              <button type="button" onClick={() => submitMessage('Hướng dẫn tôi đặt vé')} className="ai-quick-btn">🎫 Đặt vé</button>
-              <button type="button" onClick={() => submitMessage('Có trận đấu nào sắp tới không?')} className="ai-quick-btn">🔥 Trận hot sắp tới</button>
+              <button type="button" onClick={() => submitMessage('Tôi muốn xem lịch thi đấu sắp tới')} className="ai-quick-btn">📅 Lịch thi đấu</button>
+              <button type="button" onClick={() => submitMessage('Đặt vé hộ tôi')} className="ai-quick-btn">🎫 Đặt vé hộ tôi</button>
+              <button type="button" onClick={() => submitMessage('Có trận đấu nào hot sắp tới không?')} className="ai-quick-btn">🔥 Trận hot</button>
             </div>
           </div>
         ) : (
@@ -126,7 +296,7 @@ export default function AIChatModal({ onClose }) {
                key={idx} 
                className={msg.role === 'user' ? 'ai-chat-bubble-user' : 'ai-chat-bubble-bot'}
              >
-               {msg.role === 'assistant' ? renderMessageContent(msg.content) : <span>{msg.content}</span>}
+               {msg.role === 'assistant' ? renderMessageContent(msg) : <span>{msg.content}</span>}
              </div>
           ))
         )}
@@ -146,7 +316,7 @@ export default function AIChatModal({ onClose }) {
             type="text" 
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Nhập câu hỏi..." 
+            placeholder="Nhập yêu cầu... VD: Đặt 2 vé trận Hà Nội FC" 
             disabled={isLoading}
             autoFocus
           />

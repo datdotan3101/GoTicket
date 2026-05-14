@@ -715,13 +715,13 @@ textarea { width: 100%; font-family: inherit; }
   padding: 14px 18px;
   border-radius: 18px;
   border-bottom-left-radius: 4px;
-  max-width: 85%;
+  max-width: 95%;
   align-self: flex-start;
   font-size: 0.95rem;
   line-height: 1.5;
   border: 1px solid #f1f5f9;
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-  white-space: pre-wrap;
+  white-space: normal;
 }
 .ai-chat-bubble-user {
   background: linear-gradient(135deg, #3b82f6, #2563eb);
@@ -804,6 +804,235 @@ textarea { width: 100%; font-family: inherit; }
 @keyframes typingDot {
   0%, 80%, 100% { transform: scale(0); }
   40% { transform: scale(1); }
+}
+
+/* --- AI CHAT INTERACTIVE CARDS --- */
+.ai-msg-text {
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+.ai-match-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+.ai-match-card {
+  background: linear-gradient(135deg, #f8fafc, #fff);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.25s;
+  animation: fadeIn 0.3s ease-out;
+}
+.ai-match-card:hover {
+  border-color: #6366f1;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.12);
+  transform: translateY(-2px);
+}
+.ai-match-card-teams {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ai-match-team {
+  font-weight: 800;
+  font-size: 0.88rem;
+  color: #1e293b;
+}
+.ai-match-vs {
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: #94a3b8;
+  font-style: italic;
+}
+.ai-match-card-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.ai-match-card-btn {
+  width: 100%;
+  padding: 8px;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ai-match-card-btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+/* Stand Picker Card */
+.ai-stand-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  animation: fadeIn 0.3s ease-out;
+}
+.ai-stand-card-header {
+  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+  color: #fff;
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+.ai-stand-card-list {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ai-stand-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  transition: all 0.2s;
+}
+.ai-stand-item:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+.ai-stand-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ai-stand-name {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #1e293b;
+}
+.ai-stand-price {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #ef4444;
+}
+.ai-stand-seats {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+}
+.ai-stand-select-btn {
+  padding: 6px 16px;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.ai-stand-select-btn:hover {
+  background: #4f46e5;
+  transform: scale(1.05);
+}
+
+/* Booking Card */
+.ai-booking-card {
+  background: #fff;
+  border: 2px solid #22c55e;
+  border-radius: 16px;
+  overflow: hidden;
+  animation: fadeIn 0.4s ease-out;
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.1);
+}
+.ai-booking-card-header {
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: #fff;
+  padding: 14px 16px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ai-booking-card-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ai-booking-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px dashed #f1f5f9;
+}
+.ai-booking-row:last-child { border-bottom: none; }
+.ai-booking-row span {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 600;
+}
+.ai-booking-row strong {
+  font-size: 0.85rem;
+  color: #1e293b;
+  font-weight: 800;
+  text-align: right;
+  max-width: 55%;
+}
+.ai-booking-total {
+  background: #f8fafc;
+  padding: 10px 12px !important;
+  margin: 4px -16px -6px;
+  border-radius: 0 0 0 0;
+}
+.ai-booking-total span {
+  font-size: 0.9rem !important;
+  color: #1e293b !important;
+  font-weight: 800 !important;
+}
+.ai-booking-total strong {
+  font-size: 1.1rem !important;
+  color: #ef4444 !important;
+  font-weight: 900 !important;
+}
+.ai-booking-checkout-btn {
+  width: calc(100% - 32px);
+  margin: 12px 16px;
+  padding: 14px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+.ai-booking-checkout-btn:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+}
+.ai-booking-note {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  padding: 0 16px 14px;
+  margin: 0;
+  font-weight: 600;
 }
 
 /* --- MATCHCENTER PRO MANAGER WIZARD --- */
