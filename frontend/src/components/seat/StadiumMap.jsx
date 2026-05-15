@@ -95,9 +95,12 @@ export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelec
         {/* Render Blocks */}
         {MAP_BLOCKS.map((block) => {
           const standData = getBlockStand(block.id)
+          const config = blockConfigs[block.id]
           const selected = isSelected(block.id)
-          const isActive = standData.total_seats > 0
-          const soldOut = isActive && standData.available_seats === 0
+          
+          // Determine active status: prioritize local config if available (Manager View)
+          const isActive = config ? config.active : standData.total_seats > 0
+          const soldOut = !config && isActive && standData.available_seats === 0
           
           // Active + available → original color, Sold out → muted red, Inactive → grey
           const fill = selected 

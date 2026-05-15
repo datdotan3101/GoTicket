@@ -94,6 +94,10 @@ export const matchesService = {
       throw new Error("Bạn không có quyền chỉnh sửa trận đấu của CLB khác.");
     }
 
+    if (["approved", "published"].includes(match.status)) {
+      throw new Error("Không thể chỉnh sửa trận đấu đã được phê duyệt.");
+    }
+
     const result = await query(
       `UPDATE matches
        SET home_team = COALESCE($2, home_team),
@@ -123,9 +127,12 @@ export const matchesService = {
     const match = await this.getById(id);
     if (!match) throw new Error("Không tìm thấy trận đấu.");
     if (!canAccessMatchByClub(user, match)) throw new Error("Bạn không có quyền xóa trận đấu này.");
-    if (match.status !== "draft") throw new Error("Chỉ có thể xóa trận đấu ở trạng thái draft.");
+    if (!['draft', 'pending_review', 'rejected'].includes(match.status)) {
+      throw new Error("Chỉ có thể xóa trận đấu chưa được duyệt hoặc đã kết thúc.");
+    }
     await query("DELETE FROM seats WHERE match_id = $1", [id]);
     await query("DELETE FROM stands WHERE match_id = $1", [id]);
+    await query("DELETE FROM approvals WHERE resource_type = 'match' AND resource_id = $1", [id]);
     await query("DELETE FROM matches WHERE id = $1", [id]);
   },
 
@@ -160,6 +167,10 @@ export const matchesService = {
     }
     if (!canAccessMatchByClub(user, match)) {
       throw new Error("Bạn không có quyền thao tác trận đấu của CLB khác.");
+    }
+
+    if (["approved", "published"].includes(match.status)) {
+      throw new Error("Không thể thay đổi cấu hình khán đài của trận đấu đã được phê duyệt.");
     }
 
     const stands = generateStands(payload.blockConfigs || {});

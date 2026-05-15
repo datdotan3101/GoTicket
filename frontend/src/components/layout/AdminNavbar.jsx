@@ -31,8 +31,16 @@ export default function AdminNavbar() {
     }
 
     fetchPending()
+    
+    // Listen for manual updates from other components
+    const handleUpdate = () => fetchPending()
+    window.addEventListener('approval-updated', handleUpdate)
+    
     const interval = setInterval(fetchPending, 30000)
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('approval-updated', handleUpdate)
+    }
   }, [])
 
   const menuSections = [

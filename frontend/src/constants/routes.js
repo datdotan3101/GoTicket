@@ -23,6 +23,7 @@ export const APP_ROUTES = {
   EDITOR_NEWS_EDIT: '/editor/news/:newsId/edit',
   EDITOR_NOTIFICATIONS: '/editor/notifications',
   MANAGER_DASHBOARD: '/manager',
+  MANAGER_MATCHES: '/manager/matches',
   MANAGER_MATCH_CREATE: '/manager/matches/create',
   MANAGER_MATCH_EDIT: '/manager/matches/:matchId/edit',
   MANAGER_STAND_CONFIG: '/manager/matches/:matchId/stand-config',

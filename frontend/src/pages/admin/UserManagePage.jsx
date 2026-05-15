@@ -12,6 +12,7 @@ import { approvalsService } from '../../services/approvalsService'
 import { clubService } from '../../services/clubService'
 import { unwrapData } from '../../utils/apiData'
 import { formatDateTime } from '../../utils/formatDate'
+import InlineError, { getInputErrorStyle } from '../../components/ui/InlineError'
 
 const getInitials = (name) => {
   if (!name) return 'UN'
@@ -377,18 +378,18 @@ export default function UserManagePage() {
             <form noValidate onSubmit={handleAddUser} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Full Name *</label>
-                <input type="text" maxLength={255} value={addForm.fullName} onChange={e => {setAddForm({...addForm, fullName: e.target.value}); setAddFormErrors(prev => ({...prev, fullName: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${addFormErrors.fullName ? '#ef4444' : '#e2e8f0'}`, outline: 'none' }} placeholder="John Doe" />
-                {addFormErrors.fullName && <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '6px', fontWeight: 600 }}>{addFormErrors.fullName}</div>}
+                <input type="text" maxLength={255} value={addForm.fullName} onChange={e => {setAddForm({...addForm, fullName: e.target.value}); setAddFormErrors(prev => ({...prev, fullName: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', ...getInputErrorStyle(!!addFormErrors.fullName), outline: 'none' }} placeholder="John Doe" />
+                <InlineError message={addFormErrors.fullName} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Email *</label>
-                <input type="email" maxLength={255} value={addForm.email} onChange={e => {setAddForm({...addForm, email: e.target.value}); setAddFormErrors(prev => ({...prev, email: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${addFormErrors.email ? '#ef4444' : '#e2e8f0'}`, outline: 'none' }} placeholder="john@example.com" />
-                {addFormErrors.email && <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '6px', fontWeight: 600 }}>{addFormErrors.email}</div>}
+                <input type="email" maxLength={255} value={addForm.email} onChange={e => {setAddForm({...addForm, email: e.target.value}); setAddFormErrors(prev => ({...prev, email: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', ...getInputErrorStyle(!!addFormErrors.email), outline: 'none' }} placeholder="john@example.com" />
+                <InlineError message={addFormErrors.email} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Password *</label>
-                <input type="password" minLength={6} maxLength={100} value={addForm.password} onChange={e => {setAddForm({...addForm, password: e.target.value}); setAddFormErrors(prev => ({...prev, password: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${addFormErrors.password ? '#ef4444' : '#e2e8f0'}`, outline: 'none' }} placeholder="Min 6 characters" />
-                {addFormErrors.password && <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '6px', fontWeight: 600 }}>{addFormErrors.password}</div>}
+                <input type="password" minLength={6} maxLength={100} value={addForm.password} onChange={e => {setAddForm({...addForm, password: e.target.value}); setAddFormErrors(prev => ({...prev, password: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', ...getInputErrorStyle(!!addFormErrors.password), outline: 'none' }} placeholder="Min 6 characters" />
+                <InlineError message={addFormErrors.password} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Role</label>
@@ -402,13 +403,13 @@ export default function UserManagePage() {
               {addForm.role === ROLES.MANAGER && (
                 <div>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Assign Club *</label>
-                  <select value={addForm.clubId} onChange={e => {setAddForm({...addForm, clubId: e.target.value}); setAddFormErrors(prev => ({...prev, clubId: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${addFormErrors.clubId ? '#ef4444' : '#e2e8f0'}`, outline: 'none', background: '#fff' }}>
+                  <select value={addForm.clubId} onChange={e => {setAddForm({...addForm, clubId: e.target.value}); setAddFormErrors(prev => ({...prev, clubId: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', ...getInputErrorStyle(!!addFormErrors.clubId), outline: 'none', background: '#fff' }}>
                     <option value="">Select a club...</option>
                     {clubs.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
-                  {addFormErrors.clubId && <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '6px', fontWeight: 600 }}>{addFormErrors.clubId}</div>}
+                  <InlineError message={addFormErrors.clubId} />
                 </div>
               )}
               <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>

@@ -9,6 +9,7 @@ import { unwrapData } from '../../utils/apiData'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { format } from 'date-fns'
+import InlineError, { getInputErrorStyle } from '../../components/ui/InlineError'
 
 const STADIUM_COLUMNS = [
   { id: 'A1', stand: 'A', tiers: ['T1', 'T2'] },
@@ -36,6 +37,7 @@ export default function MatchCreatePage() {
     homeTeam: '',
     awayTeam: '',
     matchDate: '',
+    ticketSaleOpenAt: '',
     stadiumId: '',
     description: '',
   })
@@ -55,8 +57,12 @@ export default function MatchCreatePage() {
   const [previewBannerUrl, setPreviewBannerUrl] = useState(null)
   const [selectedBannerFile, setSelectedBannerFile] = useState(null)
   const [showConfirmPopup, setShowConfirmPopup] = useState(false)
+  const [errors, setErrors] = useState({})
 
   const navigate = useNavigate()
+
+  const inputErrorStyle = (field) => getInputErrorStyle(!!errors[field])
+  const renderError = (field) => <InlineError message={errors[field]} />
 
   useEffect(() => {
     const load = async () => {
@@ -88,52 +94,95 @@ export default function MatchCreatePage() {
       C: Math.floor(total * STAND_RATIOS.C),
       D: Math.floor(total * STAND_RATIOS.D)
     }
+    
+    // Distribute remainder to stand A to ensure total is exact
+    const standSum = standTotals.A + standTotals.B + standTotals.C + standTotals.D;
+    standTotals.A += (total - standSum);
 
+    // Get a flat list of all active blocks
+    const activeBlocks = [];
     STADIUM_COLUMNS.forEach(col => {
-      const mainStand = col.stand
-      const columnsInStand = STADIUM_COLUMNS.filter(c => c.stand === mainStand).length
-      const colCapacity = Math.floor(standTotals[mainStand] / columnsInStand)
-      
-      const activeTierCount = columnConfigs[col.id].activeTiers.length
-      const tierCapacity = activeTierCount > 0 ? Math.floor(colCapacity / activeTierCount) : 0
+      col.tiers.forEach(tier => {
+        if (columnConfigs[col.id].activeTiers.includes(tier)) {
+          activeBlocks.push({ colId: col.id, stand: col.stand, tier, blockId: `${col.id}-${tier}` });
+        }
+      })
+    });
 
+    // Distribute stand totals among active blocks in that stand
+    ['A', 'B', 'C', 'D'].forEach(mainStand => {
+      const blocksInStand = activeBlocks.filter(b => b.stand === mainStand);
+      if (blocksInStand.length > 0) {
+        const baseCapacity = Math.floor(standTotals[mainStand] / blocksInStand.length);
+        const remainder = standTotals[mainStand] % blocksInStand.length;
+        
+        blocksInStand.forEach((block, index) => {
+          // Add remainder to the first few blocks to make it exact
+          const capacity = baseCapacity + (index < remainder ? 1 : 0);
+          configs[block.blockId] = {
+            price: Number(columnConfigs[block.colId].price) || 0,
+            capacity: capacity,
+            active: true
+          }
+        });
+      }
+    });
+
+    // Fill inactive blocks with 0
+    STADIUM_COLUMNS.forEach(col => {
       col.tiers.forEach(tier => {
         const blockId = `${col.id}-${tier}`
-        const isActive = columnConfigs[col.id].activeTiers.includes(tier)
-        configs[blockId] = {
-          price: Number(columnConfigs[col.id].price) || 0,
-          capacity: isActive ? tierCapacity : 0,
-          active: isActive
+        if (!configs[blockId]) {
+          configs[blockId] = {
+            price: Number(columnConfigs[col.id].price) || 0,
+            capacity: 0,
+            active: false
+          }
         }
       })
     })
-    
+
     return configs
   }, [columnConfigs, totalCapacity])
 
   const validateStep = (currentStep) => {
+    const newErrors = {}
     if (currentStep === 1) {
-      if (!form.leagueId) return 'League selection is required.'
-      if (!form.homeTeam) return 'Home team is required.'
-      if (!form.awayTeam) return 'Away team is required.'
-      if (!form.matchDate) return 'Match date and time is required.'
-      if (!form.stadiumId) return 'Please select a stadium.'
+      const now = new Date()
+      if (!form.leagueId) newErrors.leagueId = 'Please select a league'
+      if (!form.homeTeam) newErrors.homeTeam = 'Please enter home team name'
+      if (!form.awayTeam) newErrors.awayTeam = 'Please enter away team name'
+      if (!form.matchDate) {
+        newErrors.matchDate = 'Please select date and time'
+      } else if (new Date(form.matchDate) < now) {
+        newErrors.matchDate = 'Match date cannot be in the past'
+      }
+      
+      if (!form.ticketSaleOpenAt) {
+        newErrors.ticketSaleOpenAt = 'Please select ticket sale opening date'
+      } else if (new Date(form.ticketSaleOpenAt) < now) {
+        newErrors.ticketSaleOpenAt = 'Ticket sale opening date cannot be in the past'
+      }
+
+      if (!form.stadiumId) newErrors.stadiumId = 'Please select a stadium'
+      if (!form.description) newErrors.description = 'Please enter a description'
+      if (!selectedBannerFile) newErrors.banner = 'Please upload a banner image'
     }
     if (currentStep === 2) {
-      if (!totalCapacity || Number(totalCapacity) <= 0) return 'Please enter a valid total stadium capacity.'
+      if (!totalCapacity || Number(totalCapacity) <= 0) newErrors.totalCapacity = 'Invalid capacity'
       
-      let error = null
       STADIUM_COLUMNS.forEach(col => {
         if (!columnConfigs[col.id].price || Number(columnConfigs[col.id].price) < 0) {
-          error = `Block ${col.id} must have a valid price.`
+          newErrors[`price_${col.id}`] = 'Invalid price'
         }
       })
-      if (error) return error
 
       const activeAny = Object.keys(blockConfigs).some(k => blockConfigs[k].active)
-      if (!activeAny) return 'Please enable at least one tier for sale.'
+      if (!activeAny) newErrors.general = 'Please enable at least one stand'
     }
-    return null
+
+    setErrors(newErrors)
+    return newErrors
   }
 
   const toggleTier = (colId, tier) => {
@@ -166,6 +215,7 @@ export default function MatchCreatePage() {
         leagueId: Number(form.leagueId),
         description: form.description,
         thumbnailUrl: uploadedBannerUrl,
+        ticketSaleOpenAt: form.ticketSaleOpenAt,
       }
 
       const matchRes = await matchService.create(basicPayload)
@@ -241,46 +291,76 @@ export default function MatchCreatePage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
                   <div className="mc-input-group">
                     <label>LEAGUE NAME</label>
-                    <select className="mc-nice-input" value={form.leagueId} onChange={e => setForm(p => ({...p, leagueId: e.target.value}))}>
+                    <select className="mc-nice-input" style={inputErrorStyle('leagueId')} value={form.leagueId} onChange={e => {setForm(p => ({...p, leagueId: e.target.value})); setErrors(p => ({...p, leagueId: null}))}}>
                       <option value="" disabled>Select league</option>
                       {leagues.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                     </select>
+                    {renderError('leagueId')}
                   </div>
                   <div className="mc-input-group">
                     <label>STADIUM</label>
-                    <select className="mc-nice-input" value={form.stadiumId} onChange={e => setForm(p => ({...p, stadiumId: e.target.value}))}>
+                    <select className="mc-nice-input" style={inputErrorStyle('stadiumId')} value={form.stadiumId} onChange={e => {setForm(p => ({...p, stadiumId: e.target.value})); setErrors(p => ({...p, stadiumId: null}))}}>
                       <option value="" disabled>Select stadium</option>
                       {stadiums.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                     </select>
+                    {renderError('stadiumId')}
                   </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
                   <div className="mc-input-group">
                     <label>MATCH DATE & TIME</label>
-                    <DatePicker
-                      selected={form.matchDate ? new Date(form.matchDate) : null}
-                      onChange={(date) => setForm(p => ({...p, matchDate: date ? date.toISOString() : ''}))}
-                      showTimeSelect
-                      timeFormat="HH:mm"
-                      timeIntervals={15}
-                      dateFormat="MM/dd/yyyy HH:mm"
-                      className="mc-nice-input w-full"
-                      wrapperClassName="w-full !block"
-                      placeholderText="mm/dd/yyyy --:--"
-                    />
+                    <div style={{ border: errors.matchDate ? '1px solid #ef4444' : 'none', borderRadius: '8px' }}>
+                      <DatePicker
+                        selected={form.matchDate ? new Date(form.matchDate) : null}
+                        onChange={(date) => {setForm(p => ({...p, matchDate: date ? date.toISOString() : ''})); setErrors(p => ({...p, matchDate: null}))}}
+                        showTimeSelect
+                        timeFormat="HH:mm"
+                        timeIntervals={15}
+                        dateFormat="MM/dd/yyyy HH:mm"
+                        className="mc-nice-input w-full"
+                        wrapperClassName="w-full !block"
+                        placeholderText="mm/dd/yyyy --:--"
+                      />
+                    </div>
+                    {renderError('matchDate')}
+                  </div>
+                  <div className="mc-input-group">
+                    <label>TICKET SALE OPEN AT</label>
+                    <div style={{ border: errors.ticketSaleOpenAt ? '1px solid #ef4444' : 'none', borderRadius: '8px' }}>
+                      <DatePicker
+                        selected={form.ticketSaleOpenAt ? new Date(form.ticketSaleOpenAt) : null}
+                        onChange={(date) => {setForm(p => ({...p, ticketSaleOpenAt: date ? date.toISOString() : ''})); setErrors(p => ({...p, ticketSaleOpenAt: null}))}}
+                        showTimeSelect
+                        timeFormat="HH:mm"
+                        timeIntervals={15}
+                        dateFormat="MM/dd/yyyy HH:mm"
+                        className="mc-nice-input w-full"
+                        wrapperClassName="w-full !block"
+                        placeholderText="mm/dd/yyyy --:--"
+                      />
+                    </div>
+                    {renderError('ticketSaleOpenAt')}
                   </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                   <div className="mc-input-group">
                     <label>HOME TEAM</label>
-                    <input className="mc-nice-input" placeholder="Select home team" value={form.homeTeam} onChange={e => setForm(p => ({...p, homeTeam: e.target.value}))} />
+                    <input className="mc-nice-input" style={inputErrorStyle('homeTeam')} placeholder="Select home team" value={form.homeTeam} onChange={e => {setForm(p => ({...p, homeTeam: e.target.value})); setErrors(p => ({...p, homeTeam: null}))}} />
+                    {renderError('homeTeam')}
                   </div>
                   <div className="mc-input-group">
                     <label>AWAY TEAM</label>
-                    <input className="mc-nice-input" placeholder="Select away team" value={form.awayTeam} onChange={e => setForm(p => ({...p, awayTeam: e.target.value}))} />
+                    <input className="mc-nice-input" style={inputErrorStyle('awayTeam')} placeholder="Select away team" value={form.awayTeam} onChange={e => {setForm(p => ({...p, awayTeam: e.target.value})); setErrors(p => ({...p, awayTeam: null}))}} />
+                    {renderError('awayTeam')}
                   </div>
+                </div>
+
+                <div className="mc-input-group" style={{ marginTop: '24px' }}>
+                  <label>DESCRIPTION</label>
+                  <textarea className="mc-nice-input" style={inputErrorStyle('description')} rows={3} placeholder="Enter match description" value={form.description} onChange={e => {setForm(p => ({...p, description: e.target.value})); setErrors(p => ({...p, description: null}))}} />
+                  {renderError('description')}
                 </div>
               </div>
 
@@ -291,7 +371,7 @@ export default function MatchCreatePage() {
                   </h3>
                 </div>
                 
-                <div style={{ border: '2px dashed #cbd5e1', borderRadius: '16px', padding: '8px', textAlign: 'center', background: '#f8fafc', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '220px' }}>
+                <div style={{ border: `2px dashed ${errors.banner ? '#ef4444' : '#cbd5e1'}`, borderRadius: '16px', padding: '8px', textAlign: 'center', background: '#f8fafc', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '220px' }}>
                   {previewBannerUrl ? (
                     <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
                       <img src={previewBannerUrl} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -318,8 +398,12 @@ export default function MatchCreatePage() {
                     if(file){
                       setPreviewBannerUrl(URL.createObjectURL(file));
                       setSelectedBannerFile(file);
+                      setErrors(p => ({...p, banner: null}));
                     }
                   }} />
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  {renderError('banner')}
                 </div>
                 <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>
                   This image will be displayed on the match list and ticket.
@@ -343,10 +427,21 @@ export default function MatchCreatePage() {
                   <input 
                     type="number" 
                     className="mc-nice-input" 
-                    style={{ fontSize: '1.5rem', fontWeight: 900, color: '#f97316' }}
+                    style={{ fontSize: '1.5rem', fontWeight: 900, color: '#f97316', ...(errors.totalCapacity ? { borderColor: '#ef4444' } : {}) }}
                     value={totalCapacity} 
-                    onChange={e => setTotalCapacity(e.target.value)} 
+                    min="0"
+                    onChange={e => {
+                      const val = e.target.value;
+                      setTotalCapacity(val);
+                      if (Number(val) < 0) {
+                        toast.error('Capacity cannot be negative');
+                        setErrors(p => ({...p, totalCapacity: 'Capacity cannot be negative'}));
+                      } else {
+                        setErrors(p => ({...p, totalCapacity: null}));
+                      }
+                    }} 
                   />
+                  {renderError('totalCapacity')}
                   <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '8px' }}>This total will be divided into Stands A, B, C, D automatically.</div>
                 </div>
 
@@ -371,11 +466,24 @@ export default function MatchCreatePage() {
                                 <div style={{ position: 'relative', marginBottom: '16px' }}>
                                   <input 
                                     type="number" className="mc-nice-input" placeholder="Ticket Price" 
-                                    style={{ width: '100%', paddingLeft: '45px' }} 
+                                    style={{ width: '100%', paddingLeft: '45px', ...(errors[`price_${col.id}`] ? { borderColor: '#ef4444' } : {}) }} 
                                     value={columnConfigs[col.id]?.price} 
-                                    onChange={(e) => setColumnConfigs(p => ({ ...p, [col.id]: { ...p[col.id], price: e.target.value } }))} 
+                                    min="0"
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setColumnConfigs(p => ({ ...p, [col.id]: { ...p[col.id], price: val } }));
+                                      if (Number(val) < 0) {
+                                        toast.error('Ticket price cannot be negative');
+                                        setErrors(p => ({...p, [`price_${col.id}`]: 'Ticket price cannot be negative'}));
+                                      } else {
+                                        setErrors(p => ({...p, [`price_${col.id}`]: null}));
+                                      }
+                                    }} 
                                   />
                                   <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '0.75rem', fontWeight: 800 }}>VND</span>
+                                </div>
+                                <div style={{ marginTop: '-12px', marginBottom: '8px' }}>
+                                  {renderError(`price_${col.id}`)}
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                   {col.tiers.map(tier => (
@@ -386,7 +494,7 @@ export default function MatchCreatePage() {
                                         onChange={() => toggleTier(col.id, tier)} 
                                         style={{ width: '16px', height: '16px', accentColor: '#4f46e5' }}
                                       />
-                                      Enable Level {tier.replace('T', '')}
+                                      Enable Floor {tier.replace('T', '')}
                                     </label>
                                   ))}
                                 </div>
@@ -410,13 +518,30 @@ export default function MatchCreatePage() {
           <div className="mc-footer-right">
             {step > 1 && <button className="mc-btn mc-btn-secondary" onClick={() => setStep(step - 1)}>Back</button>}
             {step === 1 && <button className="mc-btn mc-btn-primary" onClick={() => {
-              const err = validateStep(1)
-              if(err) toast.error(err)
-              else setStep(2)
+              const errs = validateStep(1)
+              const errorKeys = Object.keys(errs)
+              if(errorKeys.length > 0) {
+                const fieldNamesMap = {
+                  leagueId: 'League',
+                  homeTeam: 'Home Team',
+                  awayTeam: 'Away Team',
+                  matchDate: 'Date & Time',
+                  stadiumId: 'Stadium',
+                  description: 'Description',
+                  banner: 'Banner Image'
+                }
+                const missingFields = errorKeys.map(key => fieldNamesMap[key]).join(', ')
+                toast.error(`Please enter: ${missingFields}`)
+              } else {
+                setStep(2)
+              }
             }}>Configure Stadium ➔</button>}
             {step === 2 && <button className="mc-btn mc-btn-primary" onClick={() => {
-              const err = validateStep(2)
-              if(err) toast.error(err)
+              const errs = validateStep(2)
+              if(Object.keys(errs).length > 0) {
+                if(errs.general) toast.error(errs.general)
+                else toast.error('Please check price configuration.')
+              }
               else setShowConfirmPopup(true)
             }}>Review & Publish ✨</button>}
           </div>

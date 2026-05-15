@@ -135,24 +135,32 @@ export default function TicketDetailPage() {
               </div>
             </div>
 
-            <div className="ticket-footer-row">
-              <div className="footer-cell">
-                <span className="cell-label">STAND</span>
-                <span className="cell-value">{ticket.stand_name}</span>
+            <div className="ticket-footer-row" style={{ display: 'flex', flexDirection: 'column', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <div className="footer-cell" style={{ flex: 1, padding: '15px 20px', borderRight: '1px solid rgba(255,255,255,0.1)' }}>
+                  <span className="cell-label">TOTAL QUANTITY</span>
+                  <span className="cell-value">{ticket.total_quantity}</span>
+                </div>
+                <div className="footer-cell price-cell" style={{ flex: 1, padding: '15px 20px', textAlign: 'right' }}>
+                  <span className="cell-label">TOTAL PAID</span>
+                  <span className="cell-value price-text" style={{ fontSize: '1.4rem' }}>
+                    {formatVND(ticket.total_price)}
+                  </span>
+                </div>
               </div>
-              <div className="footer-cell">
-                <span className="cell-label">QUANTITY</span>
-                <span className="cell-value">{ticket.quantity}</span>
-              </div>
-              <div className="footer-cell flex-2">
-                <span className="cell-label">SEATS</span>
-                <span className="cell-value seats-text">{ticket.seat_labels}</span>
-              </div>
-              <div className="footer-cell price-cell">
-                <span className="cell-label">PRICE</span>
-                <span className="cell-value price-text">
-                  {ticket.price ? formatVND(ticket.price * ticket.quantity) : '500,000 VND'}
-                </span>
+              
+              <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+                {(ticket.sections || []).map((sec, idx) => (
+                  <div key={idx} className="footer-cell" style={{ 
+                    flex: '1 0 50%', 
+                    padding: '15px 20px', 
+                    borderRight: idx % 2 === 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                    borderBottom: idx < (ticket.sections.length - (ticket.sections.length % 2 === 0 ? 2 : 1)) ? '1px solid rgba(255,255,255,0.1)' : 'none'
+                  }}>
+                    <span className="cell-label">SECTION {sec.name}</span>
+                    <span className="cell-value" style={{ fontSize: '1.1rem' }}>{sec.quantity} Ticket{sec.quantity > 1 ? 's' : ''}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

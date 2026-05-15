@@ -10,32 +10,31 @@ const MAX_TOKENS = 1024;
 /**
  * System prompt — cho AI biết context và cách sử dụng actions.
  */
-const SYSTEM_PROMPT = `Bạn là trợ lý AI tư vấn viên của GoTicket — nền tảng đặt vé thể thao trực tuyến tại Việt Nam.
-Vai trò: Tư vấn viên đặt vé chuyên nghiệp. Bạn dẫn dắt khách hàng từ tìm trận → chọn khán đài → đặt vé.
+const SYSTEM_PROMPT = `Bạn là chuyên gia AI tư vấn vé thể thao của GoTicket — nền tảng đặt vé trực tuyến tại Việt Nam.
+Vai trò: Trở thành một tư vấn viên chủ động, chuyên nghiệp và nhiệt tình. Nhiệm vụ của bạn không chỉ là cung cấp thông tin, mà còn phải GỢI Ý và PHÂN TÍCH để giúp người dùng đưa ra quyết định tốt nhất.
 
 Quy tắc quan trọng:
-- Trả lời tiếng Việt, thân thiện, chuyên nghiệp.
-- Tuyệt đối KHÔNG hiển thị mã ID ra cho người dùng thấy.
-- Khi liệt kê trận đấu hoặc khán đài, dùng danh sách đánh số rõ ràng.
-- CHỦ ĐỘNG: Khi user hỏi về một trận đấu, hãy gợi ý xem giá vé. Khi user xem giá vé, hãy gợi ý đặt vé ngay.
+- Trả lời tiếng Việt, thân thiện, tự nhiên như một chuyên gia tư vấn.
+- Tuyệt đối KHÔNG hiển thị mã ID (như ID trận đấu, Stand ID) ra cho người dùng thấy.
+- Khi liệt kê trận đấu hoặc khán đài, dùng danh sách đánh số hoặc gạch đầu dòng rõ ràng.
 
-Khi cần thực hiện hành động, hãy trả về JSON trong block đặc biệt:
+Quy trình tư vấn CHUẨN:
+1. HIỂN THỊ TRẬN ĐẤU: Khi user hỏi, đưa ra danh sách các trận đấu, đặc biệt nhấn mạnh những trận đang "HOT" (sắp hết vé). Sau đó, HỎI: "Bạn muốn xem trận đấu nào?"
+2. TƯ VẤN KHÁN ĐÀI: Khi user đã chọn trận, dùng action để lấy danh sách khán đài. Thay vì chỉ liệt kê khô khan, bạn PHẢI TƯ VẤN: "Bạn ưu tiên khán đài có view tốt nhất (khán đài VIP), giá rẻ tiết kiệm nhất, hay mức giá trung bình?". Hãy dùng thông tin hệ thống cung cấp để gọi tên cụ thể khán đài nào là VIP, khán đài nào rẻ nhất.
+3. CHỐT SỐ LƯỢNG VÀ ĐẶT VÉ: Sau khi user chọn được khán đài ưng ý, hãy hỏi họ cần mua bao nhiêu vé (nếu họ chưa nói). Khi có đủ thông tin, tiến hành tạo đơn đặt vé.
+4. THANH TOÁN: Sau khi đặt thành công, chúc mừng và nhắc họ nhấn nút Thanh toán ngay.
+
+Khi cần thực hiện hành động để lấy dữ liệu hoặc đặt vé, bạn PHẢI trả về JSON trong block đặc biệt sau:
 ###ACTION###
 {"action": "tên_action", "params": {...}}
 ###END_ACTION###
 
 Các action có sẵn:
-1. search_matches - Tìm trận đấu. Params: {"keyword": "tên đội/giải (optional)"}
-2. get_availability - Xem khán đài + giá. Params: {"match_id": number}
-3. create_booking - Đặt vé hộ user. Params: {"match_id": number, "stand_id": number, "quantity": number}
+1. search_matches - Lấy danh sách trận đấu đang mở bán. Params: {"keyword": "tên đội/giải (optional)"}
+2. get_availability - Xem thông tin khán đài + giá của 1 trận. Params: {"match_id": number}
+3. create_booking - Tạo đơn đặt vé. Params: {"match_id": number, "stand_id": number, "quantity": number}
 
-Quy trình tư vấn:
-- Nếu user muốn tìm trận → dùng search_matches.
-- Nếu user đã chọn trận → dùng get_availability để hiện giá và khán đài. Sau đó hỏi user: "Bạn muốn đặt vé ở khán đài nào?"
-- Nếu user chọn khán đài → dùng create_booking ngay lập tức với số lượng mặc định là 1 nếu user chưa nói rõ.
-- Sau khi đặt vé thành công (booking_created), hãy chúc mừng và nhắc user bấm nút "Thanh toán ngay" để giữ chỗ.
-
-Lưu ý: Mỗi lần CHỈ trả về TỐI ĐA MỘT action.`;
+Lưu ý: Mỗi lần CHỈ trả về TỐI ĐA MỘT action. Đừng nói quá dài, hãy tập trung vào bước hiện tại của quy trình.`;
 
 /**
  * Lấy thông tin trận đang mở bán để đưa vào context AI.
@@ -110,9 +109,11 @@ const executeAction = async (action, userId) => {
           contextForAI: "Không tìm thấy trận đấu nào phù hợp."
         };
       }
-      const lines = matches.map(
-        (m) => `- [ID:${m.id}] ${m.home_team} vs ${m.away_team} | ${new Date(m.match_date).toLocaleString("vi-VN")} | Sân: ${m.stadium_name || "N/A"} | Giải: ${m.league_name || "N/A"} | Còn: ${m.total_seats - m.sold_count} vé`
-      );
+      const lines = matches.map((m) => {
+        const available = m.total_seats - m.sold_count;
+        const isHot = (m.total_seats > 0 && available < m.total_seats * 0.2) || available < 100 ? " [🔥 HOT - Sắp hết vé]" : "";
+        return `- [ID:${m.id}] ${m.home_team} vs ${m.away_team} | ${new Date(m.match_date).toLocaleString("vi-VN")} | Sân: ${m.stadium_name || "N/A"} | Còn: ${available} vé${isHot}`;
+      });
       return {
         actionType: "show_matches",
         actionData: matches.map(m => ({
@@ -124,7 +125,7 @@ const executeAction = async (action, userId) => {
           leagueName: m.league_name,
           availableSeats: m.total_seats - m.sold_count
         })),
-        contextForAI: `Kết quả tìm kiếm:\n${lines.join("\n")}\n\nHãy liệt kê các trận cho user (KHÔNG hiện ID) và hỏi user muốn chọn trận nào.`
+        contextForAI: `Kết quả tìm kiếm:\n${lines.join("\n")}\n\nHãy liệt kê các trận cho user (KHÔNG hiện ID), nhấn mạnh các trận HOT và hỏi user: "Bạn muốn xem trận đấu nào?"`
       };
     }
 
@@ -140,6 +141,21 @@ const executeAction = async (action, userId) => {
       const lines = stands.map(
         (s) => `- [StandID:${s.id}] Khán đài ${s.name} | Giá: ${Number(s.price).toLocaleString("vi-VN")} VND | Còn: ${s.available_seats}/${s.total_seats} ghế`
       );
+
+      let priceAnalysis = "";
+      if (stands.length > 0) {
+        const sortedStands = [...stands].sort((a, b) => Number(a.price) - Number(b.price));
+        const cheapest = sortedStands[0];
+        const mostExpensive = sortedStands[sortedStands.length - 1];
+        
+        let avgStands = [];
+        if (stands.length > 2) {
+           avgStands = sortedStands.slice(1, -1);
+        }
+
+        priceAnalysis = `\n[Phân tích nội bộ để bạn tư vấn]:\n- Khán đài giá rẻ nhất (Tiết kiệm): ${cheapest.name} (${Number(cheapest.price).toLocaleString("vi-VN")} VND)\n- Khán đài giá cao nhất (Góc nhìn VIP/Tốt nhất): ${mostExpensive.name} (${Number(mostExpensive.price).toLocaleString("vi-VN")} VND)\n- Khán đài giá trung bình: ${avgStands.map(s => s.name).join(', ') || "Không có"}.`;
+      }
+
       return {
         actionType: "show_availability",
         actionData: {
@@ -158,7 +174,7 @@ const executeAction = async (action, userId) => {
             totalSeats: s.total_seats
           }))
         },
-        contextForAI: `Thông tin khán đài trận ${match.home_team} vs ${match.away_team}:\n${lines.join("\n")}\n\nHãy liệt kê cho user (KHÔNG hiện StandID) và hỏi user muốn chọn khán đài nào, mua bao nhiêu vé.`
+        contextForAI: `Thông tin khán đài trận ${match.home_team} vs ${match.away_team}:\n${lines.join("\n")}\n${priceAnalysis}\n\nHãy liệt kê cho user (KHÔNG hiện StandID). Sau đó bạn HỎI: "Bạn ưu tiên khán đài có view tốt nhất, giá rẻ tiết kiệm nhất, hay mức giá trung bình?" và hỏi số lượng vé họ cần.`
       };
     }
 
@@ -433,7 +449,7 @@ export const aiService = {
       
       if (match) {
         return {
-          message: `Đây là thông tin khán đài và giá vé cho trận ${match.home_team} vs ${match.away_team}:`,
+          message: `Đây là thông tin khán đài cho trận ${match.home_team} vs ${match.away_team}. Bạn ưu tiên khán đài có view tốt nhất, giá rẻ tiết kiệm nhất, hay mức giá trung bình?`,
           action: "get_availability",
           data: { params: { match_id: match.id } },
           provider: "offline"
@@ -445,7 +461,7 @@ export const aiService = {
     if (lowerMsg.includes("đặt vé") || lowerMsg.includes("lịch") || lowerMsg.includes("trận")) {
       const keyword = lowerMsg.replace(/đặt vé|lịch thi đấu|trận đấu|tìm/g, "").trim();
       return {
-        message: keyword ? `Đang tìm các trận đấu liên quan đến "${keyword}"...` : "Dưới đây là các trận đấu sắp tới:",
+        message: keyword ? `Đang tìm các trận đấu liên quan đến "${keyword}". Bạn muốn xem trận đấu nào?` : "Dưới đây là các trận đấu sắp tới. Bạn muốn xem trận đấu nào?",
         action: "search_matches",
         data: { params: { keyword: keyword || undefined } },
         provider: "offline"
@@ -455,13 +471,13 @@ export const aiService = {
     // 4. Chào hỏi
     if (lowerMsg.includes("chào") || lowerMsg.includes("hi") || lowerMsg.includes("hello")) {
       return {
-        message: "Chào bạn! 👋 Mình là trợ lý GoTicket. Bạn muốn xem lịch thi đấu hay đặt vé trận nào không?",
+        message: "Chào bạn! 👋 Mình là chuyên gia tư vấn vé của GoTicket. Mình có thể giúp bạn tìm trận đấu HOT nhất. Bạn muốn xem lịch thi đấu trận nào?",
         provider: "offline"
       };
     }
 
     return {
-      message: "Xin chào! Mình có thể giúp bạn tìm trận đấu, xem giá vé và đặt vé nhanh chóng. Bạn quan tâm đến trận đấu nào?",
+      message: "Xin chào! Mình là tư vấn viên GoTicket. Bạn đang quan tâm đến trận đấu nào để mình tư vấn khán đài có view tốt nhất nhé!",
       provider: "offline"
     };
   },

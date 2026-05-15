@@ -5,7 +5,7 @@ import { unwrapData } from '../../utils/apiData'
 import { formatDateTime } from '../../utils/formatDate'
 import { formatVND } from '../../utils/formatCurrency'
 import toast from 'react-hot-toast'
-import { Eye, MapPin, Calendar, Clock, X, Check, XCircle, Users } from 'lucide-react'
+import { Eye, MapPin, Calendar, Clock, X, Check, XCircle, Users, ShoppingCart } from 'lucide-react'
 
 const DUMMY_IMAGES = [
   'https://images.unsplash.com/photo-1518605368461-1ee0676644ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
@@ -50,6 +50,7 @@ export default function MatchManagePage() {
       await approvalsService.approve(id)
       toast.success('Match approved successfully.')
       fetchMatches()
+      window.dispatchEvent(new CustomEvent('approval-updated'))
     } catch (error) {
       toast.error(error.response?.data?.message || 'Approve failed.')
     }
@@ -69,6 +70,7 @@ export default function MatchManagePage() {
       await approvalsService.reject(rejectingId, rejectReason.trim())
       toast.success('Match rejected.')
       fetchMatches()
+      window.dispatchEvent(new CustomEvent('approval-updated'))
       setRejectingId(null)
       if (selectedMatch && selectedMatch.id === rejectingId) {
         setSelectedMatch(null)
@@ -185,71 +187,144 @@ export default function MatchManagePage() {
       {/* Match Preview Modal for Pending Tab */}
       {selectedMatch && activeTab === 'pending' && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(4px)' }}>
-          <div style={{ background: '#fff', borderRadius: '24px', width: '100%', maxWidth: '600px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-            <div style={{ position: 'relative', height: '220px', backgroundImage: `url(${selectedMatch.thumbnail_url || DUMMY_IMAGES[selectedMatch.id % DUMMY_IMAGES.length]})`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%)' }}></div>
+          <div style={{ background: '#fff', borderRadius: '24px', width: '100%', maxWidth: '1000px', maxHeight: '90vh', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', display: 'flex', flexDirection: 'column' }}>
+            {/* Header Banner - Keeping it simple at top */}
+            <div style={{ position: 'relative', height: '120px', backgroundImage: `url(${selectedMatch.thumbnail_url || DUMMY_IMAGES[selectedMatch.id % DUMMY_IMAGES.length]})`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%)' }}></div>
               <button 
                 onClick={() => setSelectedMatch(null)}
-                style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background 0.2s', zIndex: 10 }}
+                style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}
               >
                 <X size={18} />
               </button>
-              
               <div style={{ textAlign: 'center', color: '#fff', zIndex: 10 }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', opacity: 0.9, display: 'block', marginBottom: '8px' }}>Match Preview</span>
-                <div style={{ fontSize: '2rem', fontWeight: 900, lineHeight: 1.1, textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
-                  {selectedMatch.home_team}
-                  <span style={{ fontSize: '1.2rem', opacity: 0.8, margin: '0 12px', fontWeight: 500 }}>VS</span>
-                  {selectedMatch.away_team}
-                </div>
+                <h2 style={{ fontSize: '1.75rem', fontWeight: 900, margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                  {selectedMatch.home_team} vs {selectedMatch.away_team}
+                </h2>
               </div>
             </div>
-            
-            <div style={{ padding: '30px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '30px' }}>
-                <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', marginBottom: '8px', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase' }}>
-                    <Calendar size={16} /> Schedule
-                  </div>
-                  <div style={{ color: '#0f172a', fontWeight: 800, fontSize: '1.1rem' }}>
-                    {selectedMatch.match_date ? formatDateTime(selectedMatch.match_date) : 'TBA'}
-                  </div>
-                </div>
-                <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', marginBottom: '8px', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase' }}>
-                    <MapPin size={16} /> Location
-                  </div>
-                  <div style={{ color: '#0f172a', fontWeight: 800, fontSize: '1.1rem' }}>
-                    {selectedMatch.stadium_name || 'TBA'}
-                  </div>
-                  {selectedMatch.stadium_address && (
-                    <div style={{ color: '#64748b', fontSize: '0.8rem', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {selectedMatch.stadium_address}
+
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+              {/* Left Column: Match Details */}
+              <div style={{ width: '40%', padding: '30px', borderRight: '1px solid #e2e8f0', background: '#f8fafc', overflowY: 'auto' }}>
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '1px' }}>Quick Info</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                        <Calendar size={18} color="#3b82f6" />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>SCHEDULE</div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>{selectedMatch.match_date ? formatDateTime(selectedMatch.match_date) : 'TBA'}</div>
+                      </div>
                     </div>
-                  )}
-                </div>
-                <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', marginBottom: '8px', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase' }}>
-                    <Users size={16} /> Capacity
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                        <MapPin size={18} color="#ef4444" />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>LOCATION</div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>{selectedMatch.stadium_name}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{selectedMatch.stadium_address}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                        <Users size={18} color="#10b981" />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>TOTAL CAPACITY</div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
+                          {selectedMatch.stands ? selectedMatch.stands.reduce((acc, stand) => acc + stand.total_seats, 0).toLocaleString() : '0'} Seats
+                        </div>
+                      </div>
+                    </div>
+                    {selectedMatch.ticket_sale_open_at && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', border: '1px solid #ffedd5' }}>
+                          <ShoppingCart size={18} color="#f97316" />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.7rem', color: '#f97316', fontWeight: 600 }}>TICKET SALE OPENS</div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#f97316' }}>{formatDateTime(selectedMatch.ticket_sale_open_at)}</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div style={{ color: '#0f172a', fontWeight: 800, fontSize: '1.1rem' }}>
-                    {selectedMatch.stands ? selectedMatch.stands.reduce((acc, stand) => acc + stand.total_seats, 0).toLocaleString() : 'TBA'}
+                </div>
+
+                <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '24px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '1px' }}>Submitted By</div>
+                  <div style={{ background: '#fff', padding: '16px', borderRadius: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                    <div style={{ fontWeight: 800, color: '#1e293b', fontSize: '1rem' }}>{selectedMatch.submitted_by_name}</div>
+                    <div style={{ color: '#3b82f6', fontSize: '0.8rem', fontWeight: 600 }}>{selectedMatch.club_name || 'Individual Manager'}</div>
+                    <div style={{ marginTop: '12px', fontSize: '0.75rem', color: '#94a3b8' }}>
+                      Submitted on {new Date(selectedMatch.created_at).toLocaleDateString()}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                <button type="button" className="mc-btn mc-btn-ghost" onClick={() => setSelectedMatch(null)}>
-                  Close
-                </button>
-                <button type="button" className="mc-btn mc-btn-primary" onClick={() => {
-                  onApprove(selectedMatch.id);
-                  setSelectedMatch(null);
-                }}>
-                  <Check size={18} style={{ marginRight: '6px' }} />
-                  Approve Match
-                </button>
+              {/* Right Column: Pricing List */}
+              <div style={{ width: '60%', padding: '30px', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>Ticket Pricing & Stands</div>
+                  <span className="badge primary" style={{ fontSize: '0.7rem' }}>{selectedMatch.stands?.length || 0} Zones</span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {Object.entries(
+                    (selectedMatch.stands || []).reduce((groups, stand) => {
+                      const prefix = stand.name.charAt(0).toUpperCase();
+                      const groupName = stand.name === 'VIP' ? 'VIP' : `Stand ${prefix}`;
+                      if (!groups[groupName]) groups[groupName] = [];
+                      groups[groupName].push(stand);
+                      return groups;
+                    }, {})
+                  ).map(([groupName, stands], groupIdx) => (
+                    <div key={groupIdx}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 900, color: '#1e293b', background: '#f1f5f9', padding: '6px 12px', borderRadius: '6px', marginBottom: '10px', display: 'inline-block' }}>
+                        {groupName}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {stands.map((stand, idx) => (
+                          <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: '#fff', border: '1px solid #f1f5f9', borderRadius: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div style={{ width: '6px', height: '6px', borderRadius: '3px', background: stand.name === 'VIP' ? '#f59e0b' : '#3b82f6' }}></div>
+                              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569' }}>
+                                {stand.name}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                              <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500 }}>
+                                {stand.total_seats.toLocaleString()} seats
+                              </div>
+                              <div style={{ fontSize: '1rem', fontWeight: 900, color: '#10b981', minWidth: '90px', textAlign: 'right' }}>
+                                {formatVND(stand.price)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div style={{ padding: '20px 30px', background: '#fff', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button type="button" className="mc-btn mc-btn-ghost" onClick={() => setSelectedMatch(null)}>
+                Close Preview
+              </button>
+              <button type="button" className="mc-btn mc-btn-primary" style={{ padding: '10px 24px' }} onClick={() => {
+                onApprove(selectedMatch.id);
+                setSelectedMatch(null);
+              }}>
+                <Check size={18} style={{ marginRight: '8px' }} />
+                Approve This Match
+              </button>
             </div>
           </div>
         </div>

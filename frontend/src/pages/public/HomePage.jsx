@@ -27,7 +27,7 @@ export default function HomePage() {
   }, [])
 
   // Split matches into categories
-  const { newMatches, onSaleMatches, endedMatches } = useMemo(() => {
+  const { newMatches, onSaleMatches, upcomingMatches, endedMatches } = useMemo(() => {
     const now = new Date()
 
     // New/Hot: created recently (last 3 days) or sorted by newest first
@@ -49,6 +49,18 @@ export default function HomePage() {
       return true // if no ticket_sale_open_at, assume on sale
     })
 
+    // Upcoming: match_date is in future AND ticket_sale_open_at is in future
+    const upcoming = matches.filter(m => {
+      if (!m.match_date) return false
+      const matchDate = new Date(m.match_date)
+      if (matchDate <= now) return false
+      if (m.ticket_sale_open_at) {
+        const saleOpen = new Date(m.ticket_sale_open_at)
+        return saleOpen > now
+      }
+      return false
+    }).sort((a, b) => new Date(a.match_date) - new Date(b.match_date))
+
     // Ended: match_date is in the past
     const ended = matches
       .filter(m => {
@@ -57,7 +69,12 @@ export default function HomePage() {
       })
       .sort((a, b) => new Date(b.match_date) - new Date(a.match_date)) // newest ended first
 
-    return { newMatches: hot, onSaleMatches: onSale.slice(0, 6), endedMatches: ended.slice(0, 6) }
+    return { 
+      newMatches: hot, 
+      onSaleMatches: onSale.slice(0, 6), 
+      upcomingMatches: upcoming.slice(0, 6),
+      endedMatches: ended.slice(0, 6) 
+    }
   }, [matches])
 
   return (
@@ -113,6 +130,33 @@ export default function HomePage() {
             
             <div className="match-cards-grid">
               {onSaleMatches.map((match) => <MatchCard key={`sale-${match.id}`} match={match} showHotBadge />)}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Upcoming Matches */}
+      {!isLoading && upcomingMatches.length > 0 && (
+        <section className="featured-section" style={{ paddingTop: 0 }}>
+          <div className="container">
+            <div className="section-head" style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <h2 className="section-title" style={{ margin: 0 }}>UPCOMING</h2>
+                <span style={{
+                  background: 'linear-gradient(135deg, #f97316, #ea580c)',
+                  color: '#fff',
+                  fontSize: '0.65rem',
+                  fontWeight: 800,
+                  padding: '4px 12px',
+                  borderRadius: '99px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px'
+                }}>Soon</span>
+              </div>
+            </div>
+            
+            <div className="match-cards-grid">
+              {upcomingMatches.map((match) => <MatchCard key={`upcoming-${match.id}`} match={match} />)}
             </div>
           </div>
         </section>

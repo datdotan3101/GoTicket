@@ -19,7 +19,7 @@ export const approvalsService = {
       values.push(type);
     }
 
-    const where = `WHERE ${conditions.join(" AND ")}`;
+    const where = `WHERE ${conditions.join(" AND ")} AND (a.resource_type != 'match' OR m.id IS NOT NULL)`;
 
     const result = await query(
       `SELECT a.*,
@@ -28,8 +28,11 @@ export const approvalsService = {
               m.home_team,
               m.away_team,
               m.match_date,
+              m.thumbnail_url,
+              m.ticket_sale_open_at,
               s.name AS stadium_name,
               s.address AS stadium_address,
+              c.name AS club_name,
               (
                 SELECT json_agg(json_build_object('name', st.name, 'price', st.price, 'total_seats', st.total_seats))
                 FROM stands st
@@ -39,6 +42,7 @@ export const approvalsService = {
        LEFT JOIN users u ON u.id = a.submitted_by
        LEFT JOIN matches m ON a.resource_type = 'match' AND a.resource_id = m.id
        LEFT JOIN stadiums s ON m.stadium_id = s.id
+       LEFT JOIN clubs c ON m.club_id = c.id
        ${where}
        ORDER BY a.created_at ASC`,
       values

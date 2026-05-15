@@ -47,6 +47,19 @@ export default function SeatSelectPage() {
     if (!stand || stand.available_seats === 0) return
 
     setSelections(prev => {
+      // Stand Constraint: Must be in the same stand (A, B, C, D)
+      if (prev.length > 0) {
+        const currentStand = prev[0].blockId.charAt(0)
+        const newStand = blockId.charAt(0)
+        if (currentStand !== newStand) {
+          toast.error(`Khán đài không khả dụng cho lựa chọn hiện tại. Vui lòng chọn vé trong cùng một khán đài ${currentStand} hoặc xóa các lựa chọn cũ để thay đổi.`, {
+            icon: '🏟️',
+            duration: 4000
+          })
+          return prev
+        }
+      }
+
       const existing = prev.find(s => s.blockId === blockId)
       if (existing) {
         const totalQty = prev.reduce((acc, s) => acc + s.quantity, 0)
@@ -57,7 +70,7 @@ export default function SeatSelectPage() {
         return prev.map(s => s.blockId === blockId ? { ...s, quantity: Math.min(s.quantity + 1, stand.available_seats) } : s)
       } else {
         if (prev.length >= 2) {
-          toast.error('You can only select up to 2 different sections')
+          toast.error('You can only select up to 2 different sections within the same stand')
           return prev
         }
         const totalQty = prev.reduce((acc, s) => acc + s.quantity, 0)
@@ -73,7 +86,7 @@ export default function SeatSelectPage() {
   const handleListSelectStand = (stand) => {
     if (!stand || stand.available_seats === 0) return
     const blockId = stand.name
-    const tierName = blockId.endsWith('T2') ? 'Level 2' : 'Level 1'
+    const tierName = blockId.endsWith('T2') ? 'Floor 2' : 'Floor 1'
     handleSelectBlock({ stand, blockId, tierName })
   }
 
@@ -85,6 +98,8 @@ export default function SeatSelectPage() {
     setStep(2)
   }
 
+  const isNotYetOpen = match?.ticket_sale_open_at ? new Date(match.ticket_sale_open_at) > new Date() : false
+
   if (isLoading) return (
     <section className="container page" style={{ paddingTop: '60px' }}>
       <LoadingSpinner text="Loading stadium map..." />
@@ -94,6 +109,31 @@ export default function SeatSelectPage() {
   if (error) return (
     <section className="container page" style={{ paddingTop: '60px' }}>
       <ErrorState title="Data Loading Error" message={error} onRetry={() => window.location.reload()} />
+    </section>
+  )
+
+  if (isNotYetOpen) return (
+    <section className="container page" style={{ paddingTop: '100px', maxWidth: '800px' }}>
+      <div style={{ textAlign: 'center', background: '#fff', padding: '60px', borderRadius: '32px', boxShadow: '0 20px 40px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
+        <div style={{ width: '80px', height: '80px', borderRadius: '40px', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+          <span style={{ fontSize: '32px' }}>🛒</span>
+        </div>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#1e293b', marginBottom: '16px' }}>Tickets Not Yet On Sale</h1>
+        <p style={{ fontSize: '1.1rem', color: '#64748b', marginBottom: '32px', lineHeight: 1.6 }}>
+          We're excited for the upcoming match! However, ticket sales haven't started yet.<br/>
+          Please come back when the sale officially opens.
+        </p>
+        
+        <div style={{ background: '#f8fafc', padding: '24px', borderRadius: '24px', display: 'inline-block', marginBottom: '32px' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '1px' }}>SALE OPENS ON</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#f97316' }}>{formatDateTime(match.ticket_sale_open_at)}</div>
+        </div>
+
+        <br/>
+        <button className="mc-btn mc-btn-primary" style={{ padding: '12px 32px' }} onClick={() => navigate(-1)}>
+          Go Back
+        </button>
+      </div>
     </section>
   )
 
@@ -420,7 +460,7 @@ export default function SeatSelectPage() {
                               }}
                             >
                               <div>
-                                <div style={{ fontWeight: 800, color: '#334155', fontSize: '0.95rem' }}>Level {tier.tierName.replace('T', '')}</div>
+                                <div style={{ fontWeight: 800, color: '#334155', fontSize: '0.95rem' }}>Floor {tier.tierName.replace('T', '')}</div>
                               </div>
                               {tier.available_seats > 0 ? (
                                 <button 

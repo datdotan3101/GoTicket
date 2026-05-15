@@ -29,9 +29,9 @@ function MatchCard({ match, onSelect }) {
       <div className="ai-match-card-info">
         <span>📅 {formatDate(match.matchDate)}</span>
         <span>🏟️ {match.stadiumName || 'N/A'}</span>
-        {match.availableSeats > 0 && <span>🎫 Còn {match.availableSeats} vé</span>}
+        {match.availableSeats > 0 && <span>🎫 {match.availableSeats} tickets left</span>}
       </div>
-      <button type="button" className="ai-match-card-btn">Chọn trận này</button>
+      <button type="button" className="ai-match-card-btn">Select this match</button>
     </div>
   )
 }
@@ -50,7 +50,7 @@ function StandListCard({ data, onSelectStand }) {
             <div className="ai-stand-item-info">
               <span className="ai-stand-name">{stand.name}</span>
               <span className="ai-stand-price">{formatVND(stand.price)}</span>
-              <span className="ai-stand-seats">{stand.availableSeats > 0 ? `Còn ${stand.availableSeats} ghế` : 'Hết chỗ'}</span>
+              <span className="ai-stand-seats">{stand.availableSeats > 0 ? `${stand.availableSeats} seats left` : 'Sold out'}</span>
             </div>
             {stand.availableSeats > 0 && (
               <button
@@ -75,31 +75,31 @@ function BookingCard({ data, onCheckout }) {
     <div className="ai-booking-card">
       <div className="ai-booking-card-header">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-        Đặt vé thành công!
+        Booking successful!
       </div>
       <div className="ai-booking-card-body">
         <div className="ai-booking-row">
-          <span>Trận đấu</span>
+          <span>Match</span>
           <strong>{data.matchName}</strong>
         </div>
         <div className="ai-booking-row">
-          <span>Ngày giờ</span>
+          <span>Date & Time</span>
           <strong>{formatDate(data.matchDate)}</strong>
         </div>
         <div className="ai-booking-row">
-          <span>Sân vận động</span>
+          <span>Stadium</span>
           <strong>{data.stadiumName || 'N/A'}</strong>
         </div>
         <div className="ai-booking-row">
-          <span>Khán đài</span>
+          <span>Stand</span>
           <strong>{data.standName}</strong>
         </div>
         <div className="ai-booking-row">
-          <span>Số lượng</span>
-          <strong>{data.quantity} vé</strong>
+          <span>Quantity</span>
+          <strong>{data.quantity} tickets</strong>
         </div>
         <div className="ai-booking-row ai-booking-total">
-          <span>Tổng cộng</span>
+          <span>Total</span>
           <strong>{formatVND(data.totalAmount)}</strong>
         </div>
       </div>
@@ -108,9 +108,9 @@ function BookingCard({ data, onCheckout }) {
         className="ai-booking-checkout-btn"
         onClick={() => onCheckout(data)}
       >
-        💳 Thanh toán ngay
+        💳 Pay Now
       </button>
-      <p className="ai-booking-note">Vé đang được giữ tạm. Vui lòng thanh toán để hoàn tất.</p>
+      <p className="ai-booking-note">Tickets are being held temporarily. Please pay to complete.</p>
     </div>
   )
 }

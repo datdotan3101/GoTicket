@@ -1,4 +1,4 @@
-export default function EmptyState({ title = 'Chưa có dữ liệu', message = 'Không tìm thấy dữ liệu nào ở thời điểm hiện tại.', icon = '📭' }) {
+export default function EmptyState({ title = 'No data available', message = 'No data found at the moment.', icon = '📭' }) {
   return (
     <div className="empty-state flex flex-col items-center justify-center p-8 text-center bg-gray-50 rounded-xl" role="region" aria-label="Empty State">
       <div className="text-5xl mb-4" aria-hidden="true">{icon}</div>

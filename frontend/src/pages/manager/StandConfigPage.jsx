@@ -1,11 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
-import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Save, Eye, ShieldCheck } from 'lucide-react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { ArrowLeft, Save, Eye, ShieldCheck, Loader2 } from 'lucide-react'
 import { STAND_NAMES } from '../../constants/standRatios'
 import { matchService } from '../../services/matchService'
 import { generateStandsPreview } from '../../utils/standGenerator'
 import StadiumMap from '../../components/seat/StadiumMap'
+import { unwrapData } from '../../utils/apiData'
+import ConfirmModal from '../../components/ui/ConfirmModal'
 
 const STADIUM_COLUMNS = [
   { id: 'A1', stand: 'A', tiers: ['T1', 'T2'] },
@@ -26,14 +28,118 @@ const STADIUM_COLUMNS = [
 
 export default function StandConfigPage() {
   const { matchId } = useParams()
+  const navigate = useNavigate()
   const [serverPreview, setServerPreview] = useState([])
   
   const [columnConfigs, setColumnConfigs] = useState(
     STADIUM_COLUMNS.reduce((acc, col) => {
-      acc[col.id] = { price: '200000', activeTiers: [...col.tiers] }
+      acc[col.id] = { 
+        price: '200000', 
+        activeTiers: [...col.tiers],
+        tierCapacities: col.tiers.reduce((tacc, t) => ({ ...tacc, [t]: 100 }), {})
+      }
       return acc
     }, {})
   )
+  const [fetching, setFetching] = useState(true)
+  const [globalCapacity, setGlobalCapacity] = useState('10000')
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+
+  const handleRedistribute = () => {
+    const total = Number(globalCapacity) || 0
+    if (total < 100) {
+      toast.error('Minimum capacity is 100')
+      return
+    }
+
+    // Reuse logic from MatchCreatePage to redistribute
+    const standTotals = {
+      A: Math.floor(total * 0.3), // Using hardcoded ratios from standRatios.js for simplicity
+      B: Math.floor(total * 0.3),
+      C: Math.floor(total * 0.2),
+      D: Math.floor(total * 0.2)
+    }
+    const standSum = standTotals.A + standTotals.B + standTotals.C + standTotals.D;
+    standTotals.A += (total - standSum);
+
+    const activeBlocks = [];
+    STADIUM_COLUMNS.forEach(col => {
+      col.tiers.forEach(tier => {
+        if (columnConfigs[col.id].activeTiers.includes(tier)) {
+          activeBlocks.push({ colId: col.id, stand: col.stand, tier });
+        }
+      })
+    });
+
+    if (activeBlocks.length === 0) {
+      toast.error('Please enable at least one level first')
+      return
+    }
+
+    const newConfigs = { ...columnConfigs }
+    
+    // Reset all capacities first
+    STADIUM_COLUMNS.forEach(col => {
+      newConfigs[col.id].tierCapacities = col.tiers.reduce((acc, t) => ({ ...acc, [t]: 0 }), {})
+    })
+
+    // Distribute
+    ;['A', 'B', 'C', 'D'].forEach(mainStand => {
+      const blocksInStand = activeBlocks.filter(b => b.stand === mainStand);
+      if (blocksInStand.length > 0) {
+        const baseCapacity = Math.floor(standTotals[mainStand] / blocksInStand.length);
+        const remainder = standTotals[mainStand] % blocksInStand.length;
+        
+        blocksInStand.forEach((block, index) => {
+          const capacity = baseCapacity + (index < remainder ? 1 : 0);
+          newConfigs[block.colId].tierCapacities[block.tier] = capacity;
+        });
+      }
+    });
+
+    setColumnConfigs(newConfigs)
+    toast.success('Seats redistributed based on total capacity')
+  }
+
+  useEffect(() => {
+    const fetchExistingConfig = async () => {
+      setFetching(true)
+      try {
+        const res = await matchService.getAvailability(matchId)
+        const existingStands = unwrapData(res) || []
+        
+        if (existingStands.length > 0) {
+          // Map existing stands back to columnConfigs
+          const newConfigs = STADIUM_COLUMNS.reduce((acc, col) => {
+            acc[col.id] = { 
+              price: '200000', 
+              activeTiers: [],
+              tierCapacities: col.tiers.reduce((tacc, t) => ({ ...tacc, [t]: 100 }), {})
+            }
+            return acc
+          }, {})
+
+          existingStands.forEach(stand => {
+            const [colId, tier] = stand.name.split('-')
+            if (newConfigs[colId]) {
+              newConfigs[colId].price = String(Math.floor(stand.price))
+              newConfigs[colId].tierCapacities[tier] = stand.total_seats
+              if (!newConfigs[colId].activeTiers.includes(tier)) {
+                newConfigs[colId].activeTiers.push(tier)
+              }
+            }
+          })
+          setColumnConfigs(newConfigs)
+        }
+      } catch (error) {
+        console.error('Failed to fetch existing config:', error)
+      } finally {
+        setFetching(false)
+      }
+    }
+    fetchExistingConfig()
+  }, [matchId])
 
   const blockConfigs = useMemo(() => {
     const configs = {}
@@ -42,7 +148,8 @@ export default function StandConfigPage() {
         const blockId = `${col.id}-${tier}`
         configs[blockId] = {
           price: columnConfigs[col.id].price,
-          active: columnConfigs[col.id].activeTiers.includes(tier)
+          active: columnConfigs[col.id].activeTiers.includes(tier),
+          capacity: columnConfigs[col.id].tierCapacities?.[tier] || 100
         }
       })
     })
@@ -54,28 +161,30 @@ export default function StandConfigPage() {
   }, [])
 
   const payload = useMemo(
-    () => ({
-      blockConfigs
-    }),
+    () => {
+      const activeBlocks = Object.values(blockConfigs).filter(b => b.active)
+      const total = activeBlocks.reduce((sum, b) => sum + (Number(b.capacity) || 0), 0)
+      return {
+        totalCapacity: total,
+        blockConfigs
+      }
+    },
     [blockConfigs],
   )
 
-  const previewOnServer = async () => {
-    try {
-      const response = await matchService.previewStands(payload)
-      setServerPreview(response.data?.data || [])
-      toast.success('API Preview generated.')
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Preview failed.')
-    }
-  }
+
 
   const saveConfig = async () => {
+    setIsSaving(true)
     try {
       await matchService.configureStands(matchId, payload)
       toast.success('Configuration saved and seats generated!')
+      navigate('/manager/matches')
     } catch (error) {
       toast.error(error.response?.data?.message || 'Save failed.')
+    } finally {
+      setIsSaving(false)
+      setIsConfirmModalOpen(false)
     }
   }
 
@@ -88,23 +197,28 @@ export default function StandConfigPage() {
     })
   }
 
+  if (fetching) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px', flexDirection: 'column', gap: '16px' }}>
+        <Loader2 size={40} className="animate-spin" color="#4f46e5" />
+        <p style={{ color: '#64748b', fontWeight: 600 }}>Fetching stadium configuration...</p>
+      </div>
+    )
+  }
+
   return (
     <section className="container manager-dashboard">
       <div className="dashboard-header">
         <div className="dashboard-header-left">
-          <Link to="/manager" className="back-link">
+          <Link to="/manager/matches" className="back-link">
             <ArrowLeft size={16} />
-            Back to Dashboard
+            Back to Matches
           </Link>
           <h1 className="dashboard-title">Stadium Configuration</h1>
           <p className="dashboard-subtitle">Define seat capacity, VIP zones, and dynamic pricing</p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <button className="mc-btn mc-btn-ghost" onClick={previewOnServer}>
-            <Eye size={18} style={{ marginRight: '8px' }} />
-            API Preview
-          </button>
-          <button className="mc-btn mc-btn-primary" onClick={saveConfig}>
+          <button className="mc-btn mc-btn-primary" onClick={() => setIsConfirmModalOpen(true)}>
             <Save size={18} style={{ marginRight: '8px' }} />
             Save Configuration
           </button>
@@ -156,18 +270,46 @@ export default function StandConfigPage() {
                              />
                              <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '0.75rem', fontWeight: 800 }}>VND</span>
                            </div>
-                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                             {col.tiers.map(tier => (
-                               <label key={tier} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: '#475569', background: '#f8fafc', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                                 <input 
-                                   type="checkbox" 
-                                   checked={columnConfigs[col.id]?.activeTiers.includes(tier)} 
-                                   onChange={() => toggleTier(col.id, tier)} 
-                                   style={{ width: '16px', height: '16px', accentColor: '#4f46e5' }}
-                                 />
-                                 Enable Level {tier.replace('T', '')}
-                               </label>
-                             ))}
+                           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                             {col.tiers.map(tier => {
+                               const isActive = columnConfigs[col.id]?.activeTiers.includes(tier)
+                               return (
+                               <div key={tier} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: `1px solid ${isActive ? '#4f46e5' : '#e2e8f0'}`, flexWrap: 'wrap' }}>
+                                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: '#475569', minWidth: '120px' }}>
+                                   <input 
+                                     type="checkbox" 
+                                     checked={isActive} 
+                                     onChange={() => toggleTier(col.id, tier)} 
+                                     style={{ width: '16px', height: '16px', accentColor: '#4f46e5' }}
+                                   />
+                                   Level {tier.replace('T', '')}
+                                 </label>
+                                 {isActive && (
+                                   <div style={{ position: 'relative', flex: 1, minWidth: '100px' }}>
+                                     <input 
+                                       type="number" 
+                                       className="mc-nice-input"
+                                       style={{ width: '100%', padding: '6px 8px 6px 45px', fontSize: '0.85rem' }}
+                                       value={columnConfigs[col.id]?.tierCapacities?.[tier] || ''}
+                                       onChange={(e) => {
+                                         const val = e.target.value;
+                                         setColumnConfigs(p => ({
+                                           ...p,
+                                           [col.id]: {
+                                             ...p[col.id],
+                                             tierCapacities: { ...p[col.id].tierCapacities, [tier]: val }
+                                           }
+                                         }))
+                                       }}
+                                       placeholder="Seats"
+                                       title="Seat Capacity for this block"
+                                     />
+                                     <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '0.75rem', fontWeight: 800 }}>CAP</span>
+                                   </div>
+                                 )}
+                               </div>
+                               )
+                             })}
                            </div>
                          </div>
                        )
@@ -191,17 +333,70 @@ export default function StandConfigPage() {
                 <span className="summary-seats">{Object.values(blockConfigs).filter(b => b.active).length} Blocks</span>
               </div>
               <div className="summary-divider"></div>
-              <div className="summary-item total">
+              <div className="summary-item total" style={{ alignItems: 'center' }}>
                 <span className="summary-label">Final Capacity</span>
-                <span className="summary-seats">{Object.values(blockConfigs).filter(b => b.active).length * 100} Seats</span>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input 
+                    type="number"
+                    value={globalCapacity}
+                    onChange={e => {
+                      setGlobalCapacity(e.target.value);
+                      // Auto-apply or let them click? Better to have an Apply button nearby or just use the tool above.
+                      // Let's keep it simple: this input updates globalCapacity, and we add an Apply link.
+                    }}
+                    style={{ 
+                      width: '120px', 
+                      background: 'transparent', 
+                      border: 'none', 
+                      borderBottom: '2px solid #4f46e5',
+                      textAlign: 'right',
+                      fontSize: '1.25rem',
+                      fontWeight: 800,
+                      color: '#4f46e5',
+                      padding: '0 4px',
+                      outline: 'none',
+                      marginRight: '8px'
+                    }}
+                  />
+                  <span className="summary-seats" style={{ fontSize: '1.25rem' }}>Seats</span>
+                </div>
               </div>
+              {globalCapacity !== String(Object.values(blockConfigs).filter(b => b.active).reduce((sum, b) => sum + (Number(b.capacity) || 0), 0)) && (
+                <button 
+                  onClick={handleRedistribute}
+                  style={{ 
+                    width: '100%', 
+                    marginTop: '12px', 
+                    padding: '8px', 
+                    background: '#4f46e5', 
+                    color: '#fff', 
+                    border: 'none', 
+                    borderRadius: '8px', 
+                    fontSize: '0.85rem', 
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Apply New Total
+                </button>
+              )}
             </div>
             <p className="summary-note">
-              * Each active block is configured with 100 seats by default.
+              * Edit the total above to redistribute seats automatically.
             </p>
           </div>
         </div>
       </div>
+      <ConfirmModal 
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={saveConfig}
+        title="Confirm Seat Configuration"
+        message="Are you sure you want to save this configuration? This will regenerate all seats and stands for this match. Existing ticket sales data might be affected if seats are removed."
+        confirmLabel="Confirm Save"
+        variant="primary"
+        isLoading={isSaving}
+      />
     </section>
   )
 }

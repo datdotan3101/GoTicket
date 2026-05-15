@@ -8,6 +8,7 @@ import { PRIVATE_ROLES, ROLES } from './constants/roles'
 import LoadingSpinner from './components/ui/LoadingSpinner'
 import AIChatBubble from './components/ai/AIChatBubble'
 import AdminLayout from './components/layout/AdminLayout'
+import ManagerLayout from './components/layout/ManagerLayout'
 
 // Lazy load pages for Route-level code splitting
 const HomePage = lazy(() => import('./pages/public/HomePage'))
@@ -39,6 +40,7 @@ const MatchEditPage = lazy(() => import('./pages/manager/MatchEditPage'))
 const StandConfigPage = lazy(() => import('./pages/manager/StandConfigPage'))
 const MatchAnalyticsPage = lazy(() => import('./pages/manager/MatchAnalyticsPage'))
 const ManagerNotificationsPage = lazy(() => import('./pages/manager/ManagerNotificationsPage'))
+const ManagerMatchesPage = lazy(() => import('./pages/manager/ManagerMatchesPage'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
 const ApprovalsPage = lazy(() => import('./pages/admin/ApprovalsPage'))
 const UserManagePage = lazy(() => import('./pages/admin/UserManagePage'))
@@ -91,12 +93,15 @@ export default function App() {
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={[ROLES.MANAGER]} />}>
-              <Route path={APP_ROUTES.MANAGER_DASHBOARD} element={<ManagerDashboard />} />
-              <Route path={APP_ROUTES.MANAGER_MATCH_CREATE} element={<MatchCreatePage />} />
-              <Route path={APP_ROUTES.MANAGER_MATCH_EDIT} element={<MatchEditPage />} />
-              <Route path={APP_ROUTES.MANAGER_STAND_CONFIG} element={<StandConfigPage />} />
-              <Route path={APP_ROUTES.MANAGER_ANALYTICS} element={<MatchAnalyticsPage />} />
-              <Route path={APP_ROUTES.MANAGER_NOTIFICATIONS} element={<ManagerNotificationsPage />} />
+              <Route element={<ManagerLayout />}>
+                <Route path={APP_ROUTES.MANAGER_DASHBOARD} element={<ManagerDashboard />} />
+                <Route path={APP_ROUTES.MANAGER_MATCHES} element={<ManagerMatchesPage />} />
+                <Route path={APP_ROUTES.MANAGER_MATCH_CREATE} element={<MatchCreatePage />} />
+                <Route path={APP_ROUTES.MANAGER_MATCH_EDIT} element={<MatchEditPage />} />
+                <Route path={APP_ROUTES.MANAGER_STAND_CONFIG} element={<StandConfigPage />} />
+                <Route path={APP_ROUTES.MANAGER_ANALYTICS} element={<MatchAnalyticsPage />} />
+                <Route path={APP_ROUTES.MANAGER_NOTIFICATIONS} element={<ManagerNotificationsPage />} />
+              </Route>
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>

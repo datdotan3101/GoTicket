@@ -1,4 +1,4 @@
-export default function LoadingSpinner({ text = 'Đang tải...' }) {
+export default function LoadingSpinner({ text = 'Loading...' }) {
   return (
     <div className="flex flex-col items-center justify-center p-8 gap-4 w-full h-full">
       <div
@@ -12,7 +12,7 @@ export default function LoadingSpinner({ text = 'Đang tải...' }) {
           animation: 'spin 1s ease-in-out infinite',
         }}
         role="status"
-        aria-label="Đang tải dữ liệu"
+        aria-label="Loading data"
       >
         {/* CSS cho spin sẽ thêm ở index.css, mặc định dùng inline style animate vòng xoay */}
         <style>{`

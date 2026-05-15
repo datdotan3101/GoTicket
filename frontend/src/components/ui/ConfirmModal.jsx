@@ -9,8 +9,11 @@
  *  - title: string — modal heading (default: "Confirm Action")
  *  - message: string | ReactNode — description text
  *  - confirmLabel: string — text on the confirm button (default: "Confirm")
- *  - variant: 'danger' | 'warning' | 'default' — controls button color (default: 'danger')
+ *  - variant: 'danger' | 'warning' | 'primary' | 'success' | 'default' — controls color (default: 'danger')
+ *  - isLoading: boolean — if true, disables buttons and shows loading state
  */
+import { Loader2 } from 'lucide-react'
+
 export default function ConfirmModal({
   isOpen,
   onClose,
@@ -18,14 +21,17 @@ export default function ConfirmModal({
   title = 'Confirm Action',
   message = 'Are you sure? This action cannot be undone.',
   confirmLabel = 'Confirm',
-  variant = 'danger'
+  variant = 'danger',
+  isLoading = false
 }) {
   if (!isOpen) return null
 
   const variantColors = {
-    danger: { bg: '#fee2e2', icon: '#ef4444', btn: '#ef4444' },
-    warning: { bg: '#fef3c7', icon: '#f59e0b', btn: '#f59e0b' },
-    default: { bg: '#e0e7ff', icon: '#3b82f6', btn: '#111827' }
+    danger: { bg: '#fee2e2', icon: '#ef4444', btn: '#ef4444', emoji: '⚠️' },
+    warning: { bg: '#fef3c7', icon: '#f59e0b', btn: '#f59e0b', emoji: '⚡' },
+    primary: { bg: '#e0e7ff', icon: '#4f46e5', btn: '#4f46e5', emoji: '💾' },
+    success: { bg: '#dcfce7', icon: '#22c55e', btn: '#22c55e', emoji: '✅' },
+    default: { bg: '#f1f5f9', icon: '#64748b', btn: '#0f172a', emoji: 'ℹ️' }
   }
 
   const colors = variantColors[variant] || variantColors.danger
@@ -48,8 +54,24 @@ export default function ConfirmModal({
         maxWidth: '400px',
         width: '90%',
         textAlign: 'center',
-        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
+        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+        position: 'relative',
+        overflow: 'hidden'
       }}>
+        {isLoading && (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(255,255,255,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10
+          }}>
+            <Loader2 className="animate-spin" size={32} color={colors.btn} />
+          </div>
+        )}
+
         <div style={{
           width: '64px',
           height: '64px',
@@ -62,18 +84,19 @@ export default function ConfirmModal({
           margin: '0 auto 20px',
           fontSize: '1.5rem'
         }}>
-          {variant === 'danger' ? '⚠️' : variant === 'warning' ? '⚡' : 'ℹ️'}
+          {colors.emoji}
         </div>
 
         <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '12px', color: '#0f172a' }}>
           {title}
         </h2>
-        <p style={{ color: '#64748b', lineHeight: 1.5, marginBottom: '28px', fontSize: '0.95rem' }}>
+        <div style={{ color: '#64748b', lineHeight: 1.5, marginBottom: '28px', fontSize: '0.95rem' }}>
           {message}
-        </p>
+        </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <button
             onClick={onClose}
+            disabled={isLoading}
             style={{
               flex: 1,
               padding: '12px',
@@ -82,13 +105,15 @@ export default function ConfirmModal({
               color: '#475569',
               fontWeight: 700,
               border: 'none',
-              cursor: 'pointer'
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              opacity: isLoading ? 0.6 : 1
             }}
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
+            disabled={isLoading}
             style={{
               flex: 1,
               padding: '12px',
@@ -97,10 +122,11 @@ export default function ConfirmModal({
               color: '#fff',
               fontWeight: 700,
               border: 'none',
-              cursor: 'pointer'
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              opacity: isLoading ? 0.6 : 1
             }}
           >
-            {confirmLabel}
+            {isLoading ? 'Processing...' : confirmLabel}
           </button>
         </div>
       </div>

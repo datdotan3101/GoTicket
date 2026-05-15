@@ -92,28 +92,39 @@ export const ticketsService = {
 
   async getMyTickets(userId) {
     const result = await query(
-      `SELECT t.ticket_code,
-              string_agg(s.seat_label, ', ' ORDER BY s.id) as seat_labels,
-              count(*) as quantity,
-              st.name as stand_name,
+      `SELECT sub.ticket_code,
+              json_agg(json_build_object(
+                'name', st.name,
+                'quantity', sub.qty,
+                'price', st.price
+              )) as sections,
+              SUM(st.price * sub.qty) as total_price,
+              SUM(sub.qty) as total_quantity,
               std.name as stadium_name,
               std.city as stadium_city,
               std.address as stadium_address,
               m.home_team,
               m.away_team,
               m.match_date,
-              st.price as price,
-              MIN(t.status) as status,
-              MIN(t.created_at) as created_at,
-              MAX(t.qr_token) as qr_token
-       FROM tickets t
-       JOIN seats s ON s.id = t.seat_id
-       JOIN stands st ON st.id = s.stand_id
-       JOIN matches m ON m.id = t.match_id
+              sub.status,
+              sub.created_at,
+              sub.qr_token
+       FROM (
+         SELECT t.ticket_code, t.match_id, t.stand_id, count(*) as qty, 
+                MIN(t.status) as status, MIN(t.created_at) as created_at, MAX(t.qr_token) as qr_token
+         FROM (
+           SELECT t2.*, s2.stand_id 
+           FROM tickets t2
+           JOIN seats s2 ON s2.id = t2.seat_id
+         ) t
+         WHERE t.user_id = $1 AND t.status IN ('paid', 'checked_in')
+         GROUP BY t.ticket_code, t.match_id, t.stand_id
+       ) sub
+       JOIN stands st ON st.id = sub.stand_id
+       JOIN matches m ON m.id = sub.match_id
        JOIN stadiums std ON std.id = m.stadium_id
-       WHERE t.user_id = $1 AND t.status IN ('paid', 'checked_in')
-       GROUP BY t.ticket_code, m.id, std.id, st.id, st.price
-       ORDER BY created_at DESC`,
+       GROUP BY sub.ticket_code, m.id, std.id, sub.status, sub.created_at, sub.qr_token
+       ORDER BY sub.created_at DESC`,
       [userId]
     );
     return result.rows;
