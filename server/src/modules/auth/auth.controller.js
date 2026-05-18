@@ -25,6 +25,11 @@ export const login = asyncHandler(async (req, res) => {
   return sendSuccess(res, payload);
 });
 
+export const googleLogin = asyncHandler(async (req, res) => {
+  const payload = await authService.googleLogin(req.body);
+  return sendSuccess(res, payload);
+});
+
 export const me = asyncHandler(async (req, res) => {
   const data = await authService.me(req.user.id);
   return sendSuccess(res, data);

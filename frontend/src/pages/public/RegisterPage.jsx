@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { APP_ROUTES } from '../../constants/routes'
 import { authService } from '../../services/authService'
 import GoogleAuthButton from '../../common/GoogleAuthButton'
+import { validatePassword } from '../../utils/validation'
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ email: '', password: '', fullName: '' })
@@ -17,6 +18,13 @@ export default function RegisterPage() {
 
   const onSubmit = async (event) => {
     event.preventDefault()
+
+    const { isValid, message } = validatePassword(form.password)
+    if (!isValid) {
+      toast.error(message)
+      return
+    }
+
     setIsSubmitting(true)
 
     try {

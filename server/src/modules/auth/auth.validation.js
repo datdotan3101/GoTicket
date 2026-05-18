@@ -24,3 +24,7 @@ export const onboardingRules = [
     .optional()
     .isInt({ min: 1 }).withMessage("secondarySportId must be a positive integer.")
 ];
+
+export const changePasswordRules = [
+  commonUserValidators.password("newPassword")
+];

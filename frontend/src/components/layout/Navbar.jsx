@@ -83,7 +83,9 @@ export default function Navbar() {
                   {user?.role === ROLES.MANAGER && <Link to={APP_ROUTES.MANAGER_DASHBOARD}>Manager Portal</Link>}
                   {user?.role === ROLES.ADMIN && <Link to={APP_ROUTES.ADMIN_DASHBOARD}>Admin Portal</Link>}
                   <Link to={APP_ROUTES.PROFILE}>My Profile</Link>
-                  <Link to={APP_ROUTES.MY_TICKETS}>My Tickets</Link>
+                  {user?.role === ROLES.AUDIENCE && (
+                    <Link to={APP_ROUTES.MY_TICKETS}>My Tickets</Link>
+                  )}
                   <button type="button" onClick={handleLogout}>Logout</button>
                 </div>
               </div>

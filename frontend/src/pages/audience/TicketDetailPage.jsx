@@ -8,7 +8,6 @@ import { formatDateTime } from '../../utils/formatDate'
 import { formatVND } from '../../utils/formatCurrency'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import { APP_ROUTES } from '../../constants/routes'
-import { MOCK_TICKETS } from '../../constants/mocks'
 import { ArrowLeft, Download, MapPin, Building2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -26,13 +25,12 @@ export default function TicketDetailPage() {
         setIsLoading(true)
         const response = await ticketService.getMyTickets()
         const fetchedTickets = unwrapData(response) ?? []
-        const allTickets = [...MOCK_TICKETS, ...fetchedTickets]
-        const found = allTickets.find(t => String(t.ticket_code) === String(ticketId))
+        const found = fetchedTickets.find(t => String(t.ticket_code) === String(ticketId))
         setTicket(found)
       } catch (error) {
         console.error('Failed to fetch ticket detail:', error)
       } finally {
-        setIsLoading(false)
+         setIsLoading(false)
       }
     }
 

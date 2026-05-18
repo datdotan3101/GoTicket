@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { authService } from '../../services/authService'
 import { APP_ROUTES } from '../../constants/routes'
+import { validatePassword } from '../../utils/validation'
 
 const getAvatarInitial = (fullName) => {
   if (!fullName) return 'U'
@@ -38,6 +39,7 @@ function Toast({ msg, type }) {
 export default function ProfilePage() {
   const navigate = useNavigate()
   const { user, setUser, logout } = useAuthStore()
+  const hasPassword = user?.hasPassword !== false
 
   /* ── profile state ── */
   const [profileForm, setProfileForm] = useState({
@@ -88,12 +90,13 @@ export default function ProfilePage() {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault()
     setPwStatus({ msg: '', type: '' })
-    if (!pwForm.currentPassword || !pwForm.newPassword || !pwForm.confirmPassword) {
+    if ((hasPassword && !pwForm.currentPassword) || !pwForm.newPassword || !pwForm.confirmPassword) {
       setPwStatus({ msg: 'Please fill in all fields.', type: 'error' })
       return
     }
-    if (pwForm.newPassword.length < 6) {
-      setPwStatus({ msg: 'New password must be at least 6 characters.', type: 'error' })
+    const { isValid, message } = validatePassword(pwForm.newPassword)
+    if (!isValid) {
+      setPwStatus({ msg: message, type: 'error' })
       return
     }
     if (pwForm.newPassword !== pwForm.confirmPassword) {
@@ -103,10 +106,11 @@ export default function ProfilePage() {
     try {
       setPwLoading(true)
       await authService.changePassword({
-        currentPassword: pwForm.currentPassword,
+        currentPassword: hasPassword ? pwForm.currentPassword : '',
         newPassword: pwForm.newPassword,
       })
-      setPwStatus({ msg: 'Password changed successfully!', type: 'success' })
+      setUser({ ...user, hasPassword: true })
+      setPwStatus({ msg: hasPassword ? 'Password changed successfully!' : 'Password set successfully!', type: 'success' })
       setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
     } catch (err) {
       setPwStatus({ msg: err?.response?.data?.message || 'An error occurred.', type: 'error' })
@@ -142,7 +146,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('profile')
   const tabs = [
     { id: 'profile', label: 'Personal Info', icon: '👤' },
-    { id: 'security', label: 'Security & Password', icon: '🔒' },
+    { id: 'security', label: 'Password', icon: '🔒' },
     { id: 'danger', label: 'Delete Account', icon: '⚠️' }
   ]
 
@@ -367,35 +371,37 @@ export default function ProfilePage() {
                   🔒
                 </div>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>Security & Password</h2>
-                  <p style={{ margin: 0, fontSize: '14px', color: '#64748b' }}>Ensure your account is secure</p>
+                  <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>Password</h2>
+                  <p style={{ margin: 0, fontSize: '14px', color: '#64748b' }}>{hasPassword ? 'Ensure your account is secure' : 'Create a password for your account'}</p>
                 </div>
               </div>
 
               <form onSubmit={handlePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current Password</label>
-                  <input
-                    type="password"
-                    value={pwForm.currentPassword}
-                    onChange={e => setPwForm(f => ({ ...f, currentPassword: e.target.value }))}
-                    placeholder="••••••••"
-                    style={{
-                      background: '#f8fafc',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '12px',
-                      padding: '14px 18px',
-                      fontSize: '15px',
-                      color: '#1e293b',
-                      outline: 'none',
-                      transition: 'all 0.2s',
-                    }}
-                    onFocus={e => (e.target.style.borderColor = '#6366f1', e.target.style.background = '#fff')}
-                    onBlur={e => (e.target.style.borderColor = '#e2e8f0', e.target.style.background = '#f8fafc')}
-                  />
-                </div>
+                {hasPassword && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current Password</label>
+                    <input
+                      type="password"
+                      value={pwForm.currentPassword}
+                      onChange={e => setPwForm(f => ({ ...f, currentPassword: e.target.value }))}
+                      placeholder="••••••••"
+                      style={{
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        padding: '14px 18px',
+                        fontSize: '15px',
+                        color: '#1e293b',
+                        outline: 'none',
+                        transition: 'all 0.2s',
+                      }}
+                      onFocus={e => (e.target.style.borderColor = '#6366f1', e.target.style.background = '#fff')}
+                      onBlur={e => (e.target.style.borderColor = '#e2e8f0', e.target.style.background = '#f8fafc')}
+                    />
+                  </div>
+                )}
 
-                <div style={{ height: '1px', background: '#f1f5f9', margin: '8px 0' }} />
+                {hasPassword && <div style={{ height: '1px', background: '#f1f5f9', margin: '8px 0' }} />}
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -483,7 +489,7 @@ export default function ProfilePage() {
                       letterSpacing: '0.5px'
                     }}
                   >
-                    {pwLoading ? 'Updating...' : 'Change Password'}
+                    {pwLoading ? 'Updating...' : (hasPassword ? 'Change Password' : 'Set Password')}
                   </button>
                 </div>
               </form>

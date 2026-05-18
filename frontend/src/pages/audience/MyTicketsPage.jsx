@@ -3,10 +3,8 @@ import TicketCard from '../../components/ui/TicketCard'
 import { ticketService } from '../../services/ticketService'
 import { unwrapData } from '../../utils/apiData'
 
-import { MOCK_TICKETS } from '../../constants/mocks'
-
 export default function MyTicketsPage() {
-  const [tickets, setTickets] = useState(MOCK_TICKETS)
+  const [tickets, setTickets] = useState([])
   const [activeTab, setActiveTab] = useState('upcoming')
 
   useEffect(() => {
@@ -14,9 +12,9 @@ export default function MyTicketsPage() {
       try {
         const response = await ticketService.getMyTickets()
         const fetchedTickets = unwrapData(response) ?? []
-        setTickets([...MOCK_TICKETS, ...fetchedTickets])
+        setTickets(fetchedTickets)
       } catch {
-        setTickets(MOCK_TICKETS)
+        setTickets([])
       }
     }
 

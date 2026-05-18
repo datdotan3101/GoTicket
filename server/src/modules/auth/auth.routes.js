@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { auth } from "../../middlewares/auth.js";
 import { runValidation } from "../../middlewares/validate.js";
-import { login, me, onboarding, register, updateProfile, changePassword, deleteAccount } from "./auth.controller.js";
-import { loginRules, onboardingRules, registerRules } from "./auth.validation.js";
+import { login, me, onboarding, register, updateProfile, changePassword, deleteAccount, googleLogin } from "./auth.controller.js";
+import { loginRules, onboardingRules, registerRules, changePasswordRules } from "./auth.validation.js";
 
 const router = Router();
 
@@ -85,6 +85,7 @@ router.post("/register", runValidation(registerRules), register);
  *         description: "Account is pending approval or locked"
  */
 router.post("/login", runValidation(loginRules), login);
+router.post("/google", googleLogin);
 
 /**
  * @swagger
@@ -164,7 +165,7 @@ router.put("/profile", auth, updateProfile);
  *       400:
  *         description: "Current password is incorrect or validation failed"
  */
-router.put("/change-password", auth, changePassword);
+router.put("/change-password", auth, runValidation(changePasswordRules), changePassword);
 
 /**
  * @swagger
