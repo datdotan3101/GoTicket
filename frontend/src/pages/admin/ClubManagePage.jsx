@@ -3,6 +3,7 @@ import toast from 'react-hot-toast'
 import { clubService } from '../../services/clubService'
 import { sportService } from '../../services/sportService'
 import { unwrapData } from '../../utils/apiData'
+import '../../common/AdminStyles.css'
 import FormModal from '../../components/ui/FormModal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import FileUploadField from '../../components/ui/FileUploadField'
@@ -137,7 +138,7 @@ export default function ClubManagePage() {
       {/* Header */}
       <div className="section-head" style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <h1 style={{ fontSize: '3rem', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '-2px', color: '#111827', lineHeight: 1, margin: 0 }}>
+          <h1 className="admin-header">
             Clubs
           </h1>
           <p className="section-subtitle" style={{ fontSize: '1rem', color: '#6b7280', marginTop: '8px' }}>
@@ -162,22 +163,22 @@ export default function ClubManagePage() {
         submitDisabled={!hasChanges()}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Club Name *</label>
+          <label className="admin-label">Club Name *</label>
           <input
             placeholder="e.g. Manchester United"
             value={form.name}
             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
             required
-            style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '1rem', background: '#f8fafc' }}
+            className="admin-input"
           />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Sport Category</label>
+          <label className="admin-label">Sport Category</label>
           <select
             value={form.sportId}
             onChange={(e) => setForm((p) => ({ ...p, sportId: e.target.value }))}
-            style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '1rem', background: '#f8fafc' }}
+            className="admin-input"
           >
             <option value="">— Select Category —</option>
             {sports.map((s) => (

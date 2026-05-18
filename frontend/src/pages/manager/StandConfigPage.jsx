@@ -8,6 +8,7 @@ import { generateStandsPreview } from '../../utils/standGenerator'
 import StadiumMap from '../../components/seat/StadiumMap'
 import { unwrapData } from '../../utils/apiData'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import { redistributeStadiumSeats } from '../../common/seatDistribution'
 
 const STADIUM_COLUMNS = [
   { id: 'A1', stand: 'A', tiers: ['T1', 'T2'] },
@@ -48,58 +49,35 @@ export default function StandConfigPage() {
 
   const handleRedistribute = () => {
     const total = Number(globalCapacity) || 0
-    if (total < 100) {
-      toast.error('Minimum capacity is 100')
-      return
-    }
-
-    // Reuse logic from MatchCreatePage to redistribute
-    const standTotals = {
-      A: Math.floor(total * 0.3), // Using hardcoded ratios from standRatios.js for simplicity
-      B: Math.floor(total * 0.3),
-      C: Math.floor(total * 0.2),
-      D: Math.floor(total * 0.2)
-    }
-    const standSum = standTotals.A + standTotals.B + standTotals.C + standTotals.D;
-    standTotals.A += (total - standSum);
 
     const activeBlocks = [];
     STADIUM_COLUMNS.forEach(col => {
       col.tiers.forEach(tier => {
         if (columnConfigs[col.id].activeTiers.includes(tier)) {
-          activeBlocks.push({ colId: col.id, stand: col.stand, tier });
+          activeBlocks.push({ colId: col.id, stand: col.stand, tier, blockId: `${col.id}-${tier}` });
         }
       })
     });
 
-    if (activeBlocks.length === 0) {
-      toast.error('Please enable at least one level first')
-      return
+    try {
+      const seatDistribution = redistributeStadiumSeats(total, activeBlocks);
+
+      const newConfigs = { ...columnConfigs }
+      // Reset all capacities first
+      STADIUM_COLUMNS.forEach(col => {
+        newConfigs[col.id].tierCapacities = col.tiers.reduce((acc, t) => ({ ...acc, [t]: 0 }), {})
+      })
+
+      // Apply distribution
+      activeBlocks.forEach(block => {
+        newConfigs[block.colId].tierCapacities[block.tier] = seatDistribution[block.blockId] || 0;
+      })
+
+      setColumnConfigs(newConfigs)
+      toast.success('Seats redistributed based on total capacity')
+    } catch (e) {
+      toast.error(e.message || 'Failed to redistribute')
     }
-
-    const newConfigs = { ...columnConfigs }
-    
-    // Reset all capacities first
-    STADIUM_COLUMNS.forEach(col => {
-      newConfigs[col.id].tierCapacities = col.tiers.reduce((acc, t) => ({ ...acc, [t]: 0 }), {})
-    })
-
-    // Distribute
-    ;['A', 'B', 'C', 'D'].forEach(mainStand => {
-      const blocksInStand = activeBlocks.filter(b => b.stand === mainStand);
-      if (blocksInStand.length > 0) {
-        const baseCapacity = Math.floor(standTotals[mainStand] / blocksInStand.length);
-        const remainder = standTotals[mainStand] % blocksInStand.length;
-        
-        blocksInStand.forEach((block, index) => {
-          const capacity = baseCapacity + (index < remainder ? 1 : 0);
-          newConfigs[block.colId].tierCapacities[block.tier] = capacity;
-        });
-      }
-    });
-
-    setColumnConfigs(newConfigs)
-    toast.success('Seats redistributed based on total capacity')
   }
 
   useEffect(() => {

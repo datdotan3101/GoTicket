@@ -13,6 +13,8 @@ import { clubService } from '../../services/clubService'
 import { unwrapData } from '../../utils/apiData'
 import { formatDateTime } from '../../utils/formatDate'
 import InlineError, { getInputErrorStyle } from '../../components/ui/InlineError'
+import '../../common/AdminStyles.css'
+import ConfirmModal from '../../components/ui/ConfirmModal'
 
 const getInitials = (name) => {
   if (!name) return 'UN'
@@ -342,28 +344,22 @@ export default function UserManagePage() {
         </div>
       </div>
 
-      {/* Confirmation Modal */}
-      {confirmModal.isOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', padding: '32px', borderRadius: '20px', maxWidth: '400px', width: '90%', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.2)' }}>
-            <div style={{ width: '64px', height: '64px', background: '#fee2e2', color: '#ef4444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-              <AlertCircle size={32} />
-            </div>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '12px', color: '#0f172a' }}>Confirm Lock</h2>
-            <p style={{ color: '#64748b', lineHeight: 1.5, marginBottom: '28px', fontSize: '0.95rem' }}>
-              Are you sure you want to lock the account for <strong>{confirmModal.user?.full_name || confirmModal.user?.email}</strong>? 
-            </p>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button onClick={() => setConfirmModal({ isOpen: false, user: null })} style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#f1f5f9', color: '#475569', fontWeight: 700, border: 'none', cursor: 'pointer' }}>
-                Cancel
-              </button>
-              <button onClick={() => { toggleActive(confirmModal.user); setConfirmModal({ isOpen: false, user: null }) }} style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#ef4444', color: '#fff', fontWeight: 700, border: 'none', cursor: 'pointer' }}>
-                Yes, Lock it
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, user: null })}
+        onConfirm={() => {
+          toggleActive(confirmModal.user)
+          setConfirmModal({ isOpen: false, user: null })
+        }}
+        title={`Confirm ${confirmModal.user?.is_active ? 'Lock' : 'Unlock'}`}
+        message={
+          <>
+            Are you sure you want to {confirmModal.user?.is_active ? 'lock' : 'unlock'} the account for <strong>{confirmModal.user?.full_name || confirmModal.user?.email}</strong>?
+          </>
+        }
+        confirmLabel={`Yes, ${confirmModal.user?.is_active ? 'Lock' : 'Unlock'} it`}
+        variant={confirmModal.user?.is_active ? 'danger' : 'success'}
+      />
 
       {/* Add User Modal */}
       {isAddModalOpen && (
@@ -377,23 +373,23 @@ export default function UserManagePage() {
             </div>
             <form noValidate onSubmit={handleAddUser} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Full Name *</label>
-                <input type="text" maxLength={255} value={addForm.fullName} onChange={e => {setAddForm({...addForm, fullName: e.target.value}); setAddFormErrors(prev => ({...prev, fullName: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', ...getInputErrorStyle(!!addFormErrors.fullName), outline: 'none' }} placeholder="John Doe" />
+                <label className="admin-label">Full Name *</label>
+                <input type="text" maxLength={255} value={addForm.fullName} onChange={e => {setAddForm({...addForm, fullName: e.target.value}); setAddFormErrors(prev => ({...prev, fullName: null}))}} className="admin-input" style={getInputErrorStyle(!!addFormErrors.fullName)} placeholder="John Doe" />
                 <InlineError message={addFormErrors.fullName} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Email *</label>
-                <input type="email" maxLength={255} value={addForm.email} onChange={e => {setAddForm({...addForm, email: e.target.value}); setAddFormErrors(prev => ({...prev, email: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', ...getInputErrorStyle(!!addFormErrors.email), outline: 'none' }} placeholder="john@example.com" />
+                <label className="admin-label">Email *</label>
+                <input type="email" maxLength={255} value={addForm.email} onChange={e => {setAddForm({...addForm, email: e.target.value}); setAddFormErrors(prev => ({...prev, email: null}))}} className="admin-input" style={getInputErrorStyle(!!addFormErrors.email)} placeholder="john@example.com" />
                 <InlineError message={addFormErrors.email} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Password *</label>
-                <input type="password" minLength={6} maxLength={100} value={addForm.password} onChange={e => {setAddForm({...addForm, password: e.target.value}); setAddFormErrors(prev => ({...prev, password: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', ...getInputErrorStyle(!!addFormErrors.password), outline: 'none' }} placeholder="Min 6 characters" />
+                <label className="admin-label">Password *</label>
+                <input type="password" minLength={6} maxLength={100} value={addForm.password} onChange={e => {setAddForm({...addForm, password: e.target.value}); setAddFormErrors(prev => ({...prev, password: null}))}} className="admin-input" style={getInputErrorStyle(!!addFormErrors.password)} placeholder="Min 6 characters" />
                 <InlineError message={addFormErrors.password} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Role</label>
-                <select value={addForm.role} onChange={e => {setAddForm({...addForm, role: e.target.value, clubId: ''}); setAddFormErrors(prev => ({...prev, clubId: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', background: '#fff' }}>
+                <label className="admin-label">Role</label>
+                <select value={addForm.role} onChange={e => {setAddForm({...addForm, role: e.target.value, clubId: ''}); setAddFormErrors(prev => ({...prev, clubId: null}))}} className="admin-input">
                   <option value={ROLES.MANAGER}>Manager</option>
                   <option value={ROLES.ADMIN}>Admin</option>
                   <option value={ROLES.EDITOR}>Editor</option>
@@ -402,8 +398,8 @@ export default function UserManagePage() {
               </div>
               {addForm.role === ROLES.MANAGER && (
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Assign Club *</label>
-                  <select value={addForm.clubId} onChange={e => {setAddForm({...addForm, clubId: e.target.value}); setAddFormErrors(prev => ({...prev, clubId: null}))}} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', ...getInputErrorStyle(!!addFormErrors.clubId), outline: 'none', background: '#fff' }}>
+                  <label className="admin-label">Assign Club *</label>
+                  <select value={addForm.clubId} onChange={e => {setAddForm({...addForm, clubId: e.target.value}); setAddFormErrors(prev => ({...prev, clubId: null}))}} className="admin-input" style={getInputErrorStyle(!!addFormErrors.clubId)}>
                     <option value="">Select a club...</option>
                     {clubs.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>

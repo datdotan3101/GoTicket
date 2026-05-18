@@ -21,7 +21,7 @@ api.interceptors.response.use(
     // but as a safety net, don't treat a checkin 401 as a session expiry.
     const isCheckinRoute = url.includes('/checkin/')
     if (is401 && !isCheckinRoute) {
-      useAuthStore.getState().logout()
+      useAuthStore.getState().logout(true)
     }
     return Promise.reject(error)
   },

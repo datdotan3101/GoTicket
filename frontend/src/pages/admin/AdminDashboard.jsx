@@ -7,8 +7,7 @@ import {
 import { APP_ROUTES } from '../../constants/routes'
 import { dashboardService } from '../../services/dashboardService'
 import { unwrapData } from '../../utils/apiData'
-import { formatVND } from '../../utils/formatCurrency'
-import { formatDateTime } from '../../utils/formatDate'
+import { formatDateTime, formatVND } from '../../common/formatters'
 
 const COLORS = ['#1d4ed8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 

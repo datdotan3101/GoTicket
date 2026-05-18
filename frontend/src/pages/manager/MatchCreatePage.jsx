@@ -10,6 +10,7 @@ import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { format } from 'date-fns'
 import InlineError, { getInputErrorStyle } from '../../components/ui/InlineError'
+import { redistributeStadiumSeats } from '../../common/seatDistribution'
 
 const STADIUM_COLUMNS = [
   { id: 'A1', stand: 'A', tiers: ['T1', 'T2'] },
@@ -86,20 +87,6 @@ export default function MatchCreatePage() {
   const blockConfigs = useMemo(() => {
     const configs = {}
     const total = Number(totalCapacity) || 0
-    
-    // Calculate total capacity per main stand (A, B, C, D)
-    const standTotals = {
-      A: Math.floor(total * STAND_RATIOS.A),
-      B: Math.floor(total * STAND_RATIOS.B),
-      C: Math.floor(total * STAND_RATIOS.C),
-      D: Math.floor(total * STAND_RATIOS.D)
-    }
-    
-    // Distribute remainder to stand A to ensure total is exact
-    const standSum = standTotals.A + standTotals.B + standTotals.C + standTotals.D;
-    standTotals.A += (total - standSum);
-
-    // Get a flat list of all active blocks
     const activeBlocks = [];
     STADIUM_COLUMNS.forEach(col => {
       col.tiers.forEach(tier => {
@@ -109,24 +96,25 @@ export default function MatchCreatePage() {
       })
     });
 
-    // Distribute stand totals among active blocks in that stand
-    ['A', 'B', 'C', 'D'].forEach(mainStand => {
-      const blocksInStand = activeBlocks.filter(b => b.stand === mainStand);
-      if (blocksInStand.length > 0) {
-        const baseCapacity = Math.floor(standTotals[mainStand] / blocksInStand.length);
-        const remainder = standTotals[mainStand] % blocksInStand.length;
-        
-        blocksInStand.forEach((block, index) => {
-          // Add remainder to the first few blocks to make it exact
-          const capacity = baseCapacity + (index < remainder ? 1 : 0);
-          configs[block.blockId] = {
-            price: Number(columnConfigs[block.colId].price) || 0,
-            capacity: capacity,
-            active: true
-          }
-        });
+    try {
+      const standTotals = {
+        A: Math.floor(total * STAND_RATIOS.A),
+        B: Math.floor(total * STAND_RATIOS.B),
+        C: Math.floor(total * STAND_RATIOS.C),
+        D: Math.floor(total * STAND_RATIOS.D)
       }
-    });
+      const seatDistribution = redistributeStadiumSeats(total, activeBlocks, standTotals);
+      
+      activeBlocks.forEach(block => {
+        configs[block.blockId] = {
+          price: Number(columnConfigs[block.colId].price) || 0,
+          capacity: seatDistribution[block.blockId] || 0,
+          active: true
+        }
+      });
+    } catch (e) {
+      // If error (e.g. no blocks enabled), capacities will be 0 via the inactive blocks logic below
+    }
 
     // Fill inactive blocks with 0
     STADIUM_COLUMNS.forEach(col => {

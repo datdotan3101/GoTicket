@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { sportService } from '../../services/sportService'
 import { unwrapData } from '../../utils/apiData'
+import '../../common/AdminStyles.css'
 import FormModal from '../../components/ui/FormModal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import FileUploadField from '../../components/ui/FileUploadField'
@@ -107,7 +108,7 @@ export default function SportsManagePage() {
     <section className="container page" style={{ border: 'none', background: 'transparent', paddingBottom: '60px' }}>
       <div className="section-head" style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <h1 style={{ fontSize: '3rem', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '-2px', color: '#111827', lineHeight: 1, margin: 0 }}>Sports</h1>
+          <h1 className="admin-header">Sports</h1>
           <p className="section-subtitle" style={{ fontSize: '1rem', color: '#6b7280', marginTop: '8px' }}>
             Manage sports categories and their visual representations.
           </p>
@@ -131,7 +132,7 @@ export default function SportsManagePage() {
       >
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Sport Name</label>
+            <label className="admin-label">Sport Name</label>
             <input 
               placeholder="e.g. Football" 
               value={form.name} 
@@ -147,17 +148,17 @@ export default function SportsManagePage() {
                 setForm((p) => ({ ...p, name, slug }));
               }} 
               required 
-              style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }}
+              className="admin-input"
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Slug</label>
+            <label className="admin-label">Slug</label>
             <input 
               placeholder="e.g. football" 
               value={form.slug} 
               onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))} 
               required 
-              style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }}
+              className="admin-input"
             />
           </div>
         </div>

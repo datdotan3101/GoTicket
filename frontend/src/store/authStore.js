@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import toast from 'react-hot-toast'
 
 const TOKEN_KEY = 'goticket_access_token'
 const USER_KEY = 'goticket_user'
@@ -26,9 +27,12 @@ export const useAuthStore = create((set) => ({
     localStorage.setItem(USER_KEY, JSON.stringify(user))
     set({ user })
   },
-  logout: () => {
+  logout: (isAuto = false) => {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
     set({ token: null, user: null })
+    if (!isAuto) {
+      toast.success('Logged out successfully!')
+    }
   },
 }))

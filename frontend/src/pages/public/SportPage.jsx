@@ -5,6 +5,7 @@ import MatchCard from '../../components/ui/MatchCard'
 import SportsBanner from '../../components/ui/SportsBanner'
 import { matchService } from '../../services/matchService'
 import { unwrapData } from '../../utils/apiData'
+import { formatDateTime } from '../../common/formatters'
 
 export default function SportPage() {
   const { sportId } = useParams()
@@ -117,7 +118,7 @@ export default function SportPage() {
                 <div className="schedule-day-matches">
                   {dayMatches.map(match => {
                     const matchTime = new Date(match.match_date)
-                    const timeStr = matchTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+                    const timeStr = formatDateTime(match.match_date, 'HH:mm')
                     const isPast = matchTime < new Date()
 
                     const CardWrapper = isPast ? 'div' : Link

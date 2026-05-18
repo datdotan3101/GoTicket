@@ -15,6 +15,7 @@ import { leagueService } from '../../services/leagueService'
 import { sportService } from '../../services/sportService'
 import { unwrapData } from '../../utils/apiData'
 import { formatDateTime } from '../../utils/formatDate'
+import '../../common/AdminStyles.css'
 import FormModal from '../../components/ui/FormModal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 
@@ -247,24 +248,24 @@ export default function LeagueManagePage() {
         submitDisabled={editingLeague && !isFormChanged()}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>League Name</label>
+          <label className="admin-label">League Name</label>
           <input 
             placeholder="e.g. Premier League" 
             value={form.name} 
             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} 
             required 
-            style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', fontSize: '1rem' }}
+            className="admin-input"
           />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Sport</label>
+            <label className="admin-label">Sport</label>
             <select 
               value={form.sportId} 
               onChange={(e) => setForm((p) => ({ ...p, sportId: e.target.value }))} 
               required
-              style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', fontSize: '1rem' }}
+              className="admin-input"
             >
               <option value="">Select sport</option>
               {sports.map((sport) => (
@@ -273,29 +274,29 @@ export default function LeagueManagePage() {
             </select>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Season</label>
+            <label className="admin-label">Season</label>
             <input 
               placeholder="e.g. 2023-24" 
               value={form.season} 
               onChange={(e) => setForm((p) => ({ ...p, season: e.target.value }))}
-              style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', fontSize: '1rem' }}
+              className="admin-input"
             />
           </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Logo URL</label>
+          <label className="admin-label">Logo URL</label>
           <input 
             placeholder="https://example.com/logo.png" 
             value={form.logoUrl} 
             onChange={(e) => setForm((p) => ({ ...p, logoUrl: e.target.value }))}
-            style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', fontSize: '1rem' }}
+            className="admin-input"
           />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Start Date</label>
+            <label className="admin-label">Start Date</label>
             <DatePicker
               selected={form.startDate}
               onChange={(date) => setForm((p) => ({ ...p, startDate: date }))}
@@ -307,7 +308,7 @@ export default function LeagueManagePage() {
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>End Date</label>
+            <label className="admin-label">End Date</label>
             <DatePicker
               selected={form.endDate}
               onChange={(date) => setForm((p) => ({ ...p, endDate: date }))}

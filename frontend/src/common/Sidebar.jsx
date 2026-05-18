@@ -1,22 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
-import { APP_ROUTES } from '../../constants/routes'
-import { 
-  LayoutDashboard, 
-  Trophy 
-} from 'lucide-react'
 
-export default function ManagerNavbar() {
+export default function Sidebar({ menuSections }) {
   const location = useLocation()
-
-  const menuSections = [
-    {
-      title: 'MENU',
-      items: [
-        { name: 'Overview', path: APP_ROUTES.MANAGER_DASHBOARD, icon: <LayoutDashboard size={22} strokeWidth={1.25} /> },
-        { name: 'Matches', path: APP_ROUTES.MANAGER_MATCHES, icon: <Trophy size={22} strokeWidth={1.25} /> }
-      ]
-    }
-  ]
 
   return (
     <div style={{
@@ -43,7 +28,8 @@ export default function ManagerNavbar() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {section.items.map((item, itemIdx) => {
-              const isActuallyActive = item.path === APP_ROUTES.MANAGER_DASHBOARD 
+              const isDashboard = item.path.endsWith('/dashboard')
+              const isActuallyActive = isDashboard 
                 ? location.pathname === item.path 
                 : location.pathname.startsWith(item.path)
 
@@ -73,6 +59,20 @@ export default function ManagerNavbar() {
                     {item.icon}
                   </span>
                   <span style={{ fontSize: '0.95rem', flex: 1 }}>{item.name}</span>
+                  
+                  {item.badge > 0 && (
+                    <span style={{
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      lineHeight: 1
+                    }}>
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               )
             })}

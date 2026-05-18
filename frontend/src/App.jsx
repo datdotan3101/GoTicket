@@ -7,8 +7,8 @@ import { APP_ROUTES } from './constants/routes'
 import { PRIVATE_ROLES, ROLES } from './constants/roles'
 import LoadingSpinner from './components/ui/LoadingSpinner'
 import AIChatBubble from './components/ai/AIChatBubble'
-import AdminLayout from './components/layout/AdminLayout'
-import ManagerLayout from './components/layout/ManagerLayout'
+import AdminLayout from './common/AdminLayout'
+import ManagerLayout from './common/ManagerLayout'
 
 // Lazy load pages for Route-level code splitting
 const HomePage = lazy(() => import('./pages/public/HomePage'))
