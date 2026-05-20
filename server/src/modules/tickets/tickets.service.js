@@ -128,5 +128,44 @@ export const ticketsService = {
       [userId]
     );
     return result.rows;
+  },
+
+  async cancelTickets({ ticketIds, userId }) {
+    return await withTransaction(async (tx) => {
+      const run = (text, params) => tx.query(text, params);
+      
+      const ticketResult = await run(
+        `UPDATE tickets
+         SET status = 'cancelled'
+         WHERE id = ANY($1::bigint[])
+           AND user_id = $2
+           AND status = 'pending'
+         RETURNING id, match_id, seat_id`,
+        [ticketIds, userId]
+      );
+      
+      const cancelledTickets = ticketResult.rows;
+      if (cancelledTickets.length === 0) return [];
+      
+      const seatIds = cancelledTickets.map(t => t.seat_id);
+      
+      await run(
+        `UPDATE seats
+         SET status = 'available'
+         WHERE id = ANY($1::bigint[])`,
+        [seatIds]
+      );
+      
+      for (const ticket of cancelledTickets) {
+        emitToMatch(ticket.match_id, "seat:booked", {
+          matchId: ticket.match_id,
+          seatId: ticket.seat_id,
+          ticketId: ticket.id,
+          status: "available"
+        });
+      }
+      
+      return cancelledTickets;
+    });
   }
 };

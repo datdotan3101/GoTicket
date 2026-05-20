@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { auth } from "../../middlewares/auth.js";
 import { runValidation } from "../../middlewares/validate.js";
-import { login, me, onboarding, register, updateProfile, changePassword, deleteAccount, googleLogin } from "./auth.controller.js";
+import { login, me, onboarding, register, updateProfile, changePassword, deleteAccount, googleLogin, logout } from "./auth.controller.js";
 import { loginRules, onboardingRules, registerRules, changePasswordRules } from "./auth.validation.js";
+import { authLimiter } from "../../middlewares/rateLimiter.js";
 
 const router = Router();
 
@@ -40,7 +41,7 @@ const router = Router();
  *       409:
  *         description: "Email already exists"
  */
-router.post("/register", runValidation(registerRules), register);
+router.post("/register", authLimiter, runValidation(registerRules), register);
 
 /**
  * @swagger
@@ -84,8 +85,22 @@ router.post("/register", runValidation(registerRules), register);
  *       403:
  *         description: "Account is pending approval or locked"
  */
-router.post("/login", runValidation(loginRules), login);
-router.post("/google", googleLogin);
+router.post("/login", authLimiter, runValidation(loginRules), login);
+router.post("/google", authLimiter, googleLogin);
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: "Logout (Blacklist current JWT)"
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: "Logged out successfully"
+ *       401:
+ *         description: "Unauthorized"
+ */
+router.post("/logout", auth, logout);
 
 /**
  * @swagger

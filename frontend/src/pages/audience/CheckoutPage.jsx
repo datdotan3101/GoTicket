@@ -1,9 +1,9 @@
-import { useMemo, useState, useEffect, useCallback } from 'react'
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useElements, useStripe } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 import toast from 'react-hot-toast'
-import { CreditCard, ShieldCheck, Ticket, Info, Loader2, User, CheckCircle2, X, ArrowLeft } from 'lucide-react'
+import { CreditCard, ShieldCheck, Ticket, Info, Loader2, User, CheckCircle2, X, ArrowLeft, Clock } from 'lucide-react'
 import { paymentService } from '../../services/paymentService'
 import { ticketService } from '../../services/ticketService'
 import { formatVND } from '../../utils/formatCurrency'
@@ -50,6 +50,31 @@ function SuccessModal({ isOpen, onClose }) {
           onClick={onClose}
         >
           View My Tickets
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function SessionExpiredModal({ isOpen, onBack }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay">
+      <div className="success-modal">
+        <div className="success-icon-wrapper" style={{ background: '#fef2f2' }}>
+          <X size={80} style={{ color: '#ef4444' }} />
+        </div>
+        <h2 className="success-title" style={{ color: '#1e293b' }}>Session Expired</h2>
+        <p className="success-message">
+          Your 10-minute hold on these seats has expired. The seats have been released.
+        </p>
+        <button 
+          className="modal-button"
+          onClick={onBack}
+          style={{ background: '#ef4444' }}
+        >
+          Return to Seat Selection
         </button>
       </div>
     </div>
@@ -239,6 +264,53 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
   const [isGlobalProcessing, setIsGlobalProcessing] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
 
+  // Countdown timer states & refs
+  const [timeLeft, setTimeLeft] = useState(null)
+  const [isExpired, setIsExpired] = useState(false)
+  const isPaidRef = useRef(false)
+  const ticketIdsRef = useRef([])
+
+  useEffect(() => {
+    ticketIdsRef.current = ticketIds
+  }, [ticketIds])
+
+  // Automatically release tickets if user closes the tab or navigates away
+  useEffect(() => {
+    return () => {
+      if (!isPaidRef.current && ticketIdsRef.current.length > 0) {
+        ticketService.cancel(ticketIdsRef.current).catch(err => {
+          console.error("Auto-cancel failed on unmount:", err)
+        })
+      }
+    }
+  }, [])
+
+  // Timer logic
+  useEffect(() => {
+    if (timeLeft === null) return
+
+    if (timeLeft <= 0) {
+      setIsExpired(true)
+      if (ticketIds.length > 0) {
+        ticketService.cancel(ticketIds).catch(err => console.error(err))
+      }
+      return
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev - 1)
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [timeLeft, ticketIds])
+
+  const formatTime = (seconds) => {
+    if (seconds === null) return '--:--'
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
+
   const handleBack = () => {
     if (onBackProp) onBackProp()
     else navigate(-1)
@@ -265,6 +337,7 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
       setTicketIds(checkoutData._ticketIds)
       setClientSecret(checkoutData._clientSecret)
       setIsInitializing(false)
+      setTimeLeft(600)
       return
     }
 
@@ -286,6 +359,19 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
       const ids = booked.map((ticket) => ticket.id)
       setTicketIds(ids)
 
+      // Initialize countdown from DB timestamp
+      if (booked.length > 0 && booked[0].created_at) {
+        const createdAt = new Date(booked[0].created_at).getTime()
+        const expiresAt = createdAt + 10 * 60 * 1000 // 10 minutes
+        const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000))
+        setTimeLeft(remaining)
+        if (remaining <= 0) {
+          setIsExpired(true)
+        }
+      } else {
+        setTimeLeft(600)
+      }
+
       const intentResponse = await paymentService.createIntent({ ticketIds: ids })
       const payment = intentResponse.data?.data
       setClientSecret(payment?.clientSecret || '')
@@ -302,6 +388,7 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
   }, [createPendingTickets])
 
   const handlePaymentSuccess = () => {
+    isPaidRef.current = true
     setIsGlobalProcessing(false)
     setShowSuccessModal(true)
   }
@@ -324,6 +411,14 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
 
 
       <div className="container">
+        {/* Countdown Banner */}
+        <div className="countdown-banner">
+          <Clock size={18} />
+          <span>
+            Your seats are reserved. Please complete payment in <strong>{formatTime(timeLeft)}</strong>. After this, your booking will be cancelled.
+          </span>
+        </div>
+
         <div className="checkout-layout">
           <div className="checkout-summary">
             <div className="summary-card">
@@ -416,6 +511,11 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
       <SuccessModal 
         isOpen={showSuccessModal} 
         onClose={handleCloseSuccess} 
+      />
+
+      <SessionExpiredModal 
+        isOpen={isExpired} 
+        onBack={handleBack} 
       />
     </section>
   )

@@ -1,6 +1,7 @@
 import { query, withTransaction } from "../../config/db.js";
 import { generateStands } from "../../utils/standGenerator.js";
 import { getPagination, buildPaginatedResponse } from "../../utils/pagination.js";
+import { getOrSetCache, invalidateCache } from "../../utils/cache.js";
 
 const canAccessMatchByClub = (user, matchRow) => {
   if (user.role !== "manager") return true;
@@ -9,59 +10,65 @@ const canAccessMatchByClub = (user, matchRow) => {
 
 export const matchesService = {
   async getAll(filters) {
-    const { page, limit, offset } = getPagination(filters);
-    const values = [];
-    const where = [];
+    const cacheKey = `matches:list:${JSON.stringify(filters)}`;
+    return getOrSetCache(cacheKey, 60, async () => {
+      const { page, limit, offset } = getPagination(filters);
+      const values = [];
+      const where = [];
 
-    if (filters.status) {
-      const statuses = filters.status.split(",");
-      if (statuses.length === 1) {
-        values.push(statuses[0]);
-        where.push(`m.status = $${values.length}`);
-      } else {
-        const placeholders = statuses.map((_, i) => `$${values.length + i + 1}`);
-        values.push(...statuses);
-        where.push(`m.status IN (${placeholders.join(", ")})`);
+      if (filters.status) {
+        const statuses = filters.status.split(",");
+        if (statuses.length === 1) {
+          values.push(statuses[0]);
+          where.push(`m.status = $${values.length}`);
+        } else {
+          const placeholders = statuses.map((_, i) => `$${values.length + i + 1}`);
+          values.push(...statuses);
+          where.push(`m.status IN (${placeholders.join(", ")})`);
+        }
       }
-    }
-    if (filters.league_id) {
-      values.push(filters.league_id);
-      where.push(`m.league_id = $${values.length}`);
-    }
+      if (filters.league_id) {
+        values.push(filters.league_id);
+        where.push(`m.league_id = $${values.length}`);
+      }
 
-    const whereClause = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
-    const totalResult = await query(`SELECT COUNT(*)::int AS total FROM matches m ${whereClause}`, values);
-    values.push(limit, offset);
-    const result = await query(
-      `SELECT m.*, s.name AS stadium_name, s.address AS stadium_address, l.name AS league_name,
-              (SELECT MIN(price) FROM stands st WHERE st.match_id = m.id) AS min_price,
-              (SELECT MAX(price) FROM stands st WHERE st.match_id = m.id) AS max_price,
-              (SELECT COUNT(*)::int FROM tickets t WHERE t.match_id = m.id AND t.status IN ('paid', 'checked_in')) AS sold_count,
-              (SELECT COALESCE(SUM(total_seats), 0)::int FROM stands st WHERE st.match_id = m.id) AS total_seats
-       FROM matches m
-       LEFT JOIN stadiums s ON s.id = m.stadium_id
-       LEFT JOIN leagues l ON l.id = m.league_id
-       ${whereClause}
-       ORDER BY m.match_date ASC
-       LIMIT $${values.length - 1} OFFSET $${values.length}`,
-      values
-    );
+      const whereClause = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
+      const totalResult = await query(`SELECT COUNT(*)::int AS total FROM matches m ${whereClause}`, values);
+      values.push(limit, offset);
+      const result = await query(
+        `SELECT m.*, s.name AS stadium_name, s.address AS stadium_address, l.name AS league_name,
+                (SELECT MIN(price) FROM stands st WHERE st.match_id = m.id) AS min_price,
+                (SELECT MAX(price) FROM stands st WHERE st.match_id = m.id) AS max_price,
+                (SELECT COUNT(*)::int FROM tickets t WHERE t.match_id = m.id AND t.status IN ('paid', 'checked_in')) AS sold_count,
+                (SELECT COALESCE(SUM(total_seats), 0)::int FROM stands st WHERE st.match_id = m.id) AS total_seats
+         FROM matches m
+         LEFT JOIN stadiums s ON s.id = m.stadium_id
+         LEFT JOIN leagues l ON l.id = m.league_id
+         ${whereClause}
+         ORDER BY m.match_date ASC
+         LIMIT $${values.length - 1} OFFSET $${values.length}`,
+        values
+      );
 
-    return buildPaginatedResponse(result.rows, totalResult.rows[0].total, page, limit);
+      return buildPaginatedResponse(result.rows, totalResult.rows[0].total, page, limit);
+    });
   },
 
   async getById(id) {
-    const result = await query(
-      `SELECT m.*, s.name AS stadium_name, s.address AS stadium_address, l.name AS league_name,
-              (SELECT COUNT(*)::int FROM tickets t WHERE t.match_id = m.id AND t.status IN ('paid', 'checked_in')) AS sold_count,
-              (SELECT COALESCE(SUM(total_seats), 0)::int FROM stands st WHERE st.match_id = m.id) AS total_seats
-       FROM matches m
-       LEFT JOIN stadiums s ON s.id = m.stadium_id
-       LEFT JOIN leagues l ON l.id = m.league_id
-       WHERE m.id = $1`,
-      [id]
-    );
-    return result.rows[0] || null;
+    const cacheKey = `matches:detail:${id}`;
+    return getOrSetCache(cacheKey, 60, async () => {
+      const result = await query(
+        `SELECT m.*, s.name AS stadium_name, s.address AS stadium_address, l.name AS league_name,
+                (SELECT COUNT(*)::int FROM tickets t WHERE t.match_id = m.id AND t.status IN ('paid', 'checked_in')) AS sold_count,
+                (SELECT COALESCE(SUM(total_seats), 0)::int FROM stands st WHERE st.match_id = m.id) AS total_seats
+         FROM matches m
+         LEFT JOIN stadiums s ON s.id = m.stadium_id
+         LEFT JOIN leagues l ON l.id = m.league_id
+         WHERE m.id = $1`,
+        [id]
+      );
+      return result.rows[0] || null;
+    });
   },
 
   async create(payload, user) {
@@ -82,6 +89,7 @@ export const matchesService = {
         payload.thumbnailUrl || null
       ]
     );
+    await invalidateCache("matches:*");
     return result.rows[0];
   },
 
@@ -120,6 +128,7 @@ export const matchesService = {
         payload.thumbnailUrl || null
       ]
     );
+    await invalidateCache("matches:*");
     return result.rows[0];
   },
 
@@ -134,6 +143,7 @@ export const matchesService = {
     await query("DELETE FROM stands WHERE match_id = $1", [id]);
     await query("DELETE FROM approvals WHERE resource_type = 'match' AND resource_id = $1", [id]);
     await query("DELETE FROM matches WHERE id = $1", [id]);
+    await invalidateCache("matches:*");
   },
 
   async getSeatsByMatchId(matchId) {
@@ -149,7 +159,7 @@ export const matchesService = {
   },
 
   async submitForApproval(id, userId) {
-    return withTransaction(async (tx) => {
+    const result = await withTransaction(async (tx) => {
       await tx.query(`UPDATE matches SET status = 'pending_review' WHERE id = $1`, [id]);
       await tx.query(
         `INSERT INTO approvals (resource_type, resource_id, submitted_by, status)
@@ -158,6 +168,8 @@ export const matchesService = {
       );
       return { id, status: "pending_review" };
     });
+    await invalidateCache("matches:*");
+    return result;
   },
 
   async configureStands(matchId, payload, user) {
@@ -174,7 +186,7 @@ export const matchesService = {
     }
 
     const stands = generateStands(payload.blockConfigs || {});
-    return withTransaction(async (tx) => {
+    const result = await withTransaction(async (tx) => {
       const run = (text, params) => tx.query(text, params);
       await run("DELETE FROM seats WHERE match_id = $1", [matchId]);
       await run("DELETE FROM stands WHERE match_id = $1", [matchId]);
@@ -220,6 +232,8 @@ export const matchesService = {
       }
       return stands;
     });
+    await invalidateCache("matches:*");
+    return result;
   },
 
   async getAvailabilityByMatchId(matchId) {

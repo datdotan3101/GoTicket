@@ -19,7 +19,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     logout()
-    navigate(APP_ROUTES.HOME)
+    navigate(APP_ROUTES.HOME, { replace: true })
   }
 
   return (

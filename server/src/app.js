@@ -21,6 +21,7 @@ import newsRoutes from "./modules/news/news.routes.js";
 import aiRoutes from "./modules/ai/ai.routes.js";
 import uploadRoutes from "./modules/upload/upload.routes.js";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
+import { globalLimiter, aiLimiter } from "./middlewares/rateLimiter.js";
 
 const app = express();
 
@@ -49,6 +50,14 @@ if (process.env.NODE_ENV !== "production") {
   app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 }
 
+// Áp dụng Rate Limiting cho tất cả các API (ngoại trừ Stripe Webhook)
+app.use("/api", (req, res, next) => {
+  if (req.path === "/payments/webhook") {
+    return next();
+  }
+  return globalLimiter(req, res, next);
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/sports", sportsRoutes);
 app.use("/api/news", newsRoutes);
@@ -62,7 +71,7 @@ app.use("/api/payments", paymentsRoutes);
 app.use("/api/checkin", checkinRoutes);
 app.use("/api/notifications", notificationsRoutes);
 app.use("/api/approvals", approvalsRoutes);
-app.use("/api/ai", aiRoutes);
+app.use("/api/ai", aiLimiter, aiRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/upload", uploadRoutes);
 

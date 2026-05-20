@@ -1,5 +1,6 @@
 import slugify from "slugify";
 import { query } from "../../config/db.js";
+import { getOrSetCache, invalidateCache } from "../../utils/cache.js";
 
 const toSlug = (name) =>
   slugify(name, {
@@ -10,8 +11,10 @@ const toSlug = (name) =>
 
 export const sportsService = {
   async getAll() {
-    const result = await query("SELECT * FROM sports WHERE is_active = true ORDER BY id DESC");
-    return result.rows;
+    return getOrSetCache("sports:list", 600, async () => {
+      const result = await query("SELECT * FROM sports WHERE is_active = true ORDER BY id DESC");
+      return result.rows;
+    });
   },
 
   async create(payload) {
@@ -23,6 +26,7 @@ export const sportsService = {
        RETURNING *`,
       [name, slug, bannerUrl || null]
     );
+    await invalidateCache("sports:list");
     return result.rows[0];
   },
 
@@ -38,11 +42,16 @@ export const sportsService = {
        RETURNING *`,
       [id, name || null, name ? toSlug(name) : null, bannerUrl || null, isActive]
     );
+    await invalidateCache("sports:list");
     return result.rows[0] || null;
   },
 
   async remove(id) {
     const result = await query("DELETE FROM sports WHERE id = $1 RETURNING id", [id]);
-    return result.rowCount > 0;
+    const deleted = result.rowCount > 0;
+    if (deleted) {
+      await invalidateCache("sports:list");
+    }
+    return deleted;
   }
 };

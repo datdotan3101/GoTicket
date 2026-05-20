@@ -84,6 +84,7 @@ export default function GoogleAuthButton() {
           callback: handleCredentialResponse,
           auto_select: false,
           cancel_on_tap_outside: true,
+          locale: 'en',
         })
 
         // Render nút chuẩn Google thương hiệu

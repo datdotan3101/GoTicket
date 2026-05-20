@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { query, withTransaction } from "../../config/db.js";
+import { redis } from "../../config/redis.js";
 
 const getPublicUser = (row) => ({
   id: row.id,
@@ -236,5 +237,15 @@ export const authService = {
       );
       return { success: true };
     }
+  },
+
+  async logout(token, decoded) {
+    if (!redis) return { success: true };
+    const now = Math.floor(Date.now() / 1000);
+    const ttl = decoded.exp - now;
+    if (ttl > 0) {
+      await redis.set(`blacklist:${token}`, "true", { ex: ttl });
+    }
+    return { success: true };
   }
 };

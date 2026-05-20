@@ -445,6 +445,50 @@ textarea { width: 100%; font-family: inherit; }
 .auth-separator:not(:empty)::before { margin-right: 16px; }
 .auth-separator:not(:empty)::after { margin-left: 16px; }
 
+/* Inline field validation errors */
+.field-group { display: flex; flex-direction: column; gap: 4px; }
+.field-error {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  animation: errorFadeIn 0.2s ease-out;
+}
+
+.input-error {
+  border-color: #dc2626 !important;
+  background-color: #fff5f5 !important;
+}
+.input-error:focus { box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important; }
+@keyframes errorFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.countdown-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #fff7ed;
+  border: 1px solid #ffedd5;
+  color: #c2410c;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+.countdown-banner strong {
+  font-family: monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ea580c;
+}
+
 .btn-google {
   display: flex;
   align-items: center;

@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import ProtectedRoute from './components/layout/ProtectedRoute'
+import GuestRoute from './components/layout/GuestRoute'
 import { APP_ROUTES } from './constants/routes'
 import { PRIVATE_ROLES, ROLES } from './constants/roles'
 import LoadingSpinner from './components/ui/LoadingSpinner'
@@ -58,8 +59,10 @@ export default function App() {
         <Suspense fallback={<LoadingSpinner text="Loading page..." />}>
           <Routes>
             <Route path={APP_ROUTES.HOME} element={<HomePage />} />
-            <Route path={APP_ROUTES.LOGIN} element={<LoginPage />} />
-            <Route path={APP_ROUTES.REGISTER} element={<RegisterPage />} />
+            <Route element={<GuestRoute />}>
+              <Route path={APP_ROUTES.LOGIN} element={<LoginPage />} />
+              <Route path={APP_ROUTES.REGISTER} element={<RegisterPage />} />
+            </Route>
             <Route path={APP_ROUTES.NEWS} element={<NewsListPage />} />
             <Route path={APP_ROUTES.NEWS_DETAIL} element={<NewsDetailPage />} />
             <Route path={APP_ROUTES.MATCH_DETAIL} element={<MatchDetailPage />} />

@@ -61,3 +61,10 @@ export const deleteAccount = asyncHandler(async (req, res) => {
   const data = await authService.deleteAccount(req.user.id);
   return sendSuccess(res, data);
 });
+
+export const logout = asyncHandler(async (req, res) => {
+  const header = req.headers.authorization;
+  const token = header.replace("Bearer ", "");
+  await authService.logout(token, req.user);
+  return sendSuccess(res, { message: "Đăng xuất thành công." });
+});

@@ -3,7 +3,7 @@ import { ROLES } from "../../constants/roles.js";
 import { auth } from "../../middlewares/auth.js";
 import { requireRoles } from "../../middlewares/roles.js";
 import { runValidation } from "../../middlewares/validate.js";
-import { bookTickets, myTickets } from "./tickets.controller.js";
+import { bookTickets, myTickets, cancelTickets } from "./tickets.controller.js";
 import { bookTicketsRules } from "./tickets.validation.js";
 
 const router = Router();
@@ -57,5 +57,6 @@ router.post("/book", auth, requireRoles(ROLES.AUDIENCE), runValidation(bookTicke
  *         description: "List of tickets with seat_label, match info, and qr_token"
  */
 router.get("/my", auth, requireRoles(ROLES.AUDIENCE), myTickets);
+router.post("/cancel", auth, requireRoles(ROLES.AUDIENCE), cancelTickets);
 
 export default router;
