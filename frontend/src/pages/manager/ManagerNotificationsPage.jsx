@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useState } from 'react'
 import { Bell, Check, MailOpen, CalendarCheck, ShieldX, X, Loader2 } from 'lucide-react'
 import { notificationService } from '../../services/notificationService'

@@ -10,23 +10,18 @@ import { ROLES } from '../constants/roles'
  * @returns {string} The target redirection path.
  */
 export const getRedirectPath = (user, defaultPath = APP_ROUTES.HOME) => {
-  if (!user || !user.email) return defaultPath
+  if (!user || !user.role) return defaultPath
 
-  // Priority redirection for internal staff
-  if (user.email.endsWith('@goticket.vn')) {
-    switch (user.role) {
-      case ROLES.ADMIN:
-        return APP_ROUTES.ADMIN_DASHBOARD
-      case ROLES.MANAGER:
-        return APP_ROUTES.MANAGER_DASHBOARD
-      case ROLES.EDITOR:
-        return APP_ROUTES.EDITOR_DASHBOARD
-      case ROLES.CHECKER:
-        return APP_ROUTES.CHECKER_DASHBOARD
-      default:
-        return defaultPath
-    }
+  switch (user.role.toLowerCase()) {
+    case ROLES.ADMIN:
+      return APP_ROUTES.ADMIN_DASHBOARD
+    case ROLES.MANAGER:
+      return APP_ROUTES.MANAGER_DASHBOARD
+    case ROLES.EDITOR:
+      return APP_ROUTES.EDITOR_DASHBOARD
+    case ROLES.CHECKER:
+      return APP_ROUTES.CHECKER_DASHBOARD
+    default:
+      return defaultPath
   }
-
-  return defaultPath
 }

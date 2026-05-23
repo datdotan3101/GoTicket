@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useState, useMemo } from 'react'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
@@ -218,7 +219,7 @@ export default function MatchCreatePage() {
         await matchService.configureStands(matchId, standsPayload)
         await matchService.submit(matchId)
       } catch (stepError) {
-        try { await matchService.delete(matchId) } catch (_) {}
+        try { await matchService.delete(matchId) } catch { /* ignore */ }
         throw stepError
       }
 

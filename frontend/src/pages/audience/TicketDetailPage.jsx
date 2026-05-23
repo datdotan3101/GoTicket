@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import QRCodeLib from 'react-qr-code'
@@ -8,7 +9,7 @@ import { formatDateTime } from '../../utils/formatDate'
 import { formatVND } from '../../utils/formatCurrency'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import { APP_ROUTES } from '../../constants/routes'
-import { ArrowLeft, Download, MapPin, Building2 } from 'lucide-react'
+import { ArrowLeft, Download, MapPin, Building2, Gift, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const QRCodeComponent = typeof QRCodeLib === 'object' && QRCodeLib.default ? QRCodeLib.default : (QRCodeLib.QRCode || QRCodeLib);
@@ -18,6 +19,10 @@ export default function TicketDetailPage() {
   const [ticket, setTicket] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const ticketRef = useRef(null)
+  
+  const [isGiftModalOpen, setIsGiftModalOpen] = useState(false)
+  const [giftEmail, setGiftEmail] = useState('')
+  const [isGifting, setIsGifting] = useState(false)
 
   useEffect(() => {
     const fetchTicketDetail = async () => {
@@ -60,8 +65,28 @@ export default function TicketDetailPage() {
       link.click()
       toast.success('Ticket saved successfully!')
     } catch (err) {
-      console.error('Download error:', err)
       toast.error('Failed to save ticket image. Please try again.')
+    }
+  }
+
+  const handleGiftTicket = async (e) => {
+    e.preventDefault()
+    if (!giftEmail || !/^\S+@\S+\.\S+$/.test(giftEmail)) {
+      toast.error("Vui lòng nhập email hợp lệ!")
+      return
+    }
+    
+    try {
+      setIsGifting(true)
+      await ticketService.giftTicket(ticket.ticket_code, giftEmail)
+      toast.success(`Vé đã được gửi tặng đến ${giftEmail} thành công!`)
+      setTicket(prev => ({ ...prev, is_gifted: true }))
+      setIsGiftModalOpen(false)
+      setGiftEmail('')
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Có lỗi xảy ra khi tặng vé.")
+    } finally {
+      setIsGifting(false)
     }
   }
 
@@ -90,13 +115,31 @@ export default function TicketDetailPage() {
           <ArrowLeft size={20} />
           <span>Back</span>
         </Link>
-        <button 
-          onClick={handleDownloadImage} 
-          className="save-image-btn"
-        >
-          <Download size={18} />
-          <span>Save as Image</span>
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          {ticket.status === 'paid' && (
+            <button 
+              onClick={() => setIsGiftModalOpen(true)} 
+              className="save-image-btn"
+              disabled={ticket.is_gifted}
+              style={{ 
+                background: ticket.is_gifted ? '#cbd5e1' : '#ec4899', 
+                color: 'white', 
+                borderColor: ticket.is_gifted ? '#cbd5e1' : '#ec4899',
+                cursor: ticket.is_gifted ? 'not-allowed' : 'pointer'
+              }}
+            >
+              <Gift size={18} />
+              <span>{ticket.is_gifted ? 'Already Gifted' : 'Gift Ticket'}</span>
+            </button>
+          )}
+          <button 
+            onClick={handleDownloadImage} 
+            className="save-image-btn"
+          >
+            <Download size={18} />
+            <span>Save as Image</span>
+          </button>
+        </div>
       </div>
 
       {/* Realistic Ticket Design */}
@@ -208,8 +251,82 @@ export default function TicketDetailPage() {
               </div>
           </div>
           
+          
         </div>
       </div>
+
+      {/* Gift Ticket Modal */}
+      {isGiftModalOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px'
+        }} onClick={() => setIsGiftModalOpen(false)}>
+          <div style={{
+            background: '#fff', padding: '32px', borderRadius: '24px', maxWidth: '420px', width: '100%',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', position: 'relative',
+            animation: 'modalSlideUp 0.3s ease-out'
+          }} onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setIsGiftModalOpen(false)}
+              style={{ position: 'absolute', top: '16px', right: '16px', background: '#f1f5f9', border: 'none', color: '#64748b', width: '32px', height: '32px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            >
+              <X size={18} />
+            </button>
+
+            <div style={{
+              width: '64px', height: '64px', background: '#fdf2f8', color: '#ec4899',
+              borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginBottom: '20px',
+            }}>
+              <Gift size={32} />
+            </div>
+
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '8px', color: '#0f172a' }}>
+              Gift this Ticket 🎁
+            </h2>
+            <p style={{ color: '#64748b', lineHeight: 1.5, marginBottom: '24px', fontSize: '0.95rem' }}>
+              We'll send the QR code and match details directly to your friend's email.
+            </p>
+
+            <form onSubmit={handleGiftTicket}>
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '8px', textTransform: 'uppercase' }}>
+                  Friend's Email
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="friend@example.com"
+                  value={giftEmail}
+                  onChange={(e) => setGiftEmail(e.target.value)}
+                  style={{
+                    width: '100%', padding: '12px 16px', borderRadius: '12px',
+                    border: '1.5px solid #cbd5e1', outline: 'none', fontSize: '1rem',
+                    transition: 'all 0.2s'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#ec4899'}
+                  onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isGifting}
+                style={{
+                  width: '100%', padding: '14px', borderRadius: '12px',
+                  background: isGifting ? '#f472b6' : '#ec4899', color: '#fff',
+                  fontWeight: 800, fontSize: '1rem', border: 'none',
+                  cursor: isGifting ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 14px rgba(236, 72, 153, 0.4)',
+                  display: 'flex', justifyContent: 'center', alignItems: 'center'
+                }}
+              >
+                {isGifting ? 'Sending...' : 'Send Gift Ticket'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {

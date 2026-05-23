@@ -3,7 +3,7 @@ import { ROLES } from "../../constants/roles.js";
 import { auth } from "../../middlewares/auth.js";
 import { requireRoles } from "../../middlewares/roles.js";
 import { runValidation } from "../../middlewares/validate.js";
-import { bookTickets, myTickets, cancelTickets } from "./tickets.controller.js";
+import { bookTickets, myTickets, cancelTickets, giftTicket, generateQrImage } from "./tickets.controller.js";
 import { bookTicketsRules } from "./tickets.validation.js";
 
 const router = Router();
@@ -58,5 +58,9 @@ router.post("/book", auth, requireRoles(ROLES.AUDIENCE), runValidation(bookTicke
  */
 router.get("/my", auth, requireRoles(ROLES.AUDIENCE), myTickets);
 router.post("/cancel", auth, requireRoles(ROLES.AUDIENCE), cancelTickets);
+router.post("/:ticketCode/gift", auth, requireRoles(ROLES.AUDIENCE), giftTicket);
+
+// Public route for email QR code
+router.get("/qr/:token", generateQrImage);
 
 export default router;

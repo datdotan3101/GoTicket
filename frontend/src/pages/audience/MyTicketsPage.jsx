@@ -77,7 +77,7 @@ export default function MyTicketsPage() {
               ) : (
                 <div className="cards-grid">
                   {upcomingTickets.map((ticket) => (
-                    <TicketCard key={ticket.id} ticket={ticket} />
+                    <TicketCard key={ticket.ticket_code} ticket={ticket} />
                   ))}
                 </div>
               )
@@ -89,7 +89,7 @@ export default function MyTicketsPage() {
               ) : (
                 <div className="cards-grid opacity-80 hover:opacity-100 transition-opacity">
                   {pastTickets.map((ticket) => (
-                    <div key={ticket.id} className="grayscale-[20%]">
+                    <div key={ticket.ticket_code} className="grayscale-[20%]">
                       <TicketCard ticket={ticket} />
                     </div>
                   ))}

@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { STAND_NAMES, STAND_RATIOS } from '../constants/standRatios'
 
 export const generateStandsPreview = (totalCapacity, vipCapacity) => {

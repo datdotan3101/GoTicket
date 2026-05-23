@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { authService } from '../services/authService'
@@ -13,38 +13,9 @@ export default function GoogleAuthButton() {
   const [isGsiLoaded, setIsGsiLoaded] = useState(false)
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
-  if (!clientId) {
-    return (
-      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <button 
-          type="button" 
-          className="btn-google" 
-          disabled 
-          style={{ 
-            width: '100%', 
-            color: '#E53E3E', 
-            borderColor: '#FEB2B2',
-            backgroundColor: '#FFF5F5',
-            opacity: 0.9, 
-            cursor: 'not-allowed',
-            fontWeight: '600',
-            padding: '12px',
-            borderRadius: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            fontSize: '0.9rem'
-          }}
-        >
-          ⚠️ VITE_GOOGLE_CLIENT_ID is not configured in .env
-        </button>
-      </div>
-    )
-  }
-
+  // Bỏ conditional return ở đây để không vi phạm quy tắc Hooks
   // 1. Hàm xử lý callback nhận ID Token từ Google và gửi lên Backend
-  const handleCredentialResponse = async (response) => {
+  const handleCredentialResponse = useCallback(async (response) => {
     const loadingToast = toast.loading('Authenticating with Google...')
     try {
       const res = await authService.googleLogin({ idToken: response.credential })
@@ -64,7 +35,7 @@ export default function GoogleAuthButton() {
       const errorMsg = error.response?.data?.message ?? 'Google Sign-in failed.'
       toast.error(errorMsg, { id: loadingToast })
     }
-  }
+  }, [login, navigate, location.state]);
 
   // 2. Load script Google Identity Services động và khởi tạo
   useEffect(() => {
@@ -121,7 +92,37 @@ export default function GoogleAuthButton() {
         existingScript.addEventListener('load', initGoogleSignIn)
       }
     }
-  }, [])
+  }, [handleCredentialResponse])
+
+  if (!clientId) {
+    return (
+      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <button 
+          type="button" 
+          className="btn-google" 
+          disabled 
+          style={{ 
+            width: '100%', 
+            color: '#E53E3E', 
+            borderColor: '#FEB2B2',
+            backgroundColor: '#FFF5F5',
+            opacity: 0.9, 
+            cursor: 'not-allowed',
+            fontWeight: '600',
+            padding: '12px',
+            borderRadius: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            fontSize: '0.9rem'
+          }}
+        >
+          ⚠️ VITE_GOOGLE_CLIENT_ID is not configured in .env
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

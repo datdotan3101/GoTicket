@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useMemo, useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useParams, Link, useNavigate } from 'react-router-dom'

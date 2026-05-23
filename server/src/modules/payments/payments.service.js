@@ -4,6 +4,7 @@ import { query, withTransaction } from "../../config/db.js";
 import { TICKET_STATUS } from "../../constants/ticketStatus.js";
 import { emitToMatch } from "../../config/socket.js";
 import { logger } from "../../utils/logger.js";
+import { sendTicketConfirmationEmail } from "../../utils/email.service.js";
 
 const getPendingTicketsForPayment = async (userId, ticketIds) => {
   const result = await query(
@@ -40,6 +41,9 @@ const handlePaymentSucceeded = async (intent) => {
     return;
   }
 
+  // Khai báo ngoài transaction để có thể dùng sau (gửi email)
+  let qrToken;
+
   await withTransaction(async (tx) => {
     const run = (text, params) => tx.query(text, params);
 
@@ -55,7 +59,7 @@ const handlePaymentSucceeded = async (intent) => {
     );
     const { ticket_code: ticketCode, match_id: matchId } = firstTicketResult.rows[0];
 
-    const qrToken = jwt.sign(
+    qrToken = jwt.sign(
       {
         ticketCode,
         userId,
@@ -99,6 +103,11 @@ const handlePaymentSucceeded = async (intent) => {
       [intent.id]
     );
   });
+
+  // Gửi email xác nhận — fire-and-forget, không block webhook
+  sendTicketConfirmationEmail(userId, ticketIds, qrToken).catch((err) =>
+    logger.error(`[Email] Failed to send ticket confirmation to userId=${userId}: ${err.message}`)
+  );
 
   logger.info(`[Webhook] payment_intent.succeeded processed: ${intent.id}, tickets: [${ticketIds.join(",")}]`);
 };

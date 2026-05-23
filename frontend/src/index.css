@@ -71,8 +71,36 @@ textarea { width: 100%; font-family: inherit; }
 .hero-content { position: relative; z-index: 10; color: #ffffff; text-align: center; width: 100%; display: flex; flex-direction: column; align-items: center; }
 .hero-badge { display: inline-block; background: #b45309; color: #fff; font-size: 0.65rem; font-weight: 800; padding: 6px 10px; border-radius: 4px; letter-spacing: 0.5px; margin-bottom: 16px; align-self: center; }
 .hero-title { font-size: 4.5rem; font-weight: 900; line-height: 0.95; margin: 0 0 40px 0; text-transform: uppercase; letter-spacing: -2px; text-align: center; }
-.hero-search-box { display: flex; background: #ffffff; border-radius: 6px; padding: 6px; max-width: 600px; width: 100%; align-items: center; margin: 0 auto; border: 1px solid #e2e8f0; transition: all 0.2s; }
-.hero-search-box:focus-within { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+/* Hero Search Bar */
+.hero-search-wrapper { width: 100%; max-width: 620px; margin: 0 auto; }
+.hero-search-box {
+  display: flex; align-items: center; gap: 0;
+  background: #ffffff; border-radius: 12px; padding: 8px 8px 8px 20px;
+  border: 2px solid transparent;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  transition: all 0.25s ease;
+  width: 100%;
+}
+.hero-search-box.focused {
+  border-color: rgba(255,255,255,0.6);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 0 0 4px rgba(255,255,255,0.15);
+}
+.hero-search-icon { color: #6366f1; flex-shrink: 0; }
+.hero-search-input {
+  flex: 1; border: none; outline: none; background: transparent;
+  font-size: 0.975rem; font-weight: 500; color: #1e293b;
+  padding: 8px 12px; min-width: 0;
+}
+.hero-search-input::placeholder { color: #94a3b8; }
+.hero-search-clear {
+  background: #f1f5f9; border: none; color: #64748b;
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+}
+.hero-search-clear:hover { background: #e2e8f0; color: #1e293b; }
+
+/* legacy hero search classes */
 .hs-input-wrap { display: flex; align-items: center; padding: 0 16px; flex: 1; gap: 8px;}
 .hs-border-r { border-right: 1px solid #e5e7eb; }
 .hs-input-wrap span { font-size: 1.2rem; opacity: 0.5; }

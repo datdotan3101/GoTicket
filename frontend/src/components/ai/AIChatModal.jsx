@@ -160,7 +160,7 @@ export default function AIChatModal({ onClose }) {
       } else {
         pushMessage({ role: 'assistant', content: 'Xin lỗi, tôi không thể xử lý yêu cầu lúc này.' })
       }
-    } catch (err) {
+    } catch {
       pushMessage({ role: 'assistant', content: 'Có lỗi xảy ra khi kết nối máy chủ AI. Vui lòng thử lại sau.' })
     } finally {
       setIsLoading(false)

@@ -16,9 +16,9 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Auto-redirect if already authenticated and has staff domain
+  // Auto-redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated && user?.email?.endsWith('@goticket.vn')) {
+    if (isAuthenticated && user) {
       const targetPath = getRedirectPath(user)
       navigate(targetPath, { replace: true })
     }

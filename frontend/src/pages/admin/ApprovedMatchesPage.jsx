@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useState } from 'react'
 import { matchService } from '../../services/matchService'
 import { unwrapData } from '../../utils/apiData'

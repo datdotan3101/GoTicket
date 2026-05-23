@@ -1,0 +1,1 @@
+ALTER TABLE tickets ADD COLUMN is_gifted BOOLEAN NOT NULL DEFAULT false;

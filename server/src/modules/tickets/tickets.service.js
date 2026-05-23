@@ -1,6 +1,7 @@
 import { query, withTransaction } from "../../config/db.js";
 import { emitToMatch } from "../../config/socket.js";
 import { TICKET_STATUS } from "../../constants/ticketStatus.js";
+import { sendGiftTicketEmail } from "../../utils/email.service.js";
 import { validateSeatSelection } from "../../utils/seatValidation.js";
 
 const getSeatRowsForBooking = async (runner, matchId, seatIds) => {
@@ -15,10 +16,10 @@ const getSeatRowsForBooking = async (runner, matchId, seatIds) => {
 };
 
 const generateTicketCode = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  // 8 chữ số ngẫu nhiên, ví dụ: 47382910
   let code = '';
   for (let i = 0; i < 5; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+    code += Math.floor(Math.random() * 10).toString();
   }
   return code;
 };
@@ -108,10 +109,11 @@ export const ticketsService = {
               m.match_date,
               sub.status,
               sub.created_at,
-              sub.qr_token
+              sub.qr_token,
+              bool_or(sub.is_gifted) as is_gifted
        FROM (
          SELECT t.ticket_code, t.match_id, t.stand_id, count(*) as qty, 
-                MIN(t.status) as status, MIN(t.created_at) as created_at, MAX(t.qr_token) as qr_token
+                MIN(t.status) as status, MIN(t.created_at) as created_at, MAX(t.qr_token) as qr_token, bool_or(t.is_gifted) as is_gifted
          FROM (
            SELECT t2.*, s2.stand_id 
            FROM tickets t2
@@ -167,5 +169,31 @@ export const ticketsService = {
       
       return cancelledTickets;
     });
+  },
+
+  async giftTicket({ userId, ticketCode, email }) {
+    // Chỉ check xem vé có tồn tại, thuộc về user và trạng thái có hợp lệ (ví dụ: 'paid')
+    const result = await query(
+      `SELECT id, is_gifted FROM tickets WHERE ticket_code = $1 AND user_id = $2 AND status = 'paid'`,
+      [ticketCode, userId]
+    );
+    if (result.rowCount === 0) {
+      throw new Error("Vé không hợp lệ, không thể tặng.");
+    }
+
+    if (result.rows[0].is_gifted) {
+      throw new Error("Vé này đã được tặng trước đó.");
+    }
+
+    // Gửi email
+    await sendGiftTicketEmail(userId, ticketCode, email);
+
+    // Đánh dấu vé đã tặng
+    await query(
+      `UPDATE tickets SET is_gifted = true WHERE ticket_code = $1 AND user_id = $2`,
+      [ticketCode, userId]
+    );
+
+    return { success: true, message: "Gift ticket sent successfully" };
   }
 };

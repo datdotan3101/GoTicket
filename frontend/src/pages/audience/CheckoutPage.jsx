@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-unused-vars */
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useElements, useStripe } from '@stripe/react-stripe-js'
@@ -81,7 +83,7 @@ function SessionExpiredModal({ isOpen, onBack }) {
   )
 }
 
-function CheckoutForm({ totalAmount, onProcessing, onSuccess }) {
+function CheckoutForm({ totalAmount, clientSecret, onProcessing, onSuccess }) {
   const stripe = useStripe()
   const elements = useElements()
   const [isPaying, setIsPaying] = useState(false)
@@ -104,7 +106,7 @@ function CheckoutForm({ totalAmount, onProcessing, onSuccess }) {
     onProcessing(true)
 
     try {
-      const result = await stripe.confirmCardPayment(window.clientSecret, {
+      const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: elements.getElement(CardNumberElement),
           billing_details: { name: cardholderName },
@@ -327,9 +329,8 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
   )
 
   useEffect(() => {
-    window.clientSecret = clientSecret
     window.totalAmount = totalAmount
-  }, [clientSecret, totalAmount])
+  }, [totalAmount])
 
   const createPendingTickets = useCallback(async () => {
     // If booking was already created by the AI chatbot, skip booking + intent creation
@@ -484,9 +485,10 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
 
               {clientSecret && stripePromise ? (
                 <div className="stripe-container">
-                  <Elements stripe={stripePromise}>
+                  <Elements stripe={stripePromise} options={{ clientSecret }}>
                     <CheckoutForm 
-                      totalAmount={totalAmount} 
+                      totalAmount={totalAmount}
+                      clientSecret={clientSecret}
                       onProcessing={setIsGlobalProcessing} 
                       onSuccess={handlePaymentSuccess}
                     />

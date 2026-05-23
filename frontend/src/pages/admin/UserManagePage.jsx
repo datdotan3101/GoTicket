@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { APP_ROUTES } from '../../constants/routes'
@@ -71,14 +72,14 @@ export default function UserManagePage() {
       const response = await userService.getAll({ limit: 100 })
       const payload = unwrapData(response)
       setUsers(payload?.data ?? payload ?? [])
-    } catch (err) {}
+    } catch { /* ignore */ }
   }
 
   const refreshPending = async () => {
     try {
       const response = await approvalsService.getPending({ type: 'match' })
       setPendingMatches(unwrapData(response) || [])
-    } catch (err) {}
+    } catch { /* ignore */ }
   }
 
   const toggleActive = async (user) => {

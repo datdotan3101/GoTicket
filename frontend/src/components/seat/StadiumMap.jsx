@@ -112,7 +112,6 @@ export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelec
                 : block.color
 
           // Compute center of block path for SOLD OUT label
-          const pathParts = block.d.split('M ').filter(Boolean)
           let cx = block.labelX
           let cy = block.labelY + 15
 

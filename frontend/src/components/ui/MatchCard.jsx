@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { isMatchHot } from '../../utils/hotBadge'
 import { formatDateTime } from '../../utils/formatDate'
-import { formatVND } from '../../utils/formatCurrency'
 import { X, Calendar, ShoppingCart, Trophy } from 'lucide-react'
 
 const DUMMY_IMAGES = [

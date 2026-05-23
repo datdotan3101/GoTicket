@@ -23,6 +23,7 @@ export default function MatchEditModal({
 
   useEffect(() => {
     if (match) {
+      // eslint-disable-next-line
       setForm({
         homeTeam: match.home_team || '',
         awayTeam: match.away_team || '',
