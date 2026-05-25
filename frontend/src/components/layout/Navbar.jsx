@@ -33,7 +33,6 @@ export default function Navbar() {
             <>
               <NavLink to={APP_ROUTES.HOME} className={linkClassName}>Home</NavLink>
               <NavLink to={APP_ROUTES.SPORTS} className={linkClassName}>Sports</NavLink>
-              <NavLink to={APP_ROUTES.NEWS} className={linkClassName}>News</NavLink>
             </>
           )}
 

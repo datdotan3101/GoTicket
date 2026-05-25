@@ -184,55 +184,6 @@ export default function CheckerDashboard() {
               </div>
             </div>
 
-            <div className="stand-analytics-section">
-              <div className="section-header-premium">
-                <LayoutGrid size={20} className="text-blue-500" />
-                <h2>Stand Occupancy Analytics</h2>
-              </div>
-              
-              <div className="stands-grid-premium">
-                {stats.stands?.map((stand) => {
-                  const fillRate = stand.sold_tickets > 0 
-                    ? Math.round((stand.checked_in_tickets / stand.sold_tickets) * 100) 
-                    : 0;
-                  
-                  return (
-                    <div key={stand.stand_name} className="stand-stat-card">
-                      <div className="stand-card-header">
-                        <span className="stand-tag">Stand {stand.stand_name}</span>
-                        <span className={`rate-badge ${fillRate > 80 ? 'high' : fillRate > 40 ? 'mid' : 'low'}`}>
-                          {fillRate}% In
-                        </span>
-                      </div>
-                      
-                      <div className="stand-metrics">
-                        <div className="s-metric">
-                          <span className="s-label">Sold</span>
-                          <span className="s-value">{stand.sold_tickets}</span>
-                        </div>
-                        <div className="s-metric">
-                          <span className="s-label">Checked-in</span>
-                          <span className="s-value highlight">{stand.checked_in_tickets}</span>
-                        </div>
-                      </div>
-
-                      <div className="stand-progress-wrap">
-                        <div className="stand-progress-bg">
-                          <div 
-                            className={`stand-progress-fill ${fillRate > 80 ? 'bg-green-500' : fillRate > 40 ? 'bg-blue-500' : 'bg-orange-500'}`} 
-                            style={{ width: `${fillRate}%` }}
-                          ></div>
-                        </div>
-                        <div className="flex justify-between text-[10px] mt-2 font-bold text-slate-400 uppercase">
-                          <span>Arrivals</span>
-                          <span>{stand.checked_in_tickets}/{stand.sold_tickets}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
           </div>
 
           <aside className="checker-sidebar">

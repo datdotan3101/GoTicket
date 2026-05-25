@@ -7,12 +7,21 @@ import { unwrapData } from '../../utils/apiData'
 import { formatDateTime, formatVND } from '../../common/formatters'
 import toast from 'react-hot-toast'
 import { Eye, MapPin, Calendar, Clock, X, Check, XCircle, Users, ShoppingCart } from 'lucide-react'
+import { usePagination } from '../../hooks/usePagination'
+import Pagination from '../../components/ui/Pagination'
 
 const DUMMY_IMAGES = [
   'https://images.unsplash.com/photo-1518605368461-1ee0676644ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
   'https://images.unsplash.com/photo-1540747913346-19e32fc3e6ed?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
   'https://images.unsplash.com/photo-1508344928928-7137b29de218?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
 ]
+
+const getFallbackImage = (id) => {
+  if (!id) return DUMMY_IMAGES[0]
+  if (typeof id === 'number') return DUMMY_IMAGES[Math.abs(id) % DUMMY_IMAGES.length]
+  const sum = String(id).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  return DUMMY_IMAGES[sum % DUMMY_IMAGES.length]
+}
 
 export default function MatchManagePage() {
   const [activeTab, setActiveTab] = useState('pending') // pending, approved
@@ -24,16 +33,27 @@ export default function MatchManagePage() {
   const [rejectingId, setRejectingId] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
 
+  const {
+    currentPage,
+    setCurrentPage,
+    paginatedItems,
+    totalPages
+  } = usePagination(matches, 6, activeTab)
+
   const fetchMatches = async () => {
     setIsLoading(true)
     try {
       if (activeTab === 'pending') {
         const response = await approvalsService.getPending({ type: 'match' })
-        setMatches(unwrapData(response) || [])
+        const dataList = unwrapData(response) || []
+        dataList.sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime())
+        setMatches(dataList)
       } else if (activeTab === 'approved') {
         const response = await matchService.getAll({ status: 'published,approved', limit: 100 })
         const payload = unwrapData(response)
-        setMatches(payload?.data ?? payload ?? [])
+        const dataList = payload?.data ?? payload ?? []
+        dataList.sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime())
+        setMatches(dataList)
       }
     } catch (error) {
       setMatches([])
@@ -120,30 +140,31 @@ export default function MatchManagePage() {
     if (matches.length === 0) return <p>No {activeTab} matches found.</p>
 
     return (
-      <div className="cards-grid">
-        {matches.map((match) => (
-          <article className="card" key={match.id} style={{ position: 'relative', overflow: 'hidden', border: '1px solid #cbd5e1', borderRadius: '16px' }}>
-            <div style={{ height: '140px', backgroundImage: `url(${match.thumbnail_url || DUMMY_IMAGES[match.id % DUMMY_IMAGES.length]})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
+      <>
+        <div className="cards-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          {paginatedItems.map((match) => (
+            <article className="card" key={match.id} style={{ position: 'relative', overflow: 'hidden', border: '1px solid #cbd5e1', borderRadius: '16px', display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <div style={{ height: '160px', backgroundImage: `url(${match.thumbnail_url || getFallbackImage(match.id)})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', backgroundColor: '#e2e8f0', flexShrink: 0 }}>
               <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
                 <span className={`badge ${activeTab === 'pending' ? 'warning' : 'success'}`} style={{ textTransform: 'uppercase', fontSize: '0.7rem', background: activeTab === 'pending' ? '#f59e0b' : '#10b981', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '6px' }}>
                   {activeTab}
                 </span>
               </div>
             </div>
-            
-            <div style={{ padding: '20px', borderBottom: '1px solid #f1f5f9' }}>
+              
+            <div style={{ padding: '20px', borderBottom: activeTab === 'pending' ? '1px solid #f1f5f9' : 'none', display: 'flex', flexDirection: 'column', flex: 1 }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1e293b', marginBottom: '8px', lineHeight: 1.3 }}>
                 {match.home_team || 'Home'} <span style={{ color: '#94a3b8', fontSize: '0.9rem', margin: '0 4px' }}>vs</span> {match.away_team || 'Away'}
               </h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>
-                <Calendar size={14} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#64748b', marginBottom: '8px', marginTop: 'auto' }}>
+                <Calendar size={14} style={{ flexShrink: 0 }} />
                 <span>{match.match_date ? formatDateTime(match.match_date) : 'TBA'}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '0.8rem', color: '#64748b' }}>
-                <MapPin size={14} style={{ marginTop: '2px' }} />
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span>{match.stadium_name || 'TBA'}</span>
-                  {match.stadium_address && <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>{match.stadium_address}</span>}
+                <MapPin size={14} style={{ marginTop: '2px', flexShrink: 0 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{match.stadium_name || 'TBA'}</span>
+                  {match.stadium_address && <span style={{ fontSize: '0.7rem', opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{match.stadium_address}</span>}
                 </div>
               </div>
             </div>
@@ -167,7 +188,17 @@ export default function MatchManagePage() {
             )}
           </article>
         ))}
-      </div>
+        </div>
+        {totalPages > 1 && (
+          <div style={{ marginTop: '32px' }}>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
+      </>
     )
   }
 
@@ -190,7 +221,7 @@ export default function MatchManagePage() {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(4px)' }}>
           <div style={{ background: '#fff', borderRadius: '24px', width: '100%', maxWidth: '1000px', maxHeight: '90vh', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', display: 'flex', flexDirection: 'column' }}>
             {/* Header Banner - Keeping it simple at top */}
-            <div style={{ position: 'relative', height: '120px', backgroundImage: `url(${selectedMatch.thumbnail_url || DUMMY_IMAGES[selectedMatch.id % DUMMY_IMAGES.length]})`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div style={{ position: 'relative', height: '120px', backgroundImage: `url(${selectedMatch.thumbnail_url || getFallbackImage(selectedMatch.id)})`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%)' }}></div>
               <button 
                 onClick={() => setSelectedMatch(null)}

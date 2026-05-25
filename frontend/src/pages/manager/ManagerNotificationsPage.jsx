@@ -1,10 +1,12 @@
 /* eslint-disable no-unused-vars */
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Bell, Check, MailOpen, CalendarCheck, ShieldX, X, Loader2 } from 'lucide-react'
 import { notificationService } from '../../services/notificationService'
 import { matchService } from '../../services/matchService'
 import { unwrapData } from '../../utils/apiData'
 import { formatDateTime } from '../../utils/formatDate'
+import { APP_ROUTES } from '../../constants/routes'
 
 export default function ManagerNotificationsPage() {
   const [items, setItems] = useState([])
@@ -262,6 +264,15 @@ export default function ManagerNotificationsPage() {
                         <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, marginBottom: '4px' }}>VENUE</div>
                         <div style={{ fontSize: '0.9rem', color: '#334155', fontWeight: 600 }}>{relatedMatchData.stadium_name || 'N/A'}</div>
                       </div>
+                    </div>
+                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', textAlign: 'center' }}>
+                      <Link 
+                        to={APP_ROUTES.MANAGER_MATCH_EDIT.replace(':matchId', relatedMatchData.id)} 
+                        className="mc-btn mc-btn-primary"
+                        style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+                      >
+                        View Match Detail
+                      </Link>
                     </div>
                   </div>
                 ) : (

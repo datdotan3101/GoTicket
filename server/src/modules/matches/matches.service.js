@@ -31,9 +31,31 @@ export const matchesService = {
         values.push(filters.league_id);
         where.push(`m.league_id = $${values.length}`);
       }
+      if (filters.q) {
+        const keyword = `%${filters.q}%`;
+        values.push(keyword);
+        const idx = values.length;
+        where.push(
+          `(m.home_team ILIKE $${idx} OR m.away_team ILIKE $${idx} OR l.name ILIKE $${idx} OR s.name ILIKE $${idx})`
+        );
+      }
+      if (filters.stadium) {
+        values.push(`%${filters.stadium}%`);
+        where.push(`s.name ILIKE $${values.length}`);
+      }
+      if (filters.date) {
+        values.push(filters.date);
+        where.push(`DATE(m.match_date) = $${values.length}`);
+      }
 
       const whereClause = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
-      const totalResult = await query(`SELECT COUNT(*)::int AS total FROM matches m ${whereClause}`, values);
+      const totalResult = await query(
+        `SELECT COUNT(*)::int AS total FROM matches m
+         LEFT JOIN stadiums s ON s.id = m.stadium_id
+         LEFT JOIN leagues l ON l.id = m.league_id
+         ${whereClause}`,
+        values
+      );
       values.push(limit, offset);
       const result = await query(
         `SELECT m.*, s.name AS stadium_name, s.address AS stadium_address, l.name AS league_name,

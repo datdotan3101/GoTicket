@@ -22,8 +22,7 @@ const ForbiddenPage = lazy(() => import('./pages/shared/ForbiddenPage'))
 const NotFoundPage = lazy(() => import('./pages/shared/NotFoundPage'))
 const SportPage = lazy(() => import('./pages/public/SportPage'))
 const MatchDetailPage = lazy(() => import('./pages/public/MatchDetailPage'))
-const NewsListPage = lazy(() => import('./pages/public/NewsListPage'))
-const NewsDetailPage = lazy(() => import('./pages/public/NewsDetailPage'))
+const SearchResultsPage = lazy(() => import('./pages/public/SearchResultsPage'))
 const SeatSelectPage = lazy(() => import('./pages/audience/SeatSelectPage'))
 const CheckoutPage = lazy(() => import('./pages/audience/CheckoutPage'))
 const PaymentSuccessPage = lazy(() => import('./pages/audience/PaymentSuccessPage'))
@@ -63,8 +62,7 @@ export default function App() {
               <Route path={APP_ROUTES.LOGIN} element={<LoginPage />} />
               <Route path={APP_ROUTES.REGISTER} element={<RegisterPage />} />
             </Route>
-            <Route path={APP_ROUTES.NEWS} element={<NewsListPage />} />
-            <Route path={APP_ROUTES.NEWS_DETAIL} element={<NewsDetailPage />} />
+            <Route path={APP_ROUTES.SEARCH} element={<SearchResultsPage />} />
             <Route path={APP_ROUTES.MATCH_DETAIL} element={<MatchDetailPage />} />
             <Route path={APP_ROUTES.SPORTS} element={<SportPage />} />
             <Route path={APP_ROUTES.FORBIDDEN} element={<ForbiddenPage />} />

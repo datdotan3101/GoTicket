@@ -17,6 +17,18 @@ import { notificationService } from '../../services/notificationService'
 import { unwrapData } from '../../utils/apiData'
 import { formatVND } from '../../utils/formatCurrency'
 import { formatDateTime } from '../../utils/formatDate'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line
+} from 'recharts'
 
 const MOCK_DATA = {
   summary: {
@@ -124,7 +136,7 @@ export default function ManagerDashboard() {
           <p className="dashboard-subtitle">Track your matches performance and manage ticket sales</p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <Link className="mc-btn mc-btn-ghost" to={APP_ROUTES.MANAGER_NOTIFICATIONS} style={{ position: 'relative' }}>
+          <Link className="mc-btn mc-btn-ghost" to={APP_ROUTES.MANAGER_NOTIFICATIONS} style={{ position: 'relative', border: '1px solid #cbd5e1' }}>
             <Bell size={18} style={{ marginRight: '8px' }} />
             Notifications
             {unreadCount > 0 && (
@@ -216,6 +228,40 @@ export default function ManagerDashboard() {
             <span className="stat-label">Total Matches</span>
             <h2 className="stat-value">{data.summary.total_matches}</h2>
             <span className="dashboard-subtitle" style={{ fontSize: '0.75rem' }}>Active campaigns</span>
+          </div>
+        </div>
+      )}
+
+      {data?.byMatch && data.byMatch.length > 0 && (
+        <div style={{ 
+          marginTop: '40px', 
+          background: '#fff', 
+          padding: '24px', 
+          borderRadius: '16px', 
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+        }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '24px', color: '#0f172a' }}>Revenue Overview</h3>
+          <div style={{ width: '100%', height: '300px' }}>
+            <ResponsiveContainer>
+              <BarChart
+                data={[...data.byMatch].reverse().map(m => ({
+                  name: `${m.home_team.substring(0,3).toUpperCase()} v ${m.away_team.substring(0,3).toUpperCase()}`,
+                  revenue: Number(m.revenue) / 1000000 // Convert to millions for better display
+                }))}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} tickFormatter={(value) => `${value}M`} />
+                <Tooltip 
+                  cursor={{ fill: '#f1f5f9' }}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                  formatter={(value) => [`${value}M VND`, 'Revenue']}
+                />
+                <Bar dataKey="revenue" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       )}

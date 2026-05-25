@@ -89,7 +89,7 @@ export default function MyTicketsPage() {
               ) : (
                 <div className="cards-grid opacity-80 hover:opacity-100 transition-opacity">
                   {pastTickets.map((ticket) => (
-                    <div key={ticket.ticket_code} className="grayscale-[20%]">
+                    <div key={ticket.ticket_code} className="grayscale-20">
                       <TicketCard ticket={ticket} />
                     </div>
                   ))}
