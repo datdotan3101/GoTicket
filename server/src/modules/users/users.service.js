@@ -165,5 +165,37 @@ export const usersService = {
       [email, hashedPassword, fullName, role, effectiveClubId]
     );
     return result.rows[0];
+  },
+
+  /**
+   * Update full user information (Admin only).
+   */
+  async updateUser(id, { email, fullName, role, clubId }) {
+    if (!ALLOWED_ROLES.includes(role)) {
+      throw new Error(`Invalid role. Allowed values: ${ALLOWED_ROLES.join(", ")}`);
+    }
+
+    if (role === ROLES.MANAGER && !clubId) {
+      throw new Error("Manager must be assigned to a club.");
+    }
+
+    // Check if the new email belongs to another user
+    const exist = await query(`SELECT id FROM users WHERE email = $1 AND id != $2`, [email, id]);
+    if (exist.rows.length > 0) {
+      const err = new Error("Email already exists for another user.");
+      err.status = 409;
+      throw err;
+    }
+
+    const effectiveClubId = role === ROLES.MANAGER ? (clubId || null) : null;
+
+    const result = await query(
+      `UPDATE users 
+       SET email = $1, full_name = $2, role = $3, club_id = $4, updated_at = NOW()
+       WHERE id = $5
+       RETURNING id, email, full_name, role, club_id, is_active, is_approved`,
+      [email, fullName, role, effectiveClubId, id]
+    );
+    return result.rows[0] || null;
   }
 };

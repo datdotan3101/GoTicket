@@ -175,4 +175,41 @@ router.put("/:id/role", auth, requireRoles(ROLES.ADMIN), updateUserRole);
  */
 router.put("/:id/active", auth, requireRoles(ROLES.ADMIN), toggleUserActive);
 
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   put:
+ *     summary: "Update user information (admin)"
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, fullName, role]
+ *             properties:
+ *               email: { type: string, format: email }
+ *               fullName: { type: string }
+ *               role: { type: string, enum: [admin, manager, editor, audience, checker] }
+ *               clubId: { type: integer }
+ *     responses:
+ *       200:
+ *         description: "Updated successfully"
+ *       400:
+ *         description: "Invalid data"
+ *       404:
+ *         description: "User not found"
+ *       409:
+ *         description: "Email already exists"
+ */
+import { updateUser } from "./users.controller.js";
+import { updateUserRules } from "./users.validation.js";
+router.put("/:id", auth, requireRoles(ROLES.ADMIN), runValidation(updateUserRules), updateUser);
+
 export default router;

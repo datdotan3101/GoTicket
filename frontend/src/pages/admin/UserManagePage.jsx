@@ -46,6 +46,10 @@ export default function UserManagePage() {
   const [addForm, setAddForm] = useState({ fullName: '', email: '', password: '', role: ROLES.MANAGER, clubId: '' })
   const [addFormErrors, setAddFormErrors] = useState({})
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editForm, setEditForm] = useState({ id: null, fullName: '', email: '', role: '', clubId: '' })
+  const [editFormErrors, setEditFormErrors] = useState({})
+
   useEffect(() => {
     const fetchInitial = async () => {
       try {
@@ -155,6 +159,44 @@ export default function UserManagePage() {
       refreshUsers()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to create user.')
+    }
+  }
+
+  const openEditModal = (user) => {
+    setEditForm({
+      id: user.id,
+      fullName: user.full_name || '',
+      email: user.email || '',
+      role: user.role || ROLES.MANAGER,
+      clubId: user.club_id || ''
+    })
+    setEditFormErrors({})
+    setIsEditModalOpen(true)
+  }
+
+  const validateEditForm = () => {
+    const errors = {}
+    if (!editForm.fullName.trim()) errors.fullName = "Full Name is required."
+    if (!editForm.email.trim()) errors.email = "Email is required."
+    else if (!/\\S+@\\S+\\.\\S+/.test(editForm.email)) errors.email = "Invalid email format."
+    if (editForm.role === ROLES.MANAGER && !editForm.clubId) {
+      errors.clubId = "Please assign a club for Manager role."
+    }
+    setEditFormErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleEditUser = async (e) => {
+    e.preventDefault()
+    if (!validateEditForm()) return
+    
+    try {
+      await userService.update(editForm.id, editForm)
+      toast.success("User updated successfully.")
+      setIsEditModalOpen(false)
+      refreshUsers()
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update user.')
     }
   }
 
@@ -313,7 +355,7 @@ export default function UserManagePage() {
                         </div>
                       </td>
                       <td style={{ padding: '16px 0', textAlign: 'right' }}>
-                        <button style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '8px', marginRight: '4px' }} title="Edit">
+                        <button onClick={() => openEditModal(user)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '8px', marginRight: '4px' }} title="Edit">
                           <Edit2 size={16} />
                         </button>
                         <button 
@@ -412,6 +454,58 @@ export default function UserManagePage() {
               <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
                 <button type="button" onClick={() => setIsAddModalOpen(false)} style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#f1f5f9', color: '#475569', fontWeight: 700, border: 'none', cursor: 'pointer' }}>Cancel</button>
                 <button type="submit" style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#0f172a', color: '#fff', fontWeight: 700, border: 'none', cursor: 'pointer' }}>Create Member</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {isEditModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#fff', padding: '32px', borderRadius: '20px', maxWidth: '500px', width: '100%', boxShadow: '0 20px 50px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>Edit Member</h2>
+              <button onClick={() => setIsEditModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                <X size={24} />
+              </button>
+            </div>
+            <form noValidate onSubmit={handleEditUser} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label className="admin-label">Full Name *</label>
+                <input type="text" maxLength={255} value={editForm.fullName} onChange={e => {setEditForm({...editForm, fullName: e.target.value}); setEditFormErrors(prev => ({...prev, fullName: null}))}} className="admin-input" style={getInputErrorStyle(!!editFormErrors.fullName)} placeholder="John Doe" />
+                <InlineError message={editFormErrors.fullName} />
+              </div>
+              <div>
+                <label className="admin-label">Email *</label>
+                <input type="email" maxLength={255} value={editForm.email} onChange={e => {setEditForm({...editForm, email: e.target.value}); setEditFormErrors(prev => ({...prev, email: null}))}} className="admin-input" style={getInputErrorStyle(!!editFormErrors.email)} placeholder="john@example.com" />
+                <InlineError message={editFormErrors.email} />
+              </div>
+              <div>
+                <label className="admin-label">Role</label>
+                <select value={editForm.role} onChange={e => {setEditForm({...editForm, role: e.target.value, clubId: ''}); setEditFormErrors(prev => ({...prev, clubId: null}))}} className="admin-input">
+                  <option value={ROLES.MANAGER}>Manager</option>
+                  <option value={ROLES.ADMIN}>Admin</option>
+                  <option value={ROLES.EDITOR}>Editor</option>
+                  <option value={ROLES.CHECKER}>Checker</option>
+                  <option value={ROLES.AUDIENCE}>Audience</option>
+                </select>
+              </div>
+              {editForm.role === ROLES.MANAGER && (
+                <div>
+                  <label className="admin-label">Assign Club *</label>
+                  <select value={editForm.clubId || ''} onChange={e => {setEditForm({...editForm, clubId: e.target.value}); setEditFormErrors(prev => ({...prev, clubId: null}))}} className="admin-input" style={getInputErrorStyle(!!editFormErrors.clubId)}>
+                    <option value="">Select a club...</option>
+                    {clubs.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                  <InlineError message={editFormErrors.clubId} />
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                <button type="button" onClick={() => setIsEditModalOpen(false)} style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#f1f5f9', color: '#475569', fontWeight: 700, border: 'none', cursor: 'pointer' }}>Cancel</button>
+                <button type="submit" style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#0f172a', color: '#fff', fontWeight: 700, border: 'none', cursor: 'pointer' }}>Save Changes</button>
               </div>
             </form>
           </div>

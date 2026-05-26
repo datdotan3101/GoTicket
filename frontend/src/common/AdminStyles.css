@@ -27,3 +27,17 @@
   line-height: 1;
   margin: 0;
 }
+
+/* DatePicker specific */
+.datepicker-full-width {
+  width: 100%;
+  display: block;
+}
+
+.datepicker-input {
+  cursor: pointer;
+}
+.datepicker-input:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}

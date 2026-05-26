@@ -57,3 +57,16 @@ export const createUser = asyncHandler(async (req, res) => {
     return sendError(res, err.message, err.status || HTTP_STATUS.BAD_REQUEST);
   }
 });
+
+/**
+ * PUT /api/users/:id — Admin directly updates user information
+ */
+export const updateUser = asyncHandler(async (req, res) => {
+  try {
+    const data = await usersService.updateUser(Number(req.params.id), req.body);
+    if (!data) return sendError(res, "User not found.", HTTP_STATUS.NOT_FOUND);
+    return sendSuccess(res, data);
+  } catch (err) {
+    return sendError(res, err.message, err.status || HTTP_STATUS.BAD_REQUEST);
+  }
+});

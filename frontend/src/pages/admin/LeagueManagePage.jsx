@@ -297,19 +297,22 @@ export default function LeagueManagePage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label className="admin-label">Start Date</label>
+            <label className="admin-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Calendar size={14} /> Start Date
+            </label>
             <DatePicker
               selected={form.startDate}
               onChange={(date) => setForm((p) => ({ ...p, startDate: date }))}
               placeholderText="Select start date"
               dateFormat="dd/MM/yyyy"
               wrapperClassName="datepicker-full-width"
-              className="datepicker-input"
-              style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', fontSize: '1rem', width: '100%' }}
+              className="admin-input datepicker-input"
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label className="admin-label">End Date</label>
+            <label className="admin-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Calendar size={14} /> End Date
+            </label>
             <DatePicker
               selected={form.endDate}
               onChange={(date) => setForm((p) => ({ ...p, endDate: date }))}
@@ -317,8 +320,7 @@ export default function LeagueManagePage() {
               dateFormat="dd/MM/yyyy"
               minDate={form.startDate}
               wrapperClassName="datepicker-full-width"
-              className="datepicker-input"
-              style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', fontSize: '1rem', width: '100%' }}
+              className="admin-input datepicker-input"
             />
           </div>
         </div>

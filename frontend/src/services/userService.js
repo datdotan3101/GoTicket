@@ -5,4 +5,5 @@ export const userService = {
   updateRole: (id, role, clubId = null) => api.put(`/users/${id}/role`, { role, clubId }),
   setActive: (id, isActive) => api.put(`/users/${id}/active`, { isActive }),
   create: (data) => api.post('/users', data),
+  update: (id, data) => api.put(`/users/${id}`, data),
 }

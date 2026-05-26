@@ -119,7 +119,7 @@ export const ticketsService = {
            FROM tickets t2
            JOIN seats s2 ON s2.id = t2.seat_id
          ) t
-         WHERE t.user_id = $1 AND t.status IN ('paid', 'checked_in')
+         WHERE t.user_id = $1 AND t.status IN ('paid', 'checked_in') AND t.is_gifted = false
          GROUP BY t.ticket_code, t.match_id, t.stand_id
        ) sub
        JOIN stands st ON st.id = sub.stand_id
@@ -172,23 +172,9 @@ export const ticketsService = {
   },
 
   async giftTicket({ userId, ticketCode, email }) {
-    let recipientId;
-    // Check if recipient exists
-    const recipientRes = await query(`SELECT id FROM users WHERE email = $1`, [email]);
-    if (recipientRes.rowCount === 0) {
-      // Auto-create a placeholder account for the recipient
-      const newUserRes = await query(
-        `INSERT INTO users (email, full_name, role, is_active, is_approved)
-         VALUES ($1, $2, 'audience', true, true)
-         RETURNING id`,
-        [email, email.split('@')[0]]
-      );
-      recipientId = newUserRes.rows[0].id;
-    } else {
-      recipientId = recipientRes.rows[0].id;
-    }
-
-    if (recipientId === userId) {
+    // Check that the user is not gifting to themselves
+    const userRes = await query(`SELECT email FROM users WHERE id = $1`, [userId]);
+    if (userRes.rows[0]?.email === email) {
       throw new Error("You cannot gift a ticket to yourself.");
     }
 
@@ -208,12 +194,12 @@ export const ticketsService = {
     // Send email using the gifter's ID
     await sendGiftTicketEmail(userId, ticketCode, email);
 
-    // Transfer ticket to recipient
+    // Mark ticket as gifted (Do not transfer user_id, keep it linked to original purchaser)
     await query(
-      `UPDATE tickets SET is_gifted = true, user_id = $1 WHERE ticket_code = $2 AND user_id = $3`,
-      [recipientId, ticketCode, userId]
+      `UPDATE tickets SET is_gifted = true WHERE ticket_code = $1 AND user_id = $2`,
+      [ticketCode, userId]
     );
 
-    return { success: true, message: "Gift ticket sent and transferred successfully" };
+    return { success: true, message: "Gift ticket sent successfully" };
   }
 };
