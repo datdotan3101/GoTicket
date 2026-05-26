@@ -2,8 +2,8 @@ import { query } from "../../config/db.js";
 
 export const stadiumsService = {
   /**
-   * Lấy danh sách sân vận động (public).
-   * Hỗ trợ search by name/city.
+   * Get list of stadiums (public).
+   * Supports search by name/city.
    */
   async getAll(queryParams = {}) {
     const { search } = queryParams;
@@ -28,7 +28,7 @@ export const stadiumsService = {
   },
 
   /**
-   * Lấy chi tiết sân theo id.
+   * Get stadium detail by id.
    */
   async getById(id) {
     const result = await query(
@@ -39,7 +39,7 @@ export const stadiumsService = {
   },
 
   /**
-   * Tạo sân vận động mới (admin only).
+   * Create a new stadium (admin only).
    */
   async create(payload) {
     const result = await query(
@@ -52,7 +52,7 @@ export const stadiumsService = {
   },
 
   /**
-   * Cập nhật sân (admin only).
+   * Update a stadium (admin only).
    */
   async update(id, payload) {
     const result = await query(
@@ -69,7 +69,7 @@ export const stadiumsService = {
   },
 
   /**
-   * Xoá sân (admin only).
+   * Delete a stadium (admin only).
    */
   async remove(id) {
     const result = await query("DELETE FROM stadiums WHERE id = $1 RETURNING id", [id]);

@@ -13,20 +13,20 @@ export default function GoogleAuthButton() {
   const [isGsiLoaded, setIsGsiLoaded] = useState(false)
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
-  // Bỏ conditional return ở đây để không vi phạm quy tắc Hooks
-  // 1. Hàm xử lý callback nhận ID Token từ Google và gửi lên Backend
+  // Remove conditional return here to avoid violating the Rules of Hooks
+  // 1. Handler for the credential response — receives ID Token from Google and sends it to the backend
   const handleCredentialResponse = useCallback(async (response) => {
     const loadingToast = toast.loading('Authenticating with Google...')
     try {
       const res = await authService.googleLogin({ idToken: response.credential })
       const payload = res.data?.data ?? res.data
       
-      // Lưu token và thông tin user vào store
+      // Save token and user info to store
       login({ token: payload.accessToken, user: payload.user })
       
       toast.success('Google Sign-in successful!', { id: loadingToast })
 
-      // Chuyển hướng người dùng về trang phù hợp
+      // Redirect user to the appropriate page
       const defaultPath = location.state?.from?.pathname ?? APP_ROUTES.HOME
       const targetPath = getRedirectPath(payload.user, defaultPath)
       navigate(targetPath, { replace: true })
@@ -37,7 +37,7 @@ export default function GoogleAuthButton() {
     }
   }, [login, navigate, location.state]);
 
-  // 2. Load script Google Identity Services động và khởi tạo
+  // 2. Dynamically load the Google Identity Services script and initialize
   useEffect(() => {
     const initGoogleSignIn = () => {
       if (!window.google) return
@@ -49,7 +49,7 @@ export default function GoogleAuthButton() {
       }
 
       try {
-        // Khởi tạo GIS Client
+        // Initialize GIS Client
         window.google.accounts.id.initialize({
           client_id: clientId,
           callback: handleCredentialResponse,
@@ -58,7 +58,7 @@ export default function GoogleAuthButton() {
           locale: 'en',
         })
 
-        // Render nút chuẩn Google thương hiệu
+        // Render the official Google branded button
         const btnContainer = document.getElementById('google-signin-button-container')
         if (btnContainer) {
           window.google.accounts.id.renderButton(btnContainer, {
@@ -75,11 +75,11 @@ export default function GoogleAuthButton() {
       }
     }
 
-    // Nếu script đã được chèn và load sẵn trong DOM
+    // If script is already loaded in the DOM
     if (window.google) {
       initGoogleSignIn()
     } else {
-      // Tự động chèn script GIS vào DOM nếu chưa tồn tại
+      // Auto-insert GIS script into DOM if it doesn't exist yet
       const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]')
       if (!existingScript) {
         const script = document.createElement('script')
@@ -126,7 +126,7 @@ export default function GoogleAuthButton() {
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      {/* Container của Google Sign In - Luôn ổn định trong DOM, ẩn/hiện bằng CSS */}
+      {/* Google Sign In container - Always stable in DOM, show/hide via CSS */}
       <div 
         id="google-signin-button-container" 
         style={{ 
@@ -137,7 +137,7 @@ export default function GoogleAuthButton() {
         }}
       />
 
-      {/* Nút loading hiển thị tạm thời - Tách biệt hoàn toàn để React gỡ bỏ an toàn */}
+      {/* Temporary loading button - Completely separated so React can safely remove it */}
       {!isGsiLoaded && (
         <button 
           type="button" 

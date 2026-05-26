@@ -2,11 +2,11 @@ import { MAX_SEATS_PER_ORDER } from "../constants/ticketRules.js";
 
 export const validateSeatSelection = (selectedSeats) => {
   if (!Array.isArray(selectedSeats) || selectedSeats.length === 0) {
-    return { valid: false, message: "Danh sách ghế không hợp lệ." };
+    return { valid: false, message: "Invalid seat list." };
   }
 
   if (selectedSeats.length > MAX_SEATS_PER_ORDER) {
-    return { valid: false, message: `Chỉ được chọn tối đa ${MAX_SEATS_PER_ORDER} ghế.` };
+    return { valid: false, message: `You can only select up to ${MAX_SEATS_PER_ORDER} seats.` };
   }
 
   const groupedByRow = selectedSeats.reduce((acc, seat) => {
@@ -22,7 +22,7 @@ export const validateSeatSelection = (selectedSeats) => {
     const sorted = rowSeats.sort((a, b) => a - b);
     for (let i = 1; i < sorted.length; i += 1) {
       if (sorted[i] - sorted[i - 1] > 1) {
-        return { valid: false, message: "Không được để ghế trống giữa các ghế đã chọn." };
+        return { valid: false, message: "You cannot leave empty seats between selected seats." };
       }
     }
   }

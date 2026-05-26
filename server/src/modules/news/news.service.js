@@ -7,8 +7,8 @@ const makeSlug = (title) =>
 
 export const newsService = {
   /**
-   * Lấy danh sách bài đã published (public).
-   * Hỗ trợ filter by sport_id, search by title, phân trang.
+   * Get list of published articles (public).
+   * Supports filtering by sport_id, searching by title, and pagination.
    */
   async getPublished(queryParams = {}) {
     const { page, limit, offset } = getPagination(queryParams);
@@ -53,7 +53,7 @@ export const newsService = {
   },
 
   /**
-   * Lấy bài viết theo slug (public — chỉ published).
+   * Get article by slug (public — published only).
    */
   async getBySlug(slug) {
     const result = await query(
@@ -70,7 +70,7 @@ export const newsService = {
   },
 
   /**
-   * Lấy bài viết theo id (dành cho editor/admin — không filter status).
+   * Get article by id (for editor/admin — no status filter).
    */
   async getById(id) {
     const result = await query(
@@ -87,7 +87,7 @@ export const newsService = {
   },
 
   /**
-   * Lấy danh sách bài của editor hiện tại (mọi status).
+   * Get list of articles by the current editor (all statuses).
    */
   async getMyNews(userId, queryParams = {}) {
     const { page, limit, offset } = getPagination(queryParams);
@@ -123,7 +123,7 @@ export const newsService = {
   },
 
   /**
-   * Tạo bài viết mới (status = draft).
+   * Create a new article (status = draft).
    */
   async create(payload, userId) {
     const slug = makeSlug(payload.title);
@@ -145,7 +145,7 @@ export const newsService = {
   },
 
   /**
-   * Cập nhật bài viết (chỉ author, chỉ khi draft hoặc rejected).
+   * Update an article (author only, when draft or rejected).
    */
   async update(id, payload, userId) {
     const result = await query(
@@ -175,7 +175,7 @@ export const newsService = {
   },
 
   /**
-   * Xoá bài viết (chỉ author, chỉ khi draft hoặc rejected).
+   * Delete an article (author only, when draft or rejected).
    */
   async remove(id, userId) {
     const result = await query(
@@ -186,14 +186,14 @@ export const newsService = {
   },
 
   /**
-   * Editor submit bài để admin duyệt.
-   * Chuyển status → pending_review, tạo approval record.
+   * Editor submits an article for admin review.
+   * Changes status to pending_review and creates an approval record.
    */
   async submit(id, userId) {
     return withTransaction(async (tx) => {
       const run = (text, params) => tx.query(text, params);
 
-      // Kiểm tra bài tồn tại và thuộc author, đang ở draft/rejected
+      // Check article exists, belongs to author, and is in draft/rejected status
       const newsResult = await run(
         `UPDATE news
          SET status = 'pending_review'
@@ -202,10 +202,10 @@ export const newsService = {
         [id, userId]
       );
       if (newsResult.rowCount === 0) {
-        throw new Error("Không tìm thấy bài viết hoặc bài viết không thể submit.");
+        throw new Error("Article not found or cannot be submitted.");
       }
 
-      // Xoá approval pending cũ nếu có (trường hợp submit lại sau khi bị reject)
+      // Remove old pending approval if any (when resubmitting after rejection)
       await run(
         "DELETE FROM approvals WHERE resource_type = 'news' AND resource_id = $1 AND status = 'pending'",
         [id]

@@ -4,8 +4,8 @@ import { notificationsService } from "../notifications/notifications.service.js"
 
 export const approvalsService = {
   /**
-   * Lấy danh sách approval đang pending.
-   * Có thể filter by resource_type: 'match' | 'news' | 'user_account'
+   * Get list of pending approvals.
+   * Can filter by resource_type: 'match' | 'news' | 'user_account'
    */
   async getPendingApprovals(queryParams = {}) {
     const { type } = queryParams;
@@ -51,7 +51,7 @@ export const approvalsService = {
   },
 
   /**
-   * Lấy chi tiết một approval record kèm thông tin resource.
+   * Get detail of a single approval record with resource info.
    */
   async getApprovalDetail(approvalId) {
     const approvalResult = await query(
@@ -74,7 +74,7 @@ export const approvalsService = {
     const config = APPROVAL_RESOURCE_MAP[approval.resource_type];
     if (!config) return approval;
 
-    // Lấy thêm thông tin của resource (match hoặc news)
+    // Fetch additional info for the resource (match or news)
     if (approval.resource_type !== "user_account") {
       const resourceResult = await query(
         `SELECT * FROM ${config.table} WHERE id = $1 LIMIT 1`,
@@ -93,40 +93,40 @@ export const approvalsService = {
   },
 
   /**
-   * Xử lý duyệt hoặc từ chối một approval.
+   * Process an approval decision (approve or reject).
    *
-   * Logic xử lý scheduled_publish_at:
-   * - match/news được duyệt + có scheduled_publish_at → status = 'approved' (cron sẽ publish đúng giờ)
-   * - match/news được duyệt + KHÔNG có scheduled_publish_at → status = 'published' ngay
-   * - user_account được duyệt → is_approved = true
+   * Logic for scheduled_publish_at:
+   * - match/news approved + has scheduled_publish_at → status = 'approved' (cron will publish at the scheduled time)
+   * - match/news approved + NO scheduled_publish_at → status = 'published' immediately
+   * - user_account approved → is_approved = true
    */
   async processApproval({ approvalId, action, reason, adminId }) {
     const approvalResult = await query("SELECT * FROM approvals WHERE id = $1", [approvalId]);
     if (approvalResult.rowCount === 0) {
-      throw new Error("Approval không tồn tại.");
+      throw new Error("Approval not found.");
     }
 
     const approval = approvalResult.rows[0];
     if (approval.status !== "pending") {
-      throw new Error("Approval này đã được xử lý rồi.");
+      throw new Error("This approval has already been processed.");
     }
 
     const config = APPROVAL_RESOURCE_MAP[approval.resource_type];
     if (!config) {
-      throw new Error(`Resource type '${approval.resource_type}' chưa được hỗ trợ.`);
+      throw new Error(`Resource type '${approval.resource_type}' is not supported.`);
     }
 
     const isApprove = action === "approve";
     const approvalStatus = isApprove ? "approved" : "rejected";
 
-    // Tính trạng thái mới cho resource
+    // Calculate the new status for the resource
     let resourceStatus;
     if (isApprove) {
       if (approval.resource_type === "user_account") {
-        // user_account: cập nhật is_approved = true (không dùng status)
+        // user_account: set is_approved = true (no status field)
         resourceStatus = config.approvedStatus; // true
       } else {
-        // match/news: nếu có scheduled_publish_at → approved (cron publish), không có → published ngay
+        // match/news: if has scheduled_publish_at → approved (cron publishes), otherwise → published immediately
         const hasSchedule = !!approval.scheduled_publish_at;
         resourceStatus = hasSchedule ? config.approvedStatus : "published";
       }
@@ -151,18 +151,18 @@ export const approvalsService = {
       const run = (text, params) => tx.query(text, params);
 
       if (approval.resource_type === "user_account") {
-        // Khoá/mở tài khoản qua is_approved
+        // Activate/deactivate account via is_approved
         await run("UPDATE users SET is_approved = $1, updated_at = NOW() WHERE id = $2", [
-          resourceStatus, // true hoặc false
+          resourceStatus, // true or false
           approval.resource_id
         ]);
       } else {
-        // Cập nhật status của match/news
+        // Update status of match/news
         const updateFields = [`status = $1`];
         const updateValues = [resourceStatus, approval.resource_id];
         let fieldIdx = 3;
 
-        // Nếu published ngay (không có schedule) → set published_at = NOW()
+        // If published immediately (no schedule) → set published_at = NOW()
         if (isApprove && !approval.scheduled_publish_at) {
           updateFields.push(`published_at = NOW()`);
         }
@@ -173,7 +173,7 @@ export const approvalsService = {
         );
       }
 
-      // Cập nhật approval record
+      // Update the approval record
       await run(
         `UPDATE approvals
          SET status = $1, rejection_reason = $2, reviewed_by = $3, reviewed_at = NOW()
@@ -182,7 +182,7 @@ export const approvalsService = {
       );
     });
 
-    // Gửi notification sau khi transaction commit
+    // Send notification after transaction commits
     await notificationsService.createNotification(notificationPayload);
 
     return { id: approvalId, status: approvalStatus, resourceStatus };

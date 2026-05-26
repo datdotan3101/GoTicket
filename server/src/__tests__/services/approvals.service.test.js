@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 /**
- * Smoke tests cho approvals.service logic.
- * Mock DB để test branching logic mà không cần DB thật.
+ * Smoke tests for approvals.service logic.
+ * Mocks DB to test branching logic without a real DB.
  */
 
-// Mock dependencies trước khi import service
+// Mock dependencies before importing the service
 vi.mock("../../../src/config/db.js", () => ({
   query: vi.fn(),
   withTransaction: vi.fn(async (handler) => {
@@ -46,15 +46,15 @@ describe("approvalsService.processApproval", () => {
     notificationsService.createNotification.mockResolvedValue({});
   });
 
-  it("ném lỗi nếu approval không tồn tại", async () => {
+  it("throws error if approval does not exist", async () => {
     query.mockResolvedValueOnce({ rowCount: 0, rows: [] });
 
     await expect(
       approvalsService.processApproval({ approvalId: 999, action: "approve", adminId: 1 })
-    ).rejects.toThrow("Approval không tồn tại.");
+    ).rejects.toThrow("Approval not found.");
   });
 
-  it("ném lỗi nếu approval đã được xử lý (status != pending)", async () => {
+  it("throws error if approval has already been processed (status != pending)", async () => {
     query.mockResolvedValueOnce({
       rowCount: 1,
       rows: [makeApproval({ status: "approved" })]
@@ -62,10 +62,10 @@ describe("approvalsService.processApproval", () => {
 
     await expect(
       approvalsService.processApproval({ approvalId: 1, action: "approve", adminId: 1 })
-    ).rejects.toThrow("đã được xử lý");
+    ).rejects.toThrow("has already been processed");
   });
 
-  it("news không có schedule → publish ngay (status=published)", async () => {
+  it("news without schedule → publish immediately (status=published)", async () => {
     const approval = makeApproval({ resource_type: "news", scheduled_publish_at: null });
     query.mockResolvedValueOnce({ rowCount: 1, rows: [approval] });
 
@@ -82,14 +82,14 @@ describe("approvalsService.processApproval", () => {
 
     expect(result.resourceStatus).toBe("published");
 
-    // Kiểm tra UPDATE news SET status = 'published'
+    // Check UPDATE news SET status = 'published'
     const newsUpdateCall = txQuery.mock.calls.find((call) =>
       call[0]?.includes("UPDATE news") && call[1]?.includes("published")
     );
     expect(newsUpdateCall).toBeDefined();
   });
 
-  it("news có schedule → status=approved (cron sẽ publish sau)", async () => {
+  it("news with schedule → status=approved (cron will publish later)", async () => {
     const approval = makeApproval({
       resource_type: "news",
       scheduled_publish_at: new Date(Date.now() + 3600000).toISOString()
@@ -123,14 +123,14 @@ describe("approvalsService.processApproval", () => {
 
     expect(result.resourceStatus).toBe(true);
 
-    // Kiểm tra UPDATE users SET is_approved = true
+    // Check UPDATE users SET is_approved = true
     const userUpdateCall = txQuery.mock.calls.find((call) =>
       call[0]?.includes("UPDATE users") && call[1]?.[0] === true
     );
     expect(userUpdateCall).toBeDefined();
   });
 
-  it("reject → resourceStatus = rejected + gửi notification", async () => {
+  it("reject → resourceStatus = rejected + send notification", async () => {
     const approval = makeApproval({ resource_type: "match" });
     query.mockResolvedValueOnce({ rowCount: 1, rows: [approval] });
 
@@ -140,7 +140,7 @@ describe("approvalsService.processApproval", () => {
     const result = await approvalsService.processApproval({
       approvalId: 1,
       action: "reject",
-      reason: "Nội dung không phù hợp",
+      reason: "Inappropriate content",
       adminId: 1
     });
 

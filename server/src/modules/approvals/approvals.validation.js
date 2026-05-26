@@ -3,6 +3,6 @@ import { body } from "express-validator";
 export const rejectApprovalRules = [
   body("reason")
     .trim()
-    .notEmpty().withMessage("Lý do từ chối là bắt buộc.")
-    .isLength({ min: 10, max: 500 }).withMessage("Lý do phải từ 10 đến 500 ký tự.")
+    .notEmpty().withMessage("Rejection reason is required.")
+    .isLength({ min: 10, max: 500 }).withMessage("Reason must be between 10 and 500 characters.")
 ];

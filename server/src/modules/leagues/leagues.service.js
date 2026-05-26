@@ -4,8 +4,8 @@ import { AppError } from "../../utils/AppError.js";
 
 export const leaguesService = {
   /**
-   * Lấy danh sách giải đấu (public).
-   * Hỗ trợ filter by sport_id, is_active, phân trang.
+   * Get list of leagues (public).
+   * Supports filtering by sport_id, is_active, and pagination.
    */
   async getAll(queryParams = {}) {
     const { page, limit, offset } = getPagination(queryParams);
@@ -23,7 +23,7 @@ export const leaguesService = {
       conditions.push(`l.is_active = $${idx++}`);
       values.push(isActive !== "false");
     } else {
-      // Mặc định chỉ lấy active
+      // Default to only fetching active ones
       conditions.push("l.is_active = true");
     }
 
@@ -48,7 +48,7 @@ export const leaguesService = {
   },
 
   /**
-   * Lấy chi tiết giải đấu theo id.
+   * Get league detail by id.
    */
   async getById(id) {
     const result = await query(
@@ -65,7 +65,7 @@ export const leaguesService = {
   },
 
   /**
-   * Tạo giải đấu mới (admin only).
+   * Create a new league (admin only).
    */
   async create(payload, userId) {
     const result = await query(
@@ -86,7 +86,7 @@ export const leaguesService = {
   },
 
   /**
-   * Cập nhật giải đấu (admin only).
+   * Update a league (admin only).
    */
   async update(id, payload) {
     const result = await query(
@@ -115,13 +115,13 @@ export const leaguesService = {
   },
 
   /**
-   * Xoá giải đấu (admin only).
+   * Delete a league (admin only).
    */
   async remove(id) {
     // Check for associated matches
     const matchesCount = await query("SELECT COUNT(*) FROM matches WHERE league_id = $1", [id]);
     if (parseInt(matchesCount.rows[0].count) > 0) {
-      throw new AppError("Không thể xóa giải đấu vì có các trận đấu đang tham chiếu tới nó.", 400);
+      throw new AppError("Cannot delete league because there are matches referencing it.", 400);
     }
     const result = await query("DELETE FROM leagues WHERE id = $1 RETURNING id", [id]);
     return result.rowCount > 0;

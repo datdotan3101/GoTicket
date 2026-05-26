@@ -12,7 +12,7 @@ export const checkinService = {
         tokenStr = parsed.token;
       }
     } catch (e) {
-      // Không phải JSON, giữ nguyên token ban đầu
+      // Not JSON, keep original token as-is
     }
 
     let ticketCode = null;
@@ -23,7 +23,7 @@ export const checkinService = {
     } else {
       const payload = jwt.decode(tokenStr);
       if (!payload) {
-        throw new Error("Mã QR không thể giải mã.");
+        throw new Error("QR code cannot be decoded.");
       }
       ticketCode = payload.ticketCode;
       ticketId = payload.ticketId;
@@ -56,14 +56,14 @@ export const checkinService = {
     }
 
     if (tickets.length === 0) {
-      throw new Error("Vé không tồn tại hoặc mã QR không hợp lệ.");
+      throw new Error("Ticket does not exist or QR code is invalid.");
     }
 
     const isAlreadyCheckedIn = tickets.every(t => t.status === TICKET_STATUS.CHECKED_IN);
     const seatLabels = tickets.map(t => t.seat_label).join(", ");
     
     return {
-      message: "Thông tin vé",
+      message: "Ticket information",
       ticketId: tickets[0].id,
       ticketCode: tickets[0].ticket_code,
       matchId: tickets[0].match_id,
@@ -87,14 +87,14 @@ export const checkinService = {
     const tickets = ticketResult.rows;
 
     if (tickets.length === 0) {
-      throw new Error("Mã vé không tồn tại.");
+      throw new Error("Ticket code does not exist.");
     }
 
     const isAlreadyCheckedIn = tickets.every(t => t.status === TICKET_STATUS.CHECKED_IN);
     const seatLabels = tickets.map(t => t.seat_label).join(", ");
 
     return {
-      message: "Thông tin vé",
+      message: "Ticket information",
       ticketId: tickets[0].id,
       ticketCode: tickets[0].ticket_code,
       matchId: tickets[0].match_id,
@@ -118,7 +118,7 @@ export const checkinService = {
     const tickets = ticketResult.rows;
 
     if (tickets.length === 0) {
-      throw new Error("Mã vé không tồn tại.");
+      throw new Error("Ticket code does not exist.");
     }
 
     const matchId = tickets[0].match_id;
@@ -143,7 +143,7 @@ export const checkinService = {
     if (results.length === 0) {
       const isAlreadyCheckedIn = tickets.every(t => t.status === TICKET_STATUS.CHECKED_IN);
       return {
-        message: isAlreadyCheckedIn ? "Vé đã được sử dụng." : "Vé không ở trạng thái hợp lệ để check-in.",
+        message: isAlreadyCheckedIn ? "Ticket has already been used." : "Ticket is not in a valid state for check-in.",
         ticketCode: tickets[0].ticket_code,
         alreadyCheckedIn: isAlreadyCheckedIn
       };
@@ -157,7 +157,7 @@ export const checkinService = {
     emitToMatch(matchId, "checkin:stats", stats);
     
     return { 
-      message: "Check-in thành công.",
+      message: "Check-in successful.",
       ticketCode: tickets[0].ticket_code,
       alreadyCheckedIn: false
     };

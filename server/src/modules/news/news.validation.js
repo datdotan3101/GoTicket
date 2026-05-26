@@ -3,22 +3,22 @@ import { body } from "express-validator";
 export const createNewsRules = [
   body("title")
     .trim()
-    .notEmpty().withMessage("Tiêu đề là bắt buộc.")
-    .isLength({ max: 255 }).withMessage("Tiêu đề tối đa 255 ký tự."),
+    .notEmpty().withMessage("Title is required.")
+    .isLength({ max: 255 }).withMessage("Title must be at most 255 characters."),
   body("content")
-    .notEmpty().withMessage("Nội dung là bắt buộc."),
+    .notEmpty().withMessage("Content is required."),
   body("sportId")
     .optional()
-    .isInt({ min: 1 }).withMessage("sportId phải là số nguyên dương."),
+    .isInt({ min: 1 }).withMessage("sportId must be a positive integer."),
   body("thumbnailUrl")
     .optional()
-    .isURL().withMessage("thumbnailUrl phải là URL hợp lệ."),
+    .isURL().withMessage("thumbnailUrl must be a valid URL."),
   body("scheduledPublishAt")
     .optional()
-    .isISO8601().withMessage("scheduledPublishAt phải là datetime ISO8601.")
+    .isISO8601().withMessage("scheduledPublishAt must be an ISO8601 datetime.")
     .custom((value) => {
       if (new Date(value) <= new Date()) {
-        throw new Error("Thời gian lên lịch phải là tương lai.");
+        throw new Error("Scheduled publish time must be in the future.");
       }
       return true;
     })
@@ -28,15 +28,15 @@ export const updateNewsRules = [
   body("title")
     .optional()
     .trim()
-    .notEmpty().withMessage("Tiêu đề không được để trống.")
-    .isLength({ max: 255 }).withMessage("Tiêu đề tối đa 255 ký tự."),
+    .notEmpty().withMessage("Title cannot be empty.")
+    .isLength({ max: 255 }).withMessage("Title must be at most 255 characters."),
   body("sportId")
     .optional()
-    .isInt({ min: 1 }).withMessage("sportId phải là số nguyên dương."),
+    .isInt({ min: 1 }).withMessage("sportId must be a positive integer."),
   body("thumbnailUrl")
     .optional()
-    .isURL().withMessage("thumbnailUrl phải là URL hợp lệ."),
+    .isURL().withMessage("thumbnailUrl must be a valid URL."),
   body("scheduledPublishAt")
     .optional()
-    .isISO8601().withMessage("scheduledPublishAt phải là datetime ISO8601.")
+    .isISO8601().withMessage("scheduledPublishAt must be an ISO8601 datetime.")
 ];

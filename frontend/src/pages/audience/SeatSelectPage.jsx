@@ -53,7 +53,7 @@ export default function SeatSelectPage() {
         const currentStand = prev[0].blockId.charAt(0)
         const newStand = blockId.charAt(0)
         if (currentStand !== newStand) {
-          toast.error(`Khán đài không khả dụng cho lựa chọn hiện tại. Vui lòng chọn vé trong cùng một khán đài ${currentStand} hoặc xóa các lựa chọn cũ để thay đổi.`, {
+          toast.error(`Stand not available for current selection. Please select tickets in the same stand ${currentStand} or clear old selections to change.`, {
             icon: '🏟️',
             duration: 4000
           })

@@ -4,8 +4,8 @@ import { sendError } from "../utils/response.js";
 
 /**
  * Generic validation runner.
- * Nhận một mảng ValidationChain từ express-validator,
- * chạy tất cả và trả về lỗi nếu có.
+ * Receives an array of ValidationChain from express-validator,
+ * runs all of them and returns an error if any.
  *
  * @example
  * import { body } from "express-validator";
@@ -17,7 +17,7 @@ import { sendError } from "../utils/response.js";
  * ]), createHandler);
  */
 export const runValidation = (rules) => async (req, res, next) => {
-  // Chạy tất cả validation rules
+  // Run all validation rules
   for (const rule of rules) {
     await rule.run(req);
   }

@@ -118,14 +118,14 @@ export const matchesService = {
   async update(id, payload, user) {
     const match = await this.getById(id);
     if (!match) {
-      throw new Error("Không tìm thấy trận đấu.");
+      throw new Error("Match not found.");
     }
     if (!canAccessMatchByClub(user, match)) {
-      throw new Error("Bạn không có quyền chỉnh sửa trận đấu của CLB khác.");
+      throw new Error("You do not have permission to edit matches from another club.");
     }
 
     if (["approved", "published"].includes(match.status)) {
-      throw new Error("Không thể chỉnh sửa trận đấu đã được phê duyệt.");
+      throw new Error("Cannot edit a match that has already been approved.");
     }
 
     const result = await query(
@@ -156,10 +156,10 @@ export const matchesService = {
 
   async delete(id, user) {
     const match = await this.getById(id);
-    if (!match) throw new Error("Không tìm thấy trận đấu.");
-    if (!canAccessMatchByClub(user, match)) throw new Error("Bạn không có quyền xóa trận đấu này.");
+    if (!match) throw new Error("Match not found.");
+    if (!canAccessMatchByClub(user, match)) throw new Error("You do not have permission to delete this match.");
     if (!['draft', 'pending_review', 'rejected'].includes(match.status)) {
-      throw new Error("Chỉ có thể xóa trận đấu chưa được duyệt hoặc đã kết thúc.");
+      throw new Error("Only unapproved or ended matches can be deleted.");
     }
     await query("DELETE FROM seats WHERE match_id = $1", [id]);
     await query("DELETE FROM stands WHERE match_id = $1", [id]);
@@ -197,14 +197,14 @@ export const matchesService = {
   async configureStands(matchId, payload, user) {
     const match = await this.getById(matchId);
     if (!match) {
-      throw new Error("Không tìm thấy trận đấu.");
+      throw new Error("Match not found.");
     }
     if (!canAccessMatchByClub(user, match)) {
-      throw new Error("Bạn không có quyền thao tác trận đấu của CLB khác.");
+      throw new Error("You do not have permission to manage matches from another club.");
     }
 
     if (["approved", "published"].includes(match.status)) {
-      throw new Error("Không thể thay đổi cấu hình khán đài của trận đấu đã được phê duyệt.");
+      throw new Error("Cannot change stand configuration for an already approved match.");
     }
 
     const stands = generateStands(payload.blockConfigs || {});

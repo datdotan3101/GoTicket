@@ -2,8 +2,8 @@ import { query } from "../../config/db.js";
 
 export const clubsService = {
   /**
-   * Lấy danh sách câu lạc bộ (public).
-   * Hỗ trợ filter by sport_id.
+   * Get list of clubs (public).
+   * Supports filtering by sport_id.
    */
   async getAll(queryParams = {}) {
     const { sportId } = queryParams;
@@ -31,7 +31,7 @@ export const clubsService = {
   },
 
   /**
-   * Lấy chi tiết CLB theo id.
+   * Get club detail by id.
    */
   async getById(id) {
     const result = await query(
@@ -46,7 +46,7 @@ export const clubsService = {
   },
 
   /**
-   * Tạo CLB mới (admin only).
+   * Create a new club (admin only).
    */
   async create(payload) {
     const result = await query(
@@ -59,7 +59,7 @@ export const clubsService = {
   },
 
   /**
-   * Cập nhật CLB (admin only).
+   * Update a club (admin only).
    */
   async update(id, payload) {
     const result = await query(
@@ -75,7 +75,7 @@ export const clubsService = {
   },
 
   /**
-   * Xoá CLB (admin only).
+   * Delete a club (admin only).
    */
   async remove(id) {
     const result = await query("DELETE FROM clubs WHERE id = $1 RETURNING id", [id]);

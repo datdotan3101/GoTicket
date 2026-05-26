@@ -65,7 +65,7 @@ export default function SportPage() {
   return (
     <section className="container page" style={{ border: 'none', boxShadow: 'none', background: 'transparent', padding: 0 }}>
 
-      {/* ============ LỊCH THI ĐẤU ============ */}
+      {/* ============ MATCH SCHEDULE ============ */}
       <section className="schedule-section" style={{ marginTop: '24px' }}>
         <div className="schedule-header">
           <div>

@@ -20,7 +20,7 @@ export default function RegisterPage() {
   const onChange = (event) => {
     const { name, value } = event.target
     setForm((prev) => ({ ...prev, [name]: value }))
-    // Xoá lỗi của field ngay khi user bắt đầu gõ lại
+    // Clear field error as soon as user starts typing again
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }))
   }
 

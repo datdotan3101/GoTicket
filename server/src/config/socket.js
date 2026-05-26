@@ -5,14 +5,14 @@ import { logger } from "../utils/logger.js";
 let ioInstance;
 
 /**
- * Khởi tạo Socket.IO với JWT auth middleware.
+ * Initialize Socket.IO with JWT auth middleware.
  *
- * Client cần truyền token khi connect:
+ * Client must pass token when connecting:
  *   const socket = io(SERVER_URL, { auth: { token: "Bearer <jwt>" } });
  *
- * Sau khi verify thành công:
- * - socket.userId được gắn tự động
- * - Tự động join room user:{userId} — không cần emit join:user thủ công
+ * After successful verification:
+ * - socket.userId is automatically attached
+ * - Automatically joins room user:{userId} — no need to manually emit join:user
  */
 export const initSocket = (httpServer) => {
   ioInstance = new Server(httpServer, {
@@ -21,12 +21,12 @@ export const initSocket = (httpServer) => {
     }
   });
 
-  // JWT Auth Middleware — verify trước khi accept connection
+  // JWT Auth Middleware — verify before accepting connection
   ioInstance.use((socket, next) => {
     const token = socket.handshake.auth?.token?.replace("Bearer ", "");
 
     if (!token) {
-      // Cho phép connect ẩn danh (audience chưa đăng nhập vẫn cần xem seat map realtime)
+      // Allow anonymous connections (unauthenticated audience still needs realtime seat map)
       socket.userId = null;
       return next();
     }
@@ -39,26 +39,26 @@ export const initSocket = (httpServer) => {
       return next();
     } catch (err) {
       logger.warn(`[Socket] Invalid token from ${socket.handshake.address}: ${err.message}`);
-      // Không reject — cho phép connect nhưng không gắn userId
+      // Do not reject — allow connection but without userId attached
       socket.userId = null;
       return next();
     }
   });
 
   ioInstance.on("connection", (socket) => {
-    // Tự động join user room nếu đã auth
+    // Automatically join user room if authenticated
     if (socket.userId) {
       socket.join(`user:${socket.userId}`);
       logger.debug(`[Socket] User ${socket.userId} connected (${socket.id})`);
     }
 
-    // Join match room để nhận seat updates realtime
+    // Join match room to receive realtime seat updates
     socket.on("join:match", (matchId) => {
       if (!matchId) return;
       socket.join(`match:${matchId}`);
     });
 
-    // Legacy: vẫn hỗ trợ join:user manual (backward compat)
+    // Legacy: still support manual join:user (backward compat)
     socket.on("join:user", (userId) => {
       if (!userId) return;
       socket.join(`user:${userId}`);

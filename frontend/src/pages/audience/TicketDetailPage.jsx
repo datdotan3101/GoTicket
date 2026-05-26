@@ -72,19 +72,19 @@ export default function TicketDetailPage() {
   const handleGiftTicket = async (e) => {
     e.preventDefault()
     if (!giftEmail || !/^\S+@\S+\.\S+$/.test(giftEmail)) {
-      toast.error("Vui lòng nhập email hợp lệ!")
+      toast.error("Please enter a valid email address!")
       return
     }
     
     try {
       setIsGifting(true)
       await ticketService.giftTicket(ticket.ticket_code, giftEmail)
-      toast.success(`Vé đã được gửi tặng đến ${giftEmail} thành công!`)
+      toast.success(`Ticket has been successfully gifted to ${giftEmail}!`)
       setTicket(prev => ({ ...prev, is_gifted: true }))
       setIsGiftModalOpen(false)
       setGiftEmail('')
     } catch (err) {
-      toast.error(err.response?.data?.message || "Có lỗi xảy ra khi tặng vé.")
+      toast.error(err.response?.data?.message || "An error occurred while gifting the ticket.")
     } finally {
       setIsGifting(false)
     }

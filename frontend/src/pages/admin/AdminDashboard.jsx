@@ -86,7 +86,7 @@ export default function AdminDashboard() {
 
   return (
     <section className="container page" style={{ border: 'none', background: 'transparent', paddingBottom: '60px' }}>
-      {/* TẦNG 0: Header */}
+      {/* LEVEL 0: Header */}
       <div className="section-head" style={{ marginBottom: '40px' }}>
         <div>
           <h1 style={{ fontSize: '3.5rem', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '-3px', color: '#111827', lineHeight: 0.9, margin: 0 }}>System Overview</h1>
@@ -96,7 +96,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* TẦNG 1: Overview KPI */}
+      {/* LEVEL 1: Overview KPI */}
       <div className="cards-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '40px' }}>
         <article className="card" style={kpiCardStyle}>
           <h3 style={kpiLabelStyle}>Total Revenue</h3>
@@ -124,7 +124,7 @@ export default function AdminDashboard() {
         </article>
       </div>
 
-      {/* TẦNG 2: Top Performers (CLB) */}
+      {/* LEVEL 2: Top Performers (Clubs) */}
       <div style={{ marginBottom: '40px' }}>
         <h2 style={sectionTitleStyle}>🔥 Top 5 Clubs by Revenue</h2>
         <div className="card" style={{ padding: '0', overflow: 'hidden', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', borderRadius: '20px', background: '#fff' }}>
@@ -165,7 +165,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* TẦNG 3: Analytics */}
+      {/* LEVEL 3: Analytics */}
       <div className="cards-grid" style={{ gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '40px' }}>
         <div className="card" style={{ padding: '24px', borderRadius: '20px', border: 'none', background: '#fff', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
           <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '24px' }}>Revenue Trend (Last 30 Days)</h3>
@@ -197,7 +197,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* TẦNG 4: Trạng thái vận hành */}
+      {/* LEVEL 4: Operations Status */}
       <div>
         <h2 style={sectionTitleStyle}>📌 Operations Status</h2>
         <div className="cards-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>

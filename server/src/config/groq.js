@@ -3,8 +3,8 @@ import Groq from "groq-sdk";
 let groqClient;
 
 /**
- * Lấy Groq client (lazy init).
- * Trả về null nếu GROQ_API_KEY chưa được cấu hình.
+ * Get Groq client (lazy init).
+ * Returns null if GROQ_API_KEY is not configured.
  */
 export const getGroq = () => {
   if (groqClient) return groqClient;

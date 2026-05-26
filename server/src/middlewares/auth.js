@@ -11,11 +11,11 @@ export const auth = async (req, res, next) => {
 
   const token = header.replace("Bearer ", "");
   try {
-    // Kiểm tra token đã bị blacklist chưa
+    // Check if token has been blacklisted
     if (redis) {
       const isBlacklisted = await redis.get(`blacklist:${token}`);
       if (isBlacklisted) {
-        return sendError(res, "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.", HTTP_STATUS.UNAUTHORIZED);
+        return sendError(res, "Session has expired. Please log in again.", HTTP_STATUS.UNAUTHORIZED);
       }
     }
 
@@ -23,6 +23,6 @@ export const auth = async (req, res, next) => {
     req.user = payload;
     return next();
   } catch {
-    return sendError(res, "Token không hợp lệ hoặc đã hết hạn.", HTTP_STATUS.UNAUTHORIZED);
+    return sendError(res, "Token is invalid or has expired.", HTTP_STATUS.UNAUTHORIZED);
   }
 };

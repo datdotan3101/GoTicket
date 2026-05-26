@@ -10,7 +10,7 @@ export const getClubs = asyncHandler(async (req, res) => {
 
 export const getClubById = asyncHandler(async (req, res) => {
   const data = await clubsService.getById(Number(req.params.id));
-  if (!data) return sendError(res, "Không tìm thấy CLB.", HTTP_STATUS.NOT_FOUND);
+  if (!data) return sendError(res, "Club not found.", HTTP_STATUS.NOT_FOUND);
   return sendSuccess(res, data);
 });
 
@@ -21,12 +21,12 @@ export const createClub = asyncHandler(async (req, res) => {
 
 export const updateClub = asyncHandler(async (req, res) => {
   const data = await clubsService.update(Number(req.params.id), req.body);
-  if (!data) return sendError(res, "Không tìm thấy CLB.", HTTP_STATUS.NOT_FOUND);
+  if (!data) return sendError(res, "Club not found.", HTTP_STATUS.NOT_FOUND);
   return sendSuccess(res, data);
 });
 
 export const deleteClub = asyncHandler(async (req, res) => {
   const deleted = await clubsService.remove(Number(req.params.id));
-  if (!deleted) return sendError(res, "Không tìm thấy CLB.", HTTP_STATUS.NOT_FOUND);
+  if (!deleted) return sendError(res, "Club not found.", HTTP_STATUS.NOT_FOUND);
   return sendSuccess(res, { id: Number(req.params.id) });
 });

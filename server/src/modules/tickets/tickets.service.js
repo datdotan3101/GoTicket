@@ -16,7 +16,7 @@ const getSeatRowsForBooking = async (runner, matchId, seatIds) => {
 };
 
 const generateTicketCode = () => {
-  // 8 chữ số ngẫu nhiên, ví dụ: 47382910
+  // Generate 5 random digits, e.g.: 47382
   let code = '';
   for (let i = 0; i < 5; i++) {
     code += Math.floor(Math.random() * 10).toString();
@@ -29,7 +29,7 @@ export const ticketsService = {
     const finalSelections = selections || [{ standId, quantity }];
     
     if (!finalSelections || finalSelections.length === 0) {
-      throw new Error("Thông tin đặt vé không hợp lệ.");
+      throw new Error("Invalid booking information.");
     }
 
     const bookedTickets = await withTransaction(async (tx) => {
@@ -40,7 +40,7 @@ export const ticketsService = {
       for (const sel of finalSelections) {
         if (!sel.standId || !sel.quantity || sel.quantity <= 0) continue;
 
-        // Tìm các ghế còn trống trong khán đài được chọn
+        // Find available seats in the selected stand
         const seatResult = await run(
           `SELECT id, seat_label
            FROM seats
@@ -53,7 +53,7 @@ export const ticketsService = {
 
         const seats = seatResult.rows;
         if (seats.length < sel.quantity) {
-          throw new Error(`Rất tiếc, khán đài ID ${sel.standId} không còn đủ số lượng ghế bạn yêu cầu.`);
+          throw new Error(`Sorry, stand ID ${sel.standId} does not have enough available seats.`);
         }
 
         const seatIds = seats.map(s => s.id);
@@ -173,10 +173,10 @@ export const ticketsService = {
 
   async giftTicket({ userId, ticketCode, email }) {
     let recipientId;
-    // Kiểm tra người nhận có tồn tại không
+    // Check if recipient exists
     const recipientRes = await query(`SELECT id FROM users WHERE email = $1`, [email]);
     if (recipientRes.rowCount === 0) {
-      // Tự động tạo tài khoản placeholder
+      // Auto-create a placeholder account for the recipient
       const newUserRes = await query(
         `INSERT INTO users (email, full_name, role, is_active, is_approved)
          VALUES ($1, $2, 'audience', true, true)
@@ -189,26 +189,26 @@ export const ticketsService = {
     }
 
     if (recipientId === userId) {
-      throw new Error("Bạn không thể tự tặng vé cho chính mình.");
+      throw new Error("You cannot gift a ticket to yourself.");
     }
 
-    // Chỉ check xem vé có tồn tại, thuộc về user và trạng thái có hợp lệ (ví dụ: 'paid')
+    // Check that the ticket exists, belongs to the user, and has a valid status (e.g.: 'paid')
     const result = await query(
       `SELECT id, is_gifted FROM tickets WHERE ticket_code = $1 AND user_id = $2 AND status = 'paid'`,
       [ticketCode, userId]
     );
     if (result.rowCount === 0) {
-      throw new Error("Vé không hợp lệ, không thể tặng.");
+      throw new Error("Invalid ticket, cannot be gifted.");
     }
 
     if (result.rows[0].is_gifted) {
-      throw new Error("Vé này đã được tặng trước đó.");
+      throw new Error("This ticket has already been gifted.");
     }
 
-    // Gửi email bằng ID người tặng
+    // Send email using the gifter's ID
     await sendGiftTicketEmail(userId, ticketCode, email);
 
-    // Chuyển nhượng vé cho người nhận
+    // Transfer ticket to recipient
     await query(
       `UPDATE tickets SET is_gifted = true, user_id = $1 WHERE ticket_code = $2 AND user_id = $3`,
       [recipientId, ticketCode, userId]

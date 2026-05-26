@@ -2,15 +2,15 @@ import { query } from "../../config/db.js";
 
 export const dashboardService = {
   /**
-   * Admin: Doanh thu toàn hệ thống.
-   * - Tổng revenue, tổng vé paid/checked_in
+   * Admin: System-wide revenue.
+   * - Total revenue, total paid/checked_in tickets
    * - Revenue by sport
-   * - Top 5 matches theo doanh thu
+   * - Top 5 matches by revenue
    * - Last 30 days revenue trend (by day)
    */
   async getAdminRevenue() {
     const [summary, bySport, topClubs, trend, operations, growth] = await Promise.all([
-      // TẦNG 1: Tổng quan (KPI)
+      // TIER 1: Overview (KPI)
       query(`
         SELECT
           COALESCE(SUM(p.amount), 0)::numeric AS total_revenue,
@@ -24,7 +24,7 @@ export const dashboardService = {
           AND p.status = 'succeeded'
       `),
 
-      // TẦNG 3: Doanh thu theo môn thể thao (Cho Pie Chart)
+      // TIER 3: Revenue by sport (For Pie Chart)
       query(`
         SELECT
           s.name AS sport_name,
@@ -39,7 +39,7 @@ export const dashboardService = {
         ORDER BY revenue DESC
       `),
 
-      // TẦNG 2: Top 5 CLB doanh thu cao nhất
+      // TIER 2: Top 5 clubs by revenue
       query(`
         SELECT
           c.id, c.name,
@@ -60,7 +60,7 @@ export const dashboardService = {
         LIMIT 5
       `),
 
-      // TẦNG 3: Trend 30 ngày (Cho Line Chart)
+      // TIER 3: 30-day trend (For Line Chart)
       query(`
         SELECT
           DATE(p.paid_at) AS day,
@@ -72,7 +72,7 @@ export const dashboardService = {
         ORDER BY day ASC
       `),
 
-      // TẦNG 4: Trạng thái vận hành
+      // TIER 4: Operations status
       query(`
         SELECT 
           id, home_team, away_team, match_date, status,
@@ -83,7 +83,7 @@ export const dashboardService = {
         ORDER BY match_date ASC
       `),
 
-      // Growth comparison (So với hôm qua)
+      // Growth comparison (vs yesterday)
       query(`
         SELECT
           (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE status = 'succeeded' AND DATE(paid_at) = CURRENT_DATE)::numeric AS today_revenue,
@@ -102,14 +102,14 @@ export const dashboardService = {
   },
 
   /**
-   * Manager: Doanh thu của CLB mình.
-   * - Tổng revenue + vé của CLB
-   * - Revenue by match (chỉ trận của club)
+   * Manager: Revenue for their club.
+   * - Total revenue + tickets for the club
+   * - Revenue by match (only matches of the club)
    * - Revenue by stand (aggregate across matches)
    */
   async getManagerRevenue(clubId) {
     const [summary, byMatch] = await Promise.all([
-      // Tổng quan CLB
+      // Club overview
       query(`
         SELECT
           COALESCE(SUM(p.amount), 0)::numeric AS total_revenue,
@@ -151,8 +151,8 @@ export const dashboardService = {
   },
 
   /**
-   * Manager: Analytics chi tiết 1 trận đấu.
-   * Kiểm tra trận thuộc club của manager (security).
+   * Manager: Detailed analytics for a single match.
+   * Verifies the match belongs to the manager's club (security).
    */
   async getMatchAnalytics(matchId, clubId) {
     // Verify match belongs to this club
@@ -161,15 +161,15 @@ export const dashboardService = {
       [matchId]
     );
     if (matchCheck.rowCount === 0) {
-      throw Object.assign(new Error("Không tìm thấy trận đấu."), { statusCode: 404 });
+      throw Object.assign(new Error("Match not found."), { statusCode: 404 });
     }
     const match = matchCheck.rows[0];
     if (Number(match.club_id) !== Number(clubId)) {
-      throw Object.assign(new Error("Bạn không có quyền xem analytics của trận đấu này."), { statusCode: 403 });
+      throw Object.assign(new Error("You do not have permission to view analytics for this match."), { statusCode: 403 });
     }
 
     const [byStand, checkinStats, peakHours] = await Promise.all([
-      // Fill rate và revenue by stand
+      // Fill rate and revenue by stand
       query(`
         SELECT
           st.name AS stand_name,
@@ -191,7 +191,7 @@ export const dashboardService = {
         ORDER BY st.name
       `, [matchId]),
 
-      // Tổng check-in stats
+      // Total check-in stats
       query(`
         SELECT
           COUNT(*)::int AS total_tickets,
@@ -200,7 +200,7 @@ export const dashboardService = {
         FROM tickets WHERE match_id = $1
       `, [matchId]),
 
-      // Peak hours (giờ cao điểm mua vé — histogram)
+      // Peak hours (ticket purchase histogram)
       query(`
         SELECT
           EXTRACT(HOUR FROM t.created_at)::int AS hour,

@@ -3,18 +3,18 @@ import { sendError } from "../utils/response.js";
 import { logger } from "../utils/logger.js";
 
 export const notFoundHandler = (req, res) => {
-  return sendError(res, `Endpoint không tồn tại: ${req.method} ${req.path}`, HTTP_STATUS.NOT_FOUND);
+  return sendError(res, `Endpoint not found: ${req.method} ${req.path}`, HTTP_STATUS.NOT_FOUND);
 };
 
 /**
- * Error handler tập trung — phân loại lỗi để trả đúng HTTP status code.
+ * Centralized error handler — classifies errors to return the correct HTTP status code.
  *
- * Thứ tự ưu tiên:
- * 1. AppError (có statusCode) — dùng statusCode của lỗi
- * 2. PostgreSQL errors — map sang 409 Conflict
- * 3. JWT errors — map sang 401 Unauthorized
- * 4. Stripe errors — map sang 402 Payment Required
- * 5. Mặc định: 500 Internal Server Error
+ * Priority order:
+ * 1. AppError (has statusCode) — use the error's statusCode
+ * 2. PostgreSQL errors — map to 409 Conflict
+ * 3. JWT errors — map to 401 Unauthorized
+ * 4. Stripe errors — map to 402 Payment Required
+ * 5. Default: 500 Internal Server Error
  */
 export const errorHandler = (err, req, res, next) => {
   if (res.headersSent) return next(err);
@@ -25,26 +25,26 @@ export const errorHandler = (err, req, res, next) => {
   // PostgreSQL unique violation
   if (err.code === "23505") {
     statusCode = HTTP_STATUS.CONFLICT;
-    message = "Dữ liệu đã tồn tại (vi phạm ràng buộc unique).";
+    message = "Data already exists (unique constraint violation).";
   }
   // PostgreSQL foreign key violation
   else if (err.code === "23503") {
     statusCode = HTTP_STATUS.BAD_REQUEST;
-    message = "Dữ liệu tham chiếu không hợp lệ (foreign key).";
+    message = "Invalid reference data (foreign key violation).";
   }
   // PostgreSQL not null violation
   else if (err.code === "23502") {
     statusCode = HTTP_STATUS.BAD_REQUEST;
-    message = `Thiếu dữ liệu bắt buộc: ${err.column || "unknown"}.`;
+    message = `Missing required field: ${err.column || "unknown"}.`;
   }
   // JWT errors
   else if (err.name === "JsonWebTokenError") {
     statusCode = HTTP_STATUS.UNAUTHORIZED;
-    message = "Token không hợp lệ.";
+    message = "Invalid token.";
   }
   else if (err.name === "TokenExpiredError") {
     statusCode = HTTP_STATUS.UNAUTHORIZED;
-    message = "Token đã hết hạn.";
+    message = "Token has expired.";
   }
   // Stripe errors
   else if (err.type?.startsWith("Stripe")) {
@@ -52,7 +52,7 @@ export const errorHandler = (err, req, res, next) => {
     message = err.message;
   }
 
-  // Log lỗi server-side (500+) — không log client errors để tránh noise
+  // Log server-side errors (500+) — do not log client errors to avoid noise
   if (statusCode >= 500) {
     logger.error(
       `[${req.method}] ${req.path} → ${statusCode}: ${message}`,

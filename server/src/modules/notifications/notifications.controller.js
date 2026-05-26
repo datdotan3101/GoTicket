@@ -11,7 +11,7 @@ export const getNotifications = asyncHandler(async (req, res) => {
 export const markNotificationRead = asyncHandler(async (req, res) => {
   const data = await notificationsService.markAsRead(Number(req.params.id), req.user.id);
   if (!data) {
-    return sendError(res, "Không tìm thấy thông báo.", HTTP_STATUS.NOT_FOUND);
+    return sendError(res, "Notification not found.", HTTP_STATUS.NOT_FOUND);
   }
   return sendSuccess(res, data);
 });

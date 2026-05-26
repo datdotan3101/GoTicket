@@ -31,9 +31,9 @@ export const authService = {
 
     if (existed.rowCount > 0) {
       if (existed.rows[0].password_hash) {
-        throw new Error("Email đã tồn tại.");
+        throw new Error("Email already exists.");
       } else {
-        // Tài khoản placeholder (được tạo qua tính năng tặng vé hoặc Google), cập nhật password và thông tin
+        // Placeholder account (created via gift ticket or Google login) — update password and profile info
         user = await withTransaction(async (tx) => {
           const updated = await tx.query(
             `UPDATE users 
@@ -64,16 +64,16 @@ export const authService = {
     const { email, password } = payload;
     const result = await query("SELECT * FROM users WHERE email = $1 AND is_active = true", [email]);
     if (result.rowCount === 0) {
-      throw new Error("Email hoặc mật khẩu không đúng.");
+      throw new Error("Incorrect email or password.");
     }
 
     const user = result.rows[0];
     const isPasswordMatched = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordMatched) {
-      throw new Error("Email hoặc mật khẩu không đúng.");
+      throw new Error("Incorrect email or password.");
     }
     if (!user.is_approved) {
-      throw new Error("Tài khoản đang chờ admin phê duyệt.");
+      throw new Error("Account is pending admin approval.");
     }
 
     return {
@@ -85,47 +85,47 @@ export const authService = {
   async googleLogin(payload) {
     const { idToken } = payload;
     if (!idToken) {
-      throw new Error("Mã xác thực Google (idToken) là bắt buộc.");
+      throw new Error("Google ID token is required.");
     }
 
     try {
-      // 1. Xác thực ID Token qua API Google
+      // 1. Verify ID Token via Google API
       const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
       if (!response.ok) {
-        throw new Error("Mã xác thực Google không hợp lệ hoặc đã hết hạn.");
+        throw new Error("Google ID token is invalid or expired.");
       }
 
       const googlePayload = await response.json();
       
-      // 2. Xác minh Client ID (Audience) nếu cấu hình GOOGLE_CLIENT_ID
+      // 2. Verify Client ID (Audience) if GOOGLE_CLIENT_ID is configured
       const clientID = process.env.GOOGLE_CLIENT_ID;
       if (clientID && googlePayload.aud !== clientID) {
-        throw new Error("Mã xác thực Google không khớp với Client ID của ứng dụng.");
+        throw new Error("Google ID token does not match the application's Client ID.");
       }
 
       const googleId = googlePayload.sub;
       const email = googlePayload.email;
       const fullName = googlePayload.name || "Google User";
 
-      // 3. Tìm user theo google_id
+      // 3. Find user by google_id
       let result = await query("SELECT * FROM users WHERE google_id = $1 AND is_active = true", [googleId]);
       
       let user;
       if (result.rowCount > 0) {
         user = result.rows[0];
       } else {
-        // 4. Nếu chưa có google_id, tìm theo email
+        // 4. If no google_id match, try finding by email
         const emailResult = await query("SELECT * FROM users WHERE email = $1 AND is_active = true", [email]);
         if (emailResult.rowCount > 0) {
           user = emailResult.rows[0];
-          // Cập nhật google_id cho user (liên kết tài khoản)
+          // Link the google_id to the existing account
           const updateResult = await query(
             "UPDATE users SET google_id = $1, updated_at = NOW() WHERE id = $2 RETURNING *",
             [googleId, user.id]
           );
           user = updateResult.rows[0];
         } else {
-          // 5. Nếu không tìm thấy, đăng ký tài khoản mới tự động
+          // 5. If not found, auto-register a new account
           const insertResult = await query(
             `INSERT INTO users (email, google_id, full_name, role, is_active, is_approved)
              VALUES ($1, $2, $3, 'audience', true, true)
@@ -137,7 +137,7 @@ export const authService = {
       }
 
       if (!user.is_approved) {
-        throw new Error("Tài khoản đang chờ admin phê duyệt.");
+        throw new Error("Account is pending admin approval.");
       }
 
       return {
@@ -145,7 +145,7 @@ export const authService = {
         user: getPublicUser(user)
       };
     } catch (error) {
-      throw new Error(error.message || "Xác thực bằng Google thất bại.");
+      throw new Error(error.message || "Google authentication failed.");
     }
   },
 
@@ -155,7 +155,7 @@ export const authService = {
       [userId]
     );
     if (result.rowCount === 0) {
-      throw new Error("Không tìm thấy người dùng.");
+      throw new Error("User not found.");
     }
     return getPublicUser(result.rows[0]);
   },
@@ -173,19 +173,19 @@ export const authService = {
   },
 
   /**
-   * Cập nhật thông tin cá nhân (full_name, email).
+   * Update personal profile (full_name, email).
    */
   async updateProfile(userId, payload) {
     const { fullName, email } = payload;
 
-    // Kiểm tra email có bị dùng bởi user khác không
+    // Check if email is already used by another user
     if (email) {
       const existed = await query(
         "SELECT id FROM users WHERE email = $1 AND id != $2",
         [email, userId]
       );
       if (existed.rowCount > 0) {
-        throw new Error("Email này đã được sử dụng bởi tài khoản khác.");
+        throw new Error("This email is already in use by another account.");
       }
     }
 
@@ -198,12 +198,12 @@ export const authService = {
        RETURNING id, email, full_name, role, club_id, is_approved, password_hash`,
       [fullName || null, email || null, userId]
     );
-    if (result.rowCount === 0) throw new Error("Không tìm thấy người dùng.");
+    if (result.rowCount === 0) throw new Error("User not found.");
     return getPublicUser(result.rows[0]);
   },
 
   /**
-   * Đổi mật khẩu — phải nhập đúng mật khẩu cũ.
+   * Change password — requires the current password to be correct.
    */
   async changePassword(userId, payload) {
     const { currentPassword, newPassword } = payload;
@@ -212,18 +212,18 @@ export const authService = {
       "SELECT id, password_hash FROM users WHERE id = $1",
       [userId]
     );
-    if (result.rowCount === 0) throw new Error("Không tìm thấy người dùng.");
+    if (result.rowCount === 0) throw new Error("User not found.");
 
     const user = result.rows[0];
     
-    // Nếu tài khoản đã có mật khẩu, bắt buộc phải nhập đúng mật khẩu hiện tại
+    // If account already has a password, the current password must be provided and correct
     if (user.password_hash) {
       if (!currentPassword) {
-        throw new Error("Vui lòng nhập mật khẩu hiện tại để thay đổi.");
+        throw new Error("Please enter your current password to proceed.");
       }
       const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
       if (!isMatch) {
-        throw new Error("Mật khẩu hiện tại không đúng.");
+        throw new Error("Current password is incorrect.");
       }
     }
 
@@ -236,8 +236,8 @@ export const authService = {
   },
 
   /**
-   * Xoá tài khoản (của chính user).
-   * Cố gắng xoá cứng, nếu vướng khoá ngoại thì xoá mềm (deactivate).
+   * Delete user account (self-initiated).
+   * Attempts a hard delete; falls back to soft delete (deactivate) if foreign key constraints prevent it.
    */
   async deleteAccount(userId) {
     try {

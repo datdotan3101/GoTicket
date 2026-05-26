@@ -35,7 +35,7 @@ export const giftTicket = asyncHandler(async (req, res) => {
   const { ticketCode } = req.params;
   const { email } = req.body;
   if (!email) {
-    return res.status(400).json({ success: false, message: "Vui lòng nhập email." });
+    return res.status(400).json({ success: false, message: "Please enter an email." });
   }
   
   const data = await ticketsService.giftTicket({ userId: req.user.id, ticketCode, email });
@@ -56,7 +56,7 @@ export const generateQrImage = asyncHandler(async (req, res) => {
       const payload = jwt.decode(token);
       if (payload) ticketCode = payload.ticketCode;
     } catch (e) {
-      // Bỏ qua lỗi giải mã
+      // Ignore decoding errors
     }
   }
 
@@ -73,7 +73,7 @@ export const generateQrImage = asyncHandler(async (req, res) => {
 
     if (result.rows.length > 0) {
       const match = result.rows[0];
-      const matchDateStr = new Date(match.match_date).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+      const matchDateStr = new Date(match.match_date).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
       qrData = JSON.stringify({
         token: token,
         ticketCode: ticketCode,

@@ -21,8 +21,8 @@ const getPendingTicketsForPayment = async (userId, ticketIds) => {
 };
 
 /**
- * Xử lý payment_intent.succeeded — idempotent.
- * Dùng FOR UPDATE để tránh race condition nếu Stripe gửi webhook 2 lần.
+ * Handle payment_intent.succeeded — idempotent.
+ * Uses FOR UPDATE to prevent race conditions if Stripe sends the webhook twice.
  */
 const handlePaymentSucceeded = async (intent) => {
   const userId = Number(intent.metadata.userId);
@@ -31,7 +31,7 @@ const handlePaymentSucceeded = async (intent) => {
     .map((id) => Number(id.trim()))
     .filter(Boolean);
 
-  // Idempotency check: nếu payment đã succeeded rồi thì bỏ qua
+  // Idempotency check: if payment already succeeded, skip
   const paymentCheck = await query(
     "SELECT status FROM payments WHERE stripe_payment_intent_id = $1",
     [intent.id]
@@ -41,13 +41,13 @@ const handlePaymentSucceeded = async (intent) => {
     return;
   }
 
-  // Khai báo ngoài transaction để có thể dùng sau (gửi email)
+  // Declare outside transaction so it can be used afterwards (for sending email)
   let qrToken;
 
   await withTransaction(async (tx) => {
     const run = (text, params) => tx.query(text, params);
 
-    // Lock payment record trước (idempotency via DB lock)
+    // Lock payment record first (idempotency via DB lock)
     await run(
       "SELECT id FROM payments WHERE stripe_payment_intent_id = $1 FOR UPDATE",
       [intent.id]
@@ -77,7 +77,7 @@ const handlePaymentSucceeded = async (intent) => {
       if (ticketResult.rowCount === 0) continue;
 
       const ticket = ticketResult.rows[0];
-      // Skip nếu vé đã được xử lý (idempotency)
+      // Skip if ticket already processed (idempotency)
       if (ticket.status !== TICKET_STATUS.PENDING) continue;
 
       await run("UPDATE tickets SET status = $1, qr_token = $2 WHERE id = $3", [
@@ -95,7 +95,7 @@ const handlePaymentSucceeded = async (intent) => {
       });
     }
 
-    // Cập nhật payment record
+    // Update payment record
     await run(
       `UPDATE payments
        SET status = 'succeeded', paid_at = NOW()
@@ -104,7 +104,7 @@ const handlePaymentSucceeded = async (intent) => {
     );
   });
 
-  // Gửi email xác nhận — fire-and-forget, không block webhook
+  // Send confirmation email — fire-and-forget, does not block webhook
   sendTicketConfirmationEmail(userId, ticketIds, qrToken).catch((err) =>
     logger.error(`[Email] Failed to send ticket confirmation to userId=${userId}: ${err.message}`)
   );
@@ -116,7 +116,7 @@ export const paymentsService = {
   async createIntent({ userId, ticketIds, currency = "vnd" }) {
     const tickets = await getPendingTicketsForPayment(userId, ticketIds);
     if (tickets.length === 0 || tickets.length !== ticketIds.length) {
-      throw new Error("Danh sách vé thanh toán không hợp lệ.");
+      throw new Error("Invalid ticket list for payment.");
     }
 
     const amount = tickets.reduce((sum, ticket) => sum + Number(ticket.price), 0);

@@ -9,7 +9,7 @@ const ensureValidation = (req, res) => {
   if (errors.isEmpty()) {
     return true;
   }
-  sendError(res, "Dữ liệu không hợp lệ.", HTTP_STATUS.BAD_REQUEST, errors.array());
+  sendError(res, "Invalid request data.", HTTP_STATUS.BAD_REQUEST, errors.array());
   return false;
 };
 
@@ -48,10 +48,10 @@ export const updateProfile = asyncHandler(async (req, res) => {
 export const changePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   if (!currentPassword || !newPassword) {
-    return sendError(res, "Vui lòng nhập đủ mật khẩu hiện tại và mật khẩu mới.", HTTP_STATUS.BAD_REQUEST);
+    return sendError(res, "Please provide both the current password and the new password.", HTTP_STATUS.BAD_REQUEST);
   }
   if (newPassword.length < 6) {
-    return sendError(res, "Mật khẩu mới phải có ít nhất 6 ký tự.", HTTP_STATUS.BAD_REQUEST);
+    return sendError(res, "New password must be at least 6 characters.", HTTP_STATUS.BAD_REQUEST);
   }
   const data = await authService.changePassword(req.user.id, req.body);
   return sendSuccess(res, data);
@@ -66,5 +66,5 @@ export const logout = asyncHandler(async (req, res) => {
   const header = req.headers.authorization;
   const token = header.replace("Bearer ", "");
   await authService.logout(token, req.user);
-  return sendSuccess(res, { message: "Đăng xuất thành công." });
+  return sendSuccess(res, { message: "Logged out successfully." });
 });

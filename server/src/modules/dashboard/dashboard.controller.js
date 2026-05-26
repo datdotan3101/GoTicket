@@ -13,11 +13,11 @@ export const adminRevenue = asyncHandler(async (req, res) => {
 
 /**
  * GET /api/dashboard/manager/revenue — Manager only
- * club_id lấy từ JWT, không cần frontend truyền.
+ * club_id is taken from JWT, frontend does not need to send it.
  */
 export const managerRevenue = asyncHandler(async (req, res) => {
   if (!req.user.club_id) {
-    return sendError(res, "Bạn chưa được gán vào câu lạc bộ.", HTTP_STATUS.FORBIDDEN);
+    return sendError(res, "You have not been assigned to a club.", HTTP_STATUS.FORBIDDEN);
   }
   const data = await dashboardService.getManagerRevenue(req.user.club_id);
   return sendSuccess(res, data);
@@ -25,11 +25,11 @@ export const managerRevenue = asyncHandler(async (req, res) => {
 
 /**
  * GET /api/dashboard/manager/match/:id — Manager only
- * Chỉ trả về analytics nếu trận thuộc CLB của manager.
+ * Only returns analytics if the match belongs to the manager's club.
  */
 export const matchAnalytics = asyncHandler(async (req, res) => {
   if (!req.user.club_id) {
-    return sendError(res, "Bạn chưa được gán vào câu lạc bộ.", HTTP_STATUS.FORBIDDEN);
+    return sendError(res, "You have not been assigned to a club.", HTTP_STATUS.FORBIDDEN);
   }
   const data = await dashboardService.getMatchAnalytics(
     Number(req.params.id),

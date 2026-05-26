@@ -1,6 +1,6 @@
 /**
- * Logger đơn giản với timestamp — không dùng magic console.log rải rắc.
- * Production: có thể swap sang winston/pino mà không cần sửa code.
+ * Simple logger with timestamp — avoid scattering magic console.log calls.
+ * Production: can be swapped with winston/pino without changing code.
  */
 const formatTimestamp = () => new Date().toISOString();
 

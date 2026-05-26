@@ -1,14 +1,14 @@
 /**
- * Cấu hình cho từng loại resource trong approval flow.
- * Thêm loại mới ở đây thay vì sửa approvals.service.js (DRY principle).
+ * Configuration for each resource type in the approval flow.
+ * Add new types here instead of modifying approvals.service.js (DRY principle).
  *
  * approvedStatus:
- *   - match/news: 'approved' (nếu có scheduled_publish_at, cron sẽ set 'published')
+ *   - match/news: 'approved' (if has scheduled_publish_at, cron will set 'published')
  *   - user_account: true (boolean — set is_approved = true)
  *
  * rejectedStatus:
  *   - match/news: 'rejected'
- *   - user_account: false (boolean — set is_approved = false, giữ nguyên trạng thái)
+ *   - user_account: false (boolean — set is_approved = false, keep current state)
  */
 export const APPROVAL_RESOURCE_MAP = {
   match: {

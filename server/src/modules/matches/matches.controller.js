@@ -12,7 +12,7 @@ export const getMatches = asyncHandler(async (req, res) => {
 export const getMatchById = asyncHandler(async (req, res) => {
   const data = await matchesService.getById(Number(req.params.id));
   if (!data) {
-    return sendError(res, "Không tìm thấy trận đấu.", HTTP_STATUS.NOT_FOUND);
+    return sendError(res, "Match not found.", HTTP_STATUS.NOT_FOUND);
   }
   return sendSuccess(res, data);
 });

@@ -8,7 +8,7 @@ const router = Router();
  * @swagger
  * tags:
  *   name: AI
- *   description: Groq Llama AI chatbot và recommendation
+ *   description: Groq Llama AI chatbot and recommendation
  */
 
 /**

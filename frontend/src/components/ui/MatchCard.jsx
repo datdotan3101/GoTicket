@@ -36,7 +36,7 @@ export default function MatchCard({ match, showHotBadge = false }) {
     <>
       <Link to={(isNotYetOpen || isEnded) ? '#' : `/audience/matches/${match.id}/seats`} className="match-card-link" onClick={handleClick}>
         <article className="match-card" style={{ border: '1px solid #cbd5e1', position: 'relative', opacity: isNotYetOpen ? 0.8 : 1 }}>
-          {/* Kết thúc badge */}
+          {/* Ended badge */}
           {isEnded && (
             <div style={{
               position: 'absolute',
@@ -55,7 +55,7 @@ export default function MatchCard({ match, showHotBadge = false }) {
             </div>
           )}
 
-          {/* Chưa mở bán badge */}
+          {/* Not yet on sale badge */}
           {!isEnded && isNotYetOpen && (
             <div style={{
               position: 'absolute',

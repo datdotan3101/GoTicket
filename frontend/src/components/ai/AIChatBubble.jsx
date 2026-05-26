@@ -84,7 +84,7 @@ export default function AIChatBubble() {
       <div style={BUBBLE_WRAPPER_STYLE}>
         {!isOpen && showGreeting && (
           <div style={GREETING_STYLE} onClick={toggleModal}>
-            Xin chào! 👋 Cần hỗ trợ tìm vé không?
+            Hello! 👋 Need help finding tickets?
           </div>
         )}
 
@@ -94,7 +94,7 @@ export default function AIChatBubble() {
           style={isOpen ? BUTTON_STYLE_OPEN : BUTTON_STYLE_CLOSED}
           onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
           onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          title={isOpen ? "Đóng AI trợ lý" : "Mở AI trợ lý"}
+          title={isOpen ? "Close AI Assistant" : "Open AI Assistant"}
         >
           {isOpen ? (
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

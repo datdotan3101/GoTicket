@@ -11,7 +11,7 @@ const formatVND = (amount = 0) => {
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '--'
-  return new Date(dateStr).toLocaleString('vi-VN', { 
+  return new Date(dateStr).toLocaleString('en-US', { 
     weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit', 
     hour: '2-digit', minute: '2-digit' 
   })
@@ -58,7 +58,7 @@ function StandListCard({ data, onSelectStand }) {
                 className="ai-stand-select-btn"
                 onClick={() => onSelectStand(data.match, stand)}
               >
-                Chọn
+                Select
               </button>
             )}
           </div>
@@ -158,10 +158,10 @@ export default function AIChatModal({ onClose }) {
           data: data.data || null
         })
       } else {
-        pushMessage({ role: 'assistant', content: 'Xin lỗi, tôi không thể xử lý yêu cầu lúc này.' })
+        pushMessage({ role: 'assistant', content: 'Sorry, I was unable to process your request at this time.' })
       }
     } catch {
-      pushMessage({ role: 'assistant', content: 'Có lỗi xảy ra khi kết nối máy chủ AI. Vui lòng thử lại sau.' })
+      pushMessage({ role: 'assistant', content: 'An error occurred while connecting to the AI server. Please try again later.' })
     } finally {
       setIsLoading(false)
     }
@@ -174,11 +174,11 @@ export default function AIChatModal({ onClose }) {
 
   /* ── Action handlers for interactive cards ── */
   const handleSelectMatch = (match) => {
-    submitMessage(`Tôi muốn xem khán đài và giá vé trận ${match.homeTeam} vs ${match.awayTeam}`)
+    submitMessage(`I'd like to see stands and ticket prices for ${match.homeTeam} vs ${match.awayTeam}`)
   }
 
   const handleSelectStand = (match, stand) => {
-    submitMessage(`Đặt cho tôi 1 vé khán đài ${stand.name} trận ${match.homeTeam} vs ${match.awayTeam}`)
+    submitMessage(`Book me 1 ticket for stand ${stand.name} for the match ${match.homeTeam} vs ${match.awayTeam}`)
   }
 
   const handleCheckout = (bookingData) => {
@@ -240,7 +240,7 @@ export default function AIChatModal({ onClose }) {
                 style={{ width: '100%', textAlign: 'center', background: '#059669' }}
                 onClick={() => navigate(matches[0])}
               >
-                Tiến hành Đặt vé
+                Proceed to Book Tickets
               </button>
             )
           }
@@ -264,14 +264,14 @@ export default function AIChatModal({ onClose }) {
           </div>
           <div className="ai-modal-title-wrapper">
             <h3 className="ai-modal-title">GoTicket Advisor</h3>
-            <span className="ai-modal-status">Tư vấn viên trực tuyến</span>
+            <span className="ai-modal-status">Online Advisor</span>
           </div>
         </div>
         <div className="ai-modal-actions">
-          <button type="button" onClick={clearMessages} className="ai-action-btn" title="Xóa trò chuyện">
+          <button type="button" onClick={clearMessages} className="ai-action-btn" title="Clear conversation">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
           </button>
-          <button type="button" onClick={onClose} className="ai-action-btn" aria-label="Đóng chat">
+          <button type="button" onClick={onClose} className="ai-action-btn" aria-label="Close chat">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
@@ -282,12 +282,12 @@ export default function AIChatModal({ onClose }) {
           <div className="ai-welcome-container">
             <div className="ai-waving">🎫</div>
             <div className="ai-welcome-text">
-              Xin chào! Mình là tư vấn viên GoTicket. Mình có thể giúp bạn tìm trận đấu và đặt vé ngay trong chat!
+              Hello! I'm your GoTicket advisor. I can help you find matches and book tickets right here in chat!
             </div>
             <div className="ai-quick-actions">
-              <button type="button" onClick={() => submitMessage('Tôi muốn xem lịch thi đấu sắp tới')} className="ai-quick-btn">📅 Lịch thi đấu</button>
-              <button type="button" onClick={() => submitMessage('Đặt vé hộ tôi')} className="ai-quick-btn">🎫 Đặt vé hộ tôi</button>
-              <button type="button" onClick={() => submitMessage('Có trận đấu nào hot sắp tới không?')} className="ai-quick-btn">🔥 Trận hot</button>
+              <button type="button" onClick={() => submitMessage('Show me the upcoming match schedule')} className="ai-quick-btn">📅 Match Schedule</button>
+              <button type="button" onClick={() => submitMessage('Book a ticket for me')} className="ai-quick-btn">🎫 Book a Ticket</button>
+              <button type="button" onClick={() => submitMessage('Are there any hot upcoming matches?')} className="ai-quick-btn">🔥 Hot Matches</button>
             </div>
           </div>
         ) : (
@@ -316,7 +316,7 @@ export default function AIChatModal({ onClose }) {
             type="text" 
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Nhập yêu cầu... VD: Đặt 2 vé trận Hà Nội FC" 
+            placeholder="Ask me anything... e.g. Book 2 tickets for the next match" 
             disabled={isLoading}
             autoFocus
           />
@@ -324,7 +324,7 @@ export default function AIChatModal({ onClose }) {
             type="submit" 
             disabled={!input.trim() || isLoading}
             className="ai-send-btn"
-            aria-label="Gửi"
+            aria-label="Send"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '-2px' }}>
               <line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>

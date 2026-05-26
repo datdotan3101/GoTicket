@@ -10,7 +10,7 @@ export const getLeagues = asyncHandler(async (req, res) => {
 
 export const getLeagueById = asyncHandler(async (req, res) => {
   const data = await leaguesService.getById(Number(req.params.id));
-  if (!data) return sendError(res, "Không tìm thấy giải đấu.", HTTP_STATUS.NOT_FOUND);
+  if (!data) return sendError(res, "League not found.", HTTP_STATUS.NOT_FOUND);
   return sendSuccess(res, data);
 });
 
@@ -21,12 +21,12 @@ export const createLeague = asyncHandler(async (req, res) => {
 
 export const updateLeague = asyncHandler(async (req, res) => {
   const data = await leaguesService.update(Number(req.params.id), req.body);
-  if (!data) return sendError(res, "Không tìm thấy giải đấu.", HTTP_STATUS.NOT_FOUND);
+  if (!data) return sendError(res, "League not found.", HTTP_STATUS.NOT_FOUND);
   return sendSuccess(res, data);
 });
 
 export const deleteLeague = asyncHandler(async (req, res) => {
   const deleted = await leaguesService.remove(Number(req.params.id));
-  if (!deleted) return sendError(res, "Không tìm thấy giải đấu.", HTTP_STATUS.NOT_FOUND);
+  if (!deleted) return sendError(res, "League not found.", HTTP_STATUS.NOT_FOUND);
   return sendSuccess(res, { id: Number(req.params.id) });
 });

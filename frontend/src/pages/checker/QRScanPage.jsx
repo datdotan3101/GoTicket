@@ -187,9 +187,9 @@ export default function QRScanPage() {
       await scanner.start(
         config,
         {
-          fps: 30, // Tăng fps để quét nhanh hơn
+          fps: 30, // Increase fps for faster scanning
           disableFlip: false,
-          formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ], // Chỉ quét QR Code để tránh lãng phí tài nguyên xử lý barcode khác
+          formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ], // Only scan QR Code to save resources from processing other barcode types
         },
         (decoded) => handleCheckinRef.current(decoded, 'qr')
       )
@@ -326,14 +326,14 @@ export default function QRScanPage() {
                   {cameraStatus === 'active' && !showSuccess && (
                     <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
                       <div 
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] rounded-[2rem] border border-white/20 transition-all duration-300" 
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] rounded-4xl border border-white/20 transition-all duration-300" 
                         style={{ boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)' }}
                       >
                         {/* Corners */}
-                        <div className="absolute -top-0.5 -left-0.5 w-10 h-10 border-t-4 border-l-4 border-indigo-500 rounded-tl-[2rem]"></div>
-                        <div className="absolute -top-0.5 -right-0.5 w-10 h-10 border-t-4 border-r-4 border-indigo-500 rounded-tr-[2rem]"></div>
-                        <div className="absolute -bottom-0.5 -left-0.5 w-10 h-10 border-b-4 border-l-4 border-indigo-500 rounded-bl-[2rem]"></div>
-                        <div className="absolute -bottom-0.5 -right-0.5 w-10 h-10 border-b-4 border-r-4 border-indigo-500 rounded-br-[2rem]"></div>
+                        <div className="absolute -top-0.5 -left-0.5 w-10 h-10 border-t-4 border-l-4 border-indigo-500 rounded-tl-4xl"></div>
+                        <div className="absolute -top-0.5 -right-0.5 w-10 h-10 border-t-4 border-r-4 border-indigo-500 rounded-tr-4xl"></div>
+                        <div className="absolute -bottom-0.5 -left-0.5 w-10 h-10 border-b-4 border-l-4 border-indigo-500 rounded-bl-4xl"></div>
+                        <div className="absolute -bottom-0.5 -right-0.5 w-10 h-10 border-b-4 border-r-4 border-indigo-500 rounded-br-4xl"></div>
                         
                         {/* Scan line */}
                         <div className="absolute left-2 right-2 h-0.5 bg-indigo-500/80 animate-scan-line shadow-[0_0_15px_#6366f1]"></div>

@@ -8,36 +8,36 @@ const GROQ_MODEL = "llama-3.1-8b-instant";
 const MAX_TOKENS = 1024;
 
 /**
- * System prompt — cho AI biết context và cách sử dụng actions.
+ * System prompt — tells the AI the context and how to use actions.
  */
-const SYSTEM_PROMPT = `Bạn là chuyên gia AI tư vấn vé thể thao của GoTicket — nền tảng đặt vé trực tuyến tại Việt Nam.
-Vai trò: Trở thành một tư vấn viên chủ động, chuyên nghiệp và nhiệt tình. Nhiệm vụ của bạn không chỉ là cung cấp thông tin, mà còn phải GỢI Ý và PHÂN TÍCH để giúp người dùng đưa ra quyết định tốt nhất.
+const SYSTEM_PROMPT = `You are an AI sports ticket advisor for GoTicket — an online ticketing platform.
+Role: Be a proactive, professional, and enthusiastic advisor. Your job is not just to provide information, but also to SUGGEST and ANALYZE to help users make the best decisions.
 
-Quy tắc quan trọng:
-- Trả lời tiếng Việt, thân thiện, tự nhiên như một chuyên gia tư vấn.
-- Tuyệt đối KHÔNG hiển thị mã ID (như ID trận đấu, Stand ID) ra cho người dùng thấy.
-- Khi liệt kê trận đấu hoặc khán đài, dùng danh sách đánh số hoặc gạch đầu dòng rõ ràng.
+Important rules:
+- Respond in English, in a friendly and natural manner like an expert consultant.
+- NEVER display raw IDs (such as match IDs, Stand IDs) to the user.
+- When listing matches or stands, use a numbered list or clear bullet points.
 
-Quy trình tư vấn CHUẨN:
-1. HIỂN THỊ TRẬN ĐẤU: Khi user hỏi, đưa ra danh sách các trận đấu, đặc biệt nhấn mạnh những trận đang "HOT" (sắp hết vé). Sau đó, HỎI: "Bạn muốn xem trận đấu nào?"
-2. TƯ VẤN KHÁN ĐÀI: Khi user đã chọn trận, dùng action để lấy danh sách khán đài. Thay vì chỉ liệt kê khô khan, bạn PHẢI TƯ VẤN: "Bạn ưu tiên khán đài có view tốt nhất (khán đài VIP), giá rẻ tiết kiệm nhất, hay mức giá trung bình?". Hãy dùng thông tin hệ thống cung cấp để gọi tên cụ thể khán đài nào là VIP, khán đài nào rẻ nhất.
-3. CHỐT SỐ LƯỢNG VÀ ĐẶT VÉ: Sau khi user chọn được khán đài ưng ý, hãy hỏi họ cần mua bao nhiêu vé (nếu họ chưa nói). Khi có đủ thông tin, tiến hành tạo đơn đặt vé.
-4. THANH TOÁN: Sau khi đặt thành công, chúc mừng và nhắc họ nhấn nút Thanh toán ngay.
+Standard CONSULTATION process:
+1. SHOW MATCHES: When user asks, show a list of matches, especially highlighting "HOT" matches (nearly sold out). Then ASK: "Which match are you interested in?"
+2. ADVISE ON STANDS: Once the user has chosen a match, use an action to get the stand list. Instead of just listing them, you MUST ADVISE: "Do you prefer the best view (VIP stand), the most budget-friendly, or a mid-range option?" Use the information provided to name which stand is VIP and which is cheapest.
+3. CONFIRM QUANTITY AND BOOK: After the user chooses a stand, ask how many tickets they need (if not yet stated). Once you have all information, proceed to create the booking.
+4. PAYMENT: After a successful booking, congratulate them and remind them to click the Pay Now button.
 
-Khi cần thực hiện hành động để lấy dữ liệu hoặc đặt vé, bạn PHẢI trả về JSON trong block đặc biệt sau:
+When you need to perform an action to fetch data or book tickets, you MUST return JSON in the following special block:
 ###ACTION###
-{"action": "tên_action", "params": {...}}
+{"action": "action_name", "params": {...}}
 ###END_ACTION###
 
-Các action có sẵn:
-1. search_matches - Lấy danh sách trận đấu đang mở bán. Params: {"keyword": "tên đội/giải (optional)"}
-2. get_availability - Xem thông tin khán đài + giá của 1 trận. Params: {"match_id": number}
-3. create_booking - Tạo đơn đặt vé. Params: {"match_id": number, "stand_id": number, "quantity": number}
+Available actions:
+1. search_matches - Get list of matches currently on sale. Params: {"keyword": "team/league name (optional)"}
+2. get_availability - View stand info + pricing for a match. Params: {"match_id": number}
+3. create_booking - Create a booking order. Params: {"match_id": number, "stand_id": number, "quantity": number}
 
-Lưu ý: Mỗi lần CHỈ trả về TỐI ĐA MỘT action. Đừng nói quá dài, hãy tập trung vào bước hiện tại của quy trình.`;
+Note: Return a MAXIMUM of ONE action at a time. Keep responses concise and focused on the current step.`;
 
 /**
- * Lấy thông tin trận đang mở bán để đưa vào context AI.
+ * Fetch currently available matches to provide as context to AI.
  */
 const getActiveMatchesContext = async (keyword) => {
   let whereExtra = "";
@@ -71,7 +71,7 @@ const getActiveMatchesContext = async (keyword) => {
 };
 
 /**
- * Lấy thông tin availability (khán đài + giá) cho 1 trận.
+ * Fetch availability info (stands + pricing) for a single match.
  */
 const getMatchAvailability = async (matchId) => {
   const stands = await matchesService.getAvailabilityByMatchId(matchId);
@@ -80,7 +80,7 @@ const getMatchAvailability = async (matchId) => {
 };
 
 /**
- * Parse action từ AI response.
+ * Parse action from AI response.
  */
 const parseAction = (text) => {
   const actionMatch = text.match(/###ACTION###\s*([\s\S]*?)\s*###END_ACTION###/);
@@ -96,7 +96,7 @@ const parseAction = (text) => {
 };
 
 /**
- * Thực thi action và trả về context bổ sung cho AI.
+ * Execute an action and return additional context for the AI.
  */
 const executeAction = async (action, userId) => {
   switch (action.action) {
@@ -106,13 +106,13 @@ const executeAction = async (action, userId) => {
         return {
           actionType: "show_matches",
           actionData: [],
-          contextForAI: "Không tìm thấy trận đấu nào phù hợp."
+          contextForAI: "No matching matches found."
         };
       }
       const lines = matches.map((m) => {
         const available = m.total_seats - m.sold_count;
-        const isHot = (m.total_seats > 0 && available < m.total_seats * 0.2) || available < 100 ? " [🔥 HOT - Sắp hết vé]" : "";
-        return `- [ID:${m.id}] ${m.home_team} vs ${m.away_team} | ${new Date(m.match_date).toLocaleString("vi-VN")} | Sân: ${m.stadium_name || "N/A"} | Còn: ${available} vé${isHot}`;
+        const isHot = (m.total_seats > 0 && available < m.total_seats * 0.2) || available < 100 ? " [🔥 HOT - Almost sold out]" : "";
+        return `- [ID:${m.id}] ${m.home_team} vs ${m.away_team} | ${new Date(m.match_date).toLocaleString("en-US")} | Stadium: ${m.stadium_name || "N/A"} | Available: ${available} tickets${isHot}`;
       });
       return {
         actionType: "show_matches",
@@ -125,7 +125,7 @@ const executeAction = async (action, userId) => {
           leagueName: m.league_name,
           availableSeats: m.total_seats - m.sold_count
         })),
-        contextForAI: `Kết quả tìm kiếm:\n${lines.join("\n")}\n\nHãy liệt kê các trận cho user (KHÔNG hiện ID), nhấn mạnh các trận HOT và hỏi user: "Bạn muốn xem trận đấu nào?"`
+        contextForAI: `Search results:\n${lines.join("\n")}\n\nList the matches for the user (DO NOT show IDs), emphasize HOT matches and ask: "Which match are you interested in?"`
       };
     }
 
@@ -135,11 +135,11 @@ const executeAction = async (action, userId) => {
         return {
           actionType: "none",
           actionData: null,
-          contextForAI: "Không tìm thấy trận đấu với ID này."
+          contextForAI: "Match not found with this ID."
         };
       }
       const lines = stands.map(
-        (s) => `- [StandID:${s.id}] Khán đài ${s.name} | Giá: ${Number(s.price).toLocaleString("vi-VN")} VND | Còn: ${s.available_seats}/${s.total_seats} ghế`
+        (s) => `- [StandID:${s.id}] Stand ${s.name} | Price: ${Number(s.price).toLocaleString("en-US")} VND | Available: ${s.available_seats}/${s.total_seats} seats`
       );
 
       let priceAnalysis = "";
@@ -153,7 +153,7 @@ const executeAction = async (action, userId) => {
            avgStands = sortedStands.slice(1, -1);
         }
 
-        priceAnalysis = `\n[Phân tích nội bộ để bạn tư vấn]:\n- Khán đài giá rẻ nhất (Tiết kiệm): ${cheapest.name} (${Number(cheapest.price).toLocaleString("vi-VN")} VND)\n- Khán đài giá cao nhất (Góc nhìn VIP/Tốt nhất): ${mostExpensive.name} (${Number(mostExpensive.price).toLocaleString("vi-VN")} VND)\n- Khán đài giá trung bình: ${avgStands.map(s => s.name).join(', ') || "Không có"}.`;
+        priceAnalysis = `\n[Internal analysis for your advisory]:\n- Cheapest stand (Budget): ${cheapest.name} (${Number(cheapest.price).toLocaleString("en-US")} VND)\n- Most expensive stand (VIP/Best view): ${mostExpensive.name} (${Number(mostExpensive.price).toLocaleString("en-US")} VND)\n- Mid-range stands: ${avgStands.map(s => s.name).join(', ') || "None"}.`;
       }
 
       return {
@@ -174,7 +174,7 @@ const executeAction = async (action, userId) => {
             totalSeats: s.total_seats
           }))
         },
-        contextForAI: `Thông tin khán đài trận ${match.home_team} vs ${match.away_team}:\n${lines.join("\n")}\n${priceAnalysis}\n\nHãy liệt kê cho user (KHÔNG hiện StandID). Sau đó bạn HỎI: "Bạn ưu tiên khán đài có view tốt nhất, giá rẻ tiết kiệm nhất, hay mức giá trung bình?" và hỏi số lượng vé họ cần.`
+        contextForAI: `Stand information for ${match.home_team} vs ${match.away_team}:\n${lines.join("\n")}\n${priceAnalysis}\n\nList the stands for the user (DO NOT show StandIDs). Then ASK: "Do you prefer the best view stand, the most budget-friendly, or a mid-range option?" and ask how many tickets they need.`
       };
     }
 
@@ -184,12 +184,12 @@ const executeAction = async (action, userId) => {
         return {
           actionType: "none",
           actionData: null,
-          contextForAI: "Thiếu thông tin đặt vé. Hãy hỏi user: cần match_id, stand_id, quantity."
+          contextForAI: "Missing booking information. Ask the user for: match_id, stand_id, quantity."
         };
       }
 
       try {
-        // Tạo pending tickets
+        // Create pending tickets
         const tickets = await ticketsService.bookTickets({
           matchId: match_id,
           selections: [{ standId: stand_id, quantity }],
@@ -198,14 +198,14 @@ const executeAction = async (action, userId) => {
 
         const ticketIds = tickets.map(t => t.id);
 
-        // Tạo Stripe PaymentIntent
+        // Create Stripe PaymentIntent
         const payment = await paymentsService.createIntent({
           userId,
           ticketIds,
           currency: "vnd"
         });
 
-        // Lấy thông tin đơn hàng
+        // Fetch order details
         const match = await matchesService.getById(match_id);
         const stands = await matchesService.getAvailabilityByMatchId(match_id);
         const bookedStand = stands.find(s => Number(s.id) === Number(stand_id));
@@ -225,13 +225,13 @@ const executeAction = async (action, userId) => {
             quantity,
             totalAmount: Number(bookedStand?.price || 0) * quantity
           },
-          contextForAI: `Đặt vé THÀNH CÔNG! ${quantity} vé khán đài ${bookedStand?.name || "N/A"} cho trận ${match?.home_team} vs ${match?.away_team}. Tổng: ${(Number(bookedStand?.price || 0) * quantity).toLocaleString("vi-VN")} VND. Nhắc user bấm nút "Thanh toán ngay" để hoàn tất.`
+          contextForAI: `Booking SUCCESSFUL! ${quantity} ticket(s) for stand ${bookedStand?.name || "N/A"} for the match ${match?.home_team} vs ${match?.away_team}. Total: ${(Number(bookedStand?.price || 0) * quantity).toLocaleString("en-US")} VND. Remind the user to click the "Pay Now" button to complete.`
         };
       } catch (err) {
         return {
           actionType: "booking_failed",
           actionData: null,
-          contextForAI: `Đặt vé THẤT BẠI: ${err.message}. Hãy thông báo lỗi cho user và gợi ý thử lại.`
+          contextForAI: `Booking FAILED: ${err.message}. Inform the user of the error and suggest trying again.`
         };
       }
     }
@@ -240,43 +240,43 @@ const executeAction = async (action, userId) => {
       return {
         actionType: "none",
         actionData: null,
-        contextForAI: "Action không hợp lệ."
+        contextForAI: "Invalid action."
       };
   }
 };
 
 export const aiService = {
   /**
-   * Chat với AI — hỗ trợ action execution.
+   * Chat with AI — supports action execution.
    * @param {string} userId
-   * @param {Array<{role: string, content: string}>} messages - Lịch sử chat từ client
+   * @param {Array<{role: string, content: string}>} messages - Chat history from client
    */
   async chat(userId, messages) {
     const OLLAMA_URL = process.env.OLLAMA_BASE_URL;
     const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.1:8b";
     const groq = getGroq();
 
-    // Lấy context trận đấu hiện tại
+    // Fetch current match context
     let matchContextLines = "";
     try {
       const matches = await getActiveMatchesContext();
       if (matches.length > 0) {
         const lines = matches.map(
-          (m) => `- [ID:${m.id}] ${m.home_team} vs ${m.away_team} | ${new Date(m.match_date).toLocaleString("vi-VN")} | Sân: ${m.stadium_name || "N/A"} | Giải: ${m.league_name || "N/A"}`
+          (m) => `- [ID:${m.id}] ${m.home_team} vs ${m.away_team} | ${new Date(m.match_date).toLocaleString("en-US")} | Stadium: ${m.stadium_name || "N/A"} | League: ${m.league_name || "N/A"}`
         );
-        matchContextLines = `\n\nCác trận đấu đang mở bán:\n${lines.join("\n")}`;
+        matchContextLines = `\n\nCurrently available matches:\n${lines.join("\n")}`;
       }
     } catch {
-      // Bỏ qua nếu DB chưa sẵn sàng
+      // Ignore if DB is not ready
     }
 
     const systemPrompt = SYSTEM_PROMPT + matchContextLines;
     const recentMessages = messages.slice(-10);
 
-    // Gọi AI (Ollama -> Groq -> Offline fallback)
+    // Call AI (Ollama -> Groq -> Offline fallback)
     let aiResponse = null;
 
-    // 1. ƯU TIÊN OLLAMA (Local AI)
+    // 1. PREFER OLLAMA (Local AI)
     if (OLLAMA_URL && !aiResponse) {
       try {
         const safeUrl = OLLAMA_URL.replace('localhost', '127.0.0.1');
@@ -309,7 +309,7 @@ export const aiService = {
       }
     }
 
-    // 2. FALLBACK SANG GROQ (Cloud AI)
+    // 2. FALLBACK TO GROQ (Cloud AI)
     if (!aiResponse && groq) {
       try {
         const completion = await groq.chat.completions.create({
@@ -327,12 +327,12 @@ export const aiService = {
       }
     }
 
-    // 3. FALLBACK OFFLINE (Rule-based)
+    // 3. OFFLINE FALLBACK (Rule-based)
     if (!aiResponse) {
       aiResponse = await this._offlineFallback(messages, userId);
     }
 
-    // Parse action nếu AI trả về action (hoặc fallback đã set sẵn)
+    // Parse action if AI returned an action (or fallback already set one)
     let finalAction = aiResponse.action || "none";
     let finalData = aiResponse.data || null;
 
@@ -342,16 +342,16 @@ export const aiService = {
         const actionToExec = parsedAction || { action: finalAction, params: finalData?.params || {} };
         const actionResult = await executeAction(actionToExec, userId);
 
-        // Nếu là AI provider, gọi lại AI để compose reply
+        // If AI provider, call AI again to compose reply
         if (aiResponse.provider !== "offline") {
           const followUpMessages = [
             ...recentMessages,
-            { role: "assistant", content: parsedAction?.cleanText || "Đang xử lý..." },
-            { role: "system", content: `Kết quả hành động: ${actionResult.contextForAI}\n\nHãy trả lời user dựa trên kết quả trên. KHÔNG trả về action nữa. KHÔNG hiển thị ID.` }
+            { role: "assistant", content: parsedAction?.cleanText || "Processing..." },
+            { role: "system", content: `Action result: ${actionResult.contextForAI}\n\nRespond to the user based on the result above. Do NOT return another action. Do NOT display IDs.` }
           ];
 
           let finalReply = actionResult.contextForAI;
-          // ... (giữ nguyên logic gọi AI lần 2 ở đây)
+          // Call AI a second time for final composed reply
           if (groq) {
             try {
               const completion2 = await groq.chat.completions.create({
@@ -394,7 +394,7 @@ export const aiService = {
           };
         }
 
-        // Nếu là offline, trả về kết quả action luôn
+        // If offline, return action result directly
         return {
           message: actionResult.contextForAI,
           action: actionResult.actionType,
@@ -415,15 +415,15 @@ export const aiService = {
   },
 
   /**
-   * Offline fallback — rule-based khi không có AI provider nào.
+   * Offline fallback — rule-based when no AI provider is available.
    */
   async _offlineFallback(messages, userId) {
     const lastMsg = messages[messages.length - 1]?.content || "";
     const lowerMsg = lastMsg.toLowerCase();
 
-    // 1. Xử lý logic Đặt vé (khi user click nút "Chọn" khán đài)
-    // Pattern: "Đặt cho tôi 1 vé khán đài Khán đài A trận Hà Nội FC vs Hải Phòng"
-    if (lowerMsg.includes("đặt") && lowerMsg.includes("khán đài")) {
+    // 1. Handle booking logic (when user clicks "Select" stand button)
+    // Pattern: "Book me 1 ticket for stand A in match Team A vs Team B"
+    if ((lowerMsg.includes("book") || lowerMsg.includes("buy")) && lowerMsg.includes("stand")) {
       const matches = await getActiveMatchesContext();
       const match = matches.find(m => lowerMsg.includes(m.home_team.toLowerCase()) || lowerMsg.includes(m.away_team.toLowerCase()));
       
@@ -433,7 +433,7 @@ export const aiService = {
         
         if (stand) {
           return {
-            message: `Đang tiến hành đặt vé cho bạn...`,
+            message: `Processing your booking...`,
             action: "create_booking",
             data: { params: { match_id: match.id, stand_id: stand.id, quantity: 1 } },
             provider: "offline"
@@ -442,14 +442,14 @@ export const aiService = {
       }
     }
 
-    // 2. Xử lý logic Xem giá/khán đài (khi user click nút "Chọn trận này")
-    if (lowerMsg.includes("khán đài") || lowerMsg.includes("giá vé")) {
+    // 2. Handle stand info / pricing (when user clicks "Select this match" button)
+    if (lowerMsg.includes("stand") || lowerMsg.includes("ticket price") || lowerMsg.includes("pricing")) {
       const matches = await getActiveMatchesContext();
       const match = matches.find(m => lowerMsg.includes(m.home_team.toLowerCase()) || lowerMsg.includes(m.away_team.toLowerCase()));
       
       if (match) {
         return {
-          message: `Đây là thông tin khán đài cho trận ${match.home_team} vs ${match.away_team}. Bạn ưu tiên khán đài có view tốt nhất, giá rẻ tiết kiệm nhất, hay mức giá trung bình?`,
+          message: `Here is the stand information for ${match.home_team} vs ${match.away_team}. Do you prefer the best view stand, the most budget-friendly, or a mid-range option?`,
           action: "get_availability",
           data: { params: { match_id: match.id } },
           provider: "offline"
@@ -457,38 +457,38 @@ export const aiService = {
       }
     }
 
-    // 3. Xử lý Tìm kiếm trận đấu
-    if (lowerMsg.includes("đặt vé") || lowerMsg.includes("lịch") || lowerMsg.includes("trận")) {
-      const keyword = lowerMsg.replace(/đặt vé|lịch thi đấu|trận đấu|tìm/g, "").trim();
+    // 3. Handle match search
+    if (lowerMsg.includes("ticket") || lowerMsg.includes("schedule") || lowerMsg.includes("match") || lowerMsg.includes("book")) {
+      const keyword = lowerMsg.replace(/ticket|schedule|match|book|find|search/g, "").trim();
       return {
-        message: keyword ? `Đang tìm các trận đấu liên quan đến "${keyword}". Bạn muốn xem trận đấu nào?` : "Dưới đây là các trận đấu sắp tới. Bạn muốn xem trận đấu nào?",
+        message: keyword ? `Searching for matches related to "${keyword}". Which match are you interested in?` : "Here are the upcoming matches. Which one would you like to see?",
         action: "search_matches",
         data: { params: { keyword: keyword || undefined } },
         provider: "offline"
       };
     }
 
-    // 4. Chào hỏi
-    if (lowerMsg.includes("chào") || lowerMsg.includes("hi") || lowerMsg.includes("hello")) {
+    // 4. Greeting
+    if (lowerMsg.includes("hello") || lowerMsg.includes("hi") || lowerMsg.includes("hey")) {
       return {
-        message: "Chào bạn! 👋 Mình là chuyên gia tư vấn vé của GoTicket. Mình có thể giúp bạn tìm trận đấu HOT nhất. Bạn muốn xem lịch thi đấu trận nào?",
+        message: "Hello! 👋 I'm your GoTicket ticket advisor. I can help you find the hottest matches. Which match are you interested in?",
         provider: "offline"
       };
     }
 
     return {
-      message: "Xin chào! Mình là tư vấn viên GoTicket. Bạn đang quan tâm đến trận đấu nào để mình tư vấn khán đài có view tốt nhất nhé!",
+      message: "Hello! I'm the GoTicket advisor. Which match are you interested in? I can help you find the best stand with the greatest view!",
       provider: "offline"
     };
   },
 
   /**
-   * Gợi ý trận đấu dựa trên sở thích của user (primary_sport_id).
-   * Cache 5 phút phía client (trả về Cache-Control header từ controller).
+   * Recommend matches based on user preferences (primary_sport_id).
+   * Cache for 5 minutes on the client side (Cache-Control header returned from controller).
    * @param {string} userId
    */
   async getRecommendations(userId) {
-    // Lấy sở thích sport của user
+    // Fetch user's sport preferences
     const userResult = await query(
       "SELECT primary_sport_id, secondary_sport_id FROM users WHERE id = $1",
       [userId]
@@ -503,7 +503,7 @@ export const aiService = {
     const values = [];
 
     if (sportIds.length > 0) {
-      // Ưu tiên matches thuộc sport yêu thích qua league.sport_id
+      // Prioritize matches in preferred sports via league.sport_id
       values.push(sportIds);
       whereExtra = `AND l.sport_id = ANY($1::bigint[])`;
     }

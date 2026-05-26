@@ -50,7 +50,7 @@ if (process.env.NODE_ENV !== "production") {
   app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 }
 
-// Áp dụng Rate Limiting cho tất cả các API (ngoại trừ Stripe Webhook)
+// Apply Rate Limiting to all APIs (except Stripe Webhook)
 app.use("/api", (req, res, next) => {
   if (req.path === "/payments/webhook") {
     return next();

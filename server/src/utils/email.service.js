@@ -4,10 +4,10 @@ import { query } from "../config/db.js";
 import { logger } from "./logger.js";
 
 /**
- * Query đầy đủ thông tin vé, trận đấu, user, stadium cho email.
+ * Query full ticket info, match, user, and stadium for email.
  */
 const getTicketEmailData = async (userId, ticketIds) => {
-  // Lấy thông tin user
+  // Fetch user info
   const userResult = await query(
     "SELECT id, email, full_name FROM users WHERE id = $1",
     [userId]
@@ -15,7 +15,7 @@ const getTicketEmailData = async (userId, ticketIds) => {
   const user = userResult.rows[0];
   if (!user) throw new Error(`User ${userId} not found`);
 
-  // Lấy thông tin vé + trận + sân vận động + khán đài (gom theo ticket_code & stand)
+  // Fetch ticket info + match + stadium + stand (grouped by ticket_code & stand)
   const ticketResult = await query(
     `SELECT
        t.ticket_code,
@@ -46,7 +46,7 @@ const getTicketEmailData = async (userId, ticketIds) => {
 };
 
 /**
- * Query đầy đủ thông tin vé, trận đấu, user, stadium cho email dựa trên ticket_code.
+ * Query full ticket info, match, user, and stadium for email based on ticket_code.
  */
 const getTicketEmailDataByCode = async (userId, ticketCode) => {
   const userResult = await query(
@@ -86,7 +86,7 @@ const getTicketEmailDataByCode = async (userId, ticketCode) => {
 };
 
 /**
- * Format ngày giờ theo múi giờ Việt Nam (UTC+7).
+ * Format date/time in Vietnam timezone (UTC+7).
  */
 const formatMatchDate = (dateStr) => {
   const d = new Date(dateStr);
@@ -102,18 +102,18 @@ const formatMatchDate = (dateStr) => {
 };
 
 /**
- * Format tiền VND.
+ * Format VND currency.
  */
 const formatCurrency = (amount) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
 
-// Xóa hàm generateQRBuffer vì giờ dùng public API
+// Removed generateQRBuffer function — now using public API
+// Removed public API — Gmail cannot load localhost images
 
-// Xóa public API vì Gmail không load được ảnh localhost
 /**
- * Build HTML template cho email xác nhận vé.
- * @param {string} qrUrl - URL hình ảnh QR
- * @param {string} recipientEmail - Nếu có, thay đổi lời chào là được tặng vé
+ * Build HTML template for ticket confirmation email.
+ * @param {string} qrUrl - QR image URL
+ * @param {string} recipientEmail - If provided, changes greeting to indicate the ticket is a gift
  */
 const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
   const first = rows[0];
@@ -122,7 +122,7 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
   const totalPrice = rows.reduce((s, r) => s + Number(r.price) * Number(r.quantity), 0);
   const myTicketsUrl = `${clientUrl}/audience/my-tickets`;
 
-  // Rows cho bảng tóm tắt vé
+  // Rows for ticket summary table
   const standRows = rows
     .map(
       (r) => `
@@ -136,11 +136,11 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
     .join("");
 
   return `<!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Xác nhận đặt vé - GoTicket</title>
+  <title>Ticket Booking Confirmation - GoTicket</title>
 </head>
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
 
@@ -156,12 +156,12 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
               <span style="color:#ffffff;font-size:22px;font-weight:900;letter-spacing:2px;">⚽ GoTicket</span>
             </div>
             <h1 style="margin:0 0 8px;color:#ffffff;font-size:28px;font-weight:800;letter-spacing:-0.5px;">
-              ${recipientEmail ? "Bạn được tặng 1 vé! 🎁" : "Đặt vé thành công! 🎉"}
+              ${recipientEmail ? "You received a gift ticket! 🎁" : "Booking successful! 🎉"}
             </h1>
             <p style="margin:0;color:rgba(255,255,255,0.85);font-size:15px;">
               ${recipientEmail 
-                ? `Bạn vừa được <strong>${user.full_name || user.email}</strong> tặng một vé xem thể thao trên GoTicket.` 
-                : `Cảm ơn <strong>${user.full_name || user.email}</strong> đã tin tưởng GoTicket`}
+                ? `You just received a sports ticket on GoTicket from <strong>${user.full_name || user.email}</strong>.` 
+                : `Thank you <strong>${user.full_name || user.email}</strong> for trusting GoTicket`}
             </p>
           </td>
         </tr>
@@ -173,7 +173,7 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
               <tr>
                 <!-- Home team -->
                 <td width="40%" style="padding:24px 16px;text-align:center;">
-                  <div style="font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Chủ nhà</div>
+                  <div style="font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Home Team</div>
                   <div style="font-size:18px;font-weight:800;color:#1e40af;line-height:1.3;">${first.home_team}</div>
                 </td>
                 <!-- VS -->
@@ -182,7 +182,7 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
                 </td>
                 <!-- Away team -->
                 <td width="40%" style="padding:24px 16px;text-align:center;">
-                  <div style="font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Đội khách</div>
+                  <div style="font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Away Team</div>
                   <div style="font-size:18px;font-weight:800;color:#1e40af;line-height:1.3;">${first.away_team}</div>
                 </td>
               </tr>
@@ -198,17 +198,17 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
                   <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                       <td style="padding:6px 0;width:50%;">
-                        <span style="font-size:13px;color:#6b7280;">🕐 Thời gian</span><br/>
+                        <span style="font-size:13px;color:#6b7280;">🕐 Time</span><br/>
                         <span style="font-size:14px;font-weight:700;color:#1e293b;">${matchDate}</span>
                       </td>
                       <td style="padding:6px 0;width:50%;">
-                        <span style="font-size:13px;color:#6b7280;">🏟️ Sân vận động</span><br/>
+                        <span style="font-size:13px;color:#6b7280;">🏟️ Stadium</span><br/>
                         <span style="font-size:14px;font-weight:700;color:#1e293b;">${first.stadium_name}</span>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2" style="padding:6px 0;">
-                        <span style="font-size:13px;color:#6b7280;">📍 Địa chỉ</span><br/>
+                        <span style="font-size:13px;color:#6b7280;">📍 Address</span><br/>
                         <span style="font-size:14px;font-weight:700;color:#1e293b;">${first.stadium_address}, ${first.stadium_city}</span>
                       </td>
                     </tr>
@@ -222,20 +222,20 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
         <!-- TICKET SUMMARY TABLE -->
         <tr>
           <td style="padding:24px 32px 0;">
-            <h3 style="margin:0 0 12px;color:#0f172a;font-size:16px;font-weight:700;">🎟️ Chi tiết vé</h3>
+            <h3 style="margin:0 0 12px;color:#0f172a;font-size:16px;font-weight:700;">🎟️ Ticket Details</h3>
             <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
               <thead>
                 <tr style="background:#f8fafc;">
-                  <th style="padding:12px 16px;text-align:left;font-size:12px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Khán đài</th>
-                  <th style="padding:12px 16px;text-align:center;font-size:12px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">SL</th>
-                  <th style="padding:12px 16px;text-align:right;font-size:12px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Đơn giá</th>
-                  <th style="padding:12px 16px;text-align:right;font-size:12px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Thành tiền</th>
+                  <th style="padding:12px 16px;text-align:left;font-size:12px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Stand</th>
+                  <th style="padding:12px 16px;text-align:center;font-size:12px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Qty</th>
+                  <th style="padding:12px 16px;text-align:right;font-size:12px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Unit Price</th>
+                  <th style="padding:12px 16px;text-align:right;font-size:12px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Subtotal</th>
                 </tr>
               </thead>
               <tbody>${standRows}</tbody>
               <tfoot>
                 <tr style="background:#eff6ff;">
-                  <td colspan="3" style="padding:14px 16px;font-size:15px;font-weight:800;color:#1e40af;">Tổng cộng (${totalQty} vé)</td>
+                  <td colspan="3" style="padding:14px 16px;font-size:15px;font-weight:800;color:#1e40af;">Total (${totalQty} ticket${totalQty > 1 ? "s" : ""})</td>
                   <td style="padding:14px 16px;text-align:right;font-size:15px;font-weight:800;color:#1e40af;">${formatCurrency(totalPrice)}</td>
                 </tr>
               </tfoot>
@@ -247,7 +247,7 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
         <tr>
           <td style="padding:20px 32px 0;">
             <div style="background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:12px;padding:14px 20px;text-align:center;">
-              <span style="font-size:12px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Mã vé của bạn</span><br/>
+              <span style="font-size:12px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Your Ticket Code</span><br/>
               <span style="font-size:26px;font-weight:900;color:#0f172a;letter-spacing:6px;font-family:'Courier New',monospace;">${first.ticket_code}</span>
             </div>
           </td>
@@ -256,12 +256,12 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
         <!-- QR CODE -->
         <tr>
           <td style="padding:24px 32px 0;text-align:center;">
-            <h3 style="margin:0 0 16px;color:#0f172a;font-size:16px;font-weight:700;">📲 Mã QR Check-in</h3>
+            <h3 style="margin:0 0 16px;color:#0f172a;font-size:16px;font-weight:700;">📲 QR Code for Check-in</h3>
             <div style="display:inline-block;background:#ffffff;border:2px solid #e2e8f0;border-radius:16px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
-              <img src="${qrUrl}" alt="QR Code vé" width="220" height="220" style="display:block;border-radius:8px;" />
+              <img src="${qrUrl}" alt="Ticket QR Code" width="220" height="220" style="display:block;border-radius:8px;" />
             </div>
             <p style="margin:12px 0 0;font-size:13px;color:#6b7280;">
-              Xuất trình mã này tại cửa vào sân để check-in
+              Present this code at the stadium entrance to check in
             </p>
           </td>
         </tr>
@@ -272,10 +272,10 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
           <td style="padding:32px 32px 0;text-align:center;">
             <a href="${myTicketsUrl}"
                style="display:inline-block;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#ffffff;font-size:16px;font-weight:800;text-decoration:none;padding:16px 40px;border-radius:50px;letter-spacing:0.5px;box-shadow:0 4px 16px rgba(37,99,235,0.4);">
-              🎟️ Xem Vé Của Tôi
+              🎟️ View My Tickets
             </a>
             <p style="margin:12px 0 0;font-size:12px;color:#94a3b8;">
-              Hoặc truy cập: <a href="${myTicketsUrl}" style="color:#2563eb;">${myTicketsUrl}</a>
+              Or visit: <a href="${myTicketsUrl}" style="color:#2563eb;">${myTicketsUrl}</a>
             </p>
           </td>
         </tr>
@@ -286,8 +286,8 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
           <td style="padding:24px 32px 0;">
             <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:12px;padding:14px 18px;">
               <p style="margin:0;font-size:13px;color:#92400e;line-height:1.6;">
-                <strong>⚠️ Lưu ý:</strong> Vui lòng đến sân trước giờ thi đấu <strong>30 phút</strong> để check-in. 
-                Mã QR chỉ có hiệu lực cho đúng trận đấu này và không thể chuyển nhượng.
+                <strong>⚠️ Note:</strong> Please arrive at the stadium <strong>30 minutes</strong> before kick-off to check in. 
+                The QR code is only valid for this specific match and is non-transferable.
               </p>
             </div>
           </td>
@@ -298,8 +298,8 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
           <td style="padding:32px;text-align:center;border-top:1px solid #f1f5f9;margin-top:32px;">
             <p style="margin:0 0 6px;font-size:15px;font-weight:800;color:#1e40af;">⚽ GoTicket</p>
             <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6;">
-              Email này được gửi tự động, vui lòng không reply trực tiếp.<br/>
-              Nếu bạn không thực hiện giao dịch này, hãy liên hệ hỗ trợ ngay.
+              This email was sent automatically, please do not reply directly.<br/>
+              If you did not perform this transaction, please contact support immediately.
             </p>
           </td>
         </tr>
@@ -313,10 +313,10 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
 };
 
 /**
- * Gửi email xác nhận đặt vé thành công.
+ * Send ticket booking confirmation email.
  * @param {number} userId
  * @param {number[]} ticketIds
- * @param {string} qrToken  — JWT token đã được lưu vào DB
+ * @param {string} qrToken  — JWT token already saved in DB
  */
 export const sendTicketConfirmationEmail = async (userId, ticketIds, qrToken) => {
   const mailer = getMailer();
@@ -340,12 +340,12 @@ export const sendTicketConfirmationEmail = async (userId, ticketIds, qrToken) =>
     stadium: first.stadium_name
   });
 
-  // Sử dụng Public QR API (QuickChart) để đảm bảo mọi Mail Client (bao gồm Gmail) đều có thể tải được ảnh, không bị block base64 hay lỗi CID
+  // Use Public QR API (QuickChart) to ensure all Mail Clients (including Gmail) can load the image, without being blocked by base64 or CID errors
   const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(qrData)}&size=300&margin=2`;
   const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
   const html = buildEmailHTML({ user, rows, qrUrl, clientUrl });
-  const subject = `✅ Đặt vé thành công — ${first.home_team} vs ${first.away_team} | GoTicket`;
+  const subject = `✅ Booking successful — ${first.home_team} vs ${first.away_team} | GoTicket`;
 
   await mailer.sendMail({
     from: `"GoTicket" <${process.env.GMAIL_USER}>`,
@@ -358,7 +358,7 @@ export const sendTicketConfirmationEmail = async (userId, ticketIds, qrToken) =>
 };
 
 /**
- * Gửi email tặng vé cho bạn bè.
+ * Send gift ticket email to a friend.
  */
 export const sendGiftTicketEmail = async (userId, ticketCode, recipientEmail) => {
   const mailer = getMailer();
@@ -385,7 +385,7 @@ export const sendGiftTicketEmail = async (userId, ticketCode, recipientEmail) =>
   const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
   const html = buildEmailHTML({ user, rows, qrUrl, clientUrl, recipientEmail });
-  const subject = `🎁 ${user.full_name || user.email} đã tặng bạn một vé: ${first.home_team} vs ${first.away_team} | GoTicket`;
+  const subject = `🎁 ${user.full_name || user.email} has gifted you a ticket: ${first.home_team} vs ${first.away_team} | GoTicket`;
 
   await mailer.sendMail({
     from: `"GoTicket" <${process.env.GMAIL_USER}>`,

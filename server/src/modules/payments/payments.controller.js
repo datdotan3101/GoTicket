@@ -15,7 +15,7 @@ export const createPaymentIntent = asyncHandler(async (req, res) => {
 export const stripeWebhook = asyncHandler(async (req, res) => {
   const signature = req.headers["stripe-signature"];
   if (!signature) {
-    return sendError(res, "Thiếu stripe-signature.", HTTP_STATUS.BAD_REQUEST);
+    return sendError(res, "Missing stripe-signature.", HTTP_STATUS.BAD_REQUEST);
   }
   const data = await paymentsService.handleWebhook(req.body, signature);
   return sendSuccess(res, data);
@@ -24,7 +24,7 @@ export const stripeWebhook = asyncHandler(async (req, res) => {
 export const confirmPayment = asyncHandler(async (req, res) => {
   const { paymentIntentId } = req.body;
   if (!paymentIntentId) {
-    return sendError(res, "Thiếu paymentIntentId.", HTTP_STATUS.BAD_REQUEST);
+    return sendError(res, "Missing paymentIntentId.", HTTP_STATUS.BAD_REQUEST);
   }
   const data = await paymentsService.confirmLocalPayment(paymentIntentId);
   return sendSuccess(res, data);

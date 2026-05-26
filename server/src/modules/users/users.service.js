@@ -7,8 +7,8 @@ const ALLOWED_ROLES = Object.values(ROLES);
 
 export const usersService = {
   /**
-   * Lấy danh sách user (admin only).
-   * Hỗ trợ filter by role, is_active, is_approved, search by email/name.
+   * Get list of users (admin only).
+   * Supports filtering by role, is_active, is_approved, and searching by email/name.
    */
   async getAll(queryParams = {}) {
     const { page, limit, offset } = getPagination(queryParams);
@@ -58,7 +58,7 @@ export const usersService = {
   },
 
   /**
-   * Lấy chi tiết user theo id (admin only).
+   * Get user detail by id (admin only).
    */
   async getById(id) {
     const result = await query(
@@ -77,20 +77,20 @@ export const usersService = {
   },
 
   /**
-   * Cập nhật role và club_id của user (admin only).
-   * Validation: role phải nằm trong ALLOWED_ROLES.
+   * Update user role and club_id (admin only).
+   * Validation: role must be in ALLOWED_ROLES.
    */
   async updateRole(id, role, clubId) {
     if (!ALLOWED_ROLES.includes(role)) {
-      throw new Error(`Role không hợp lệ. Cho phép: ${ALLOWED_ROLES.join(", ")}`);
+      throw new Error(`Invalid role. Allowed values: ${ALLOWED_ROLES.join(", ")}`);
     }
 
-    // Nếu role là manager thì cần club_id
+    // Manager role requires a club_id
     if (role === ROLES.MANAGER && !clubId) {
-      throw new Error("Manager phải được gán vào một câu lạc bộ.");
+      throw new Error("Manager must be assigned to a club.");
     }
 
-    // Nếu đổi role khác manager thì clear club_id
+    // Non-manager roles should have no club_id
     const effectiveClubId = role === ROLES.MANAGER ? (clubId || null) : null;
 
     const result = await query(
@@ -104,7 +104,7 @@ export const usersService = {
   },
 
   /**
-   * Khoá / mở khoá tài khoản user (admin only).
+   * Lock / unlock user account (admin only).
    */
   async setActive(id, isActive) {
     const result = await query(
@@ -118,7 +118,7 @@ export const usersService = {
   },
 
   /**
-   * Lấy danh sách user đang chờ duyệt tài khoản.
+   * Get list of users pending account approval.
    */
   async getPendingApproval() {
     const result = await query(
@@ -134,21 +134,21 @@ export const usersService = {
   },
 
   /**
-   * Tạo tài khoản trực tiếp (Dành cho Admin).
+   * Create an account directly (Admin only).
    */
   async createDirect({ email, password, fullName, role, clubId }) {
     if (!ALLOWED_ROLES.includes(role)) {
-      throw new Error(`Role không hợp lệ. Cho phép: ${ALLOWED_ROLES.join(", ")}`);
+      throw new Error(`Invalid role. Allowed values: ${ALLOWED_ROLES.join(", ")}`);
     }
 
     if (role === ROLES.MANAGER && !clubId) {
-      throw new Error("Manager phải được gán vào một câu lạc bộ.");
+      throw new Error("Manager must be assigned to a club.");
     }
 
     // Check email exists
     const exist = await query(`SELECT id FROM users WHERE email = $1`, [email]);
     if (exist.rows.length > 0) {
-      const err = new Error("Email đã tồn tại.");
+      const err = new Error("Email already exists.");
       err.status = 409;
       throw err;
     }

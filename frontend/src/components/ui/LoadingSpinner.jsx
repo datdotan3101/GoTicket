@@ -14,7 +14,7 @@ export default function LoadingSpinner({ text = 'Loading...' }) {
         role="status"
         aria-label="Loading data"
       >
-        {/* CSS cho spin sẽ thêm ở index.css, mặc định dùng inline style animate vòng xoay */}
+        {/* Spin animation is handled inline here; can be moved to index.css if needed */}
         <style>{`
           @keyframes spin {
             to { transform: rotate(360deg); }

@@ -10,7 +10,7 @@ import { aiService } from "./ai.service.js";
 export const chat = asyncHandler(async (req, res) => {
   const { messages } = req.body;
   if (!Array.isArray(messages) || messages.length === 0) {
-    return res.status(400).json({ success: false, message: "messages là bắt buộc và phải là array." });
+    return res.status(400).json({ success: false, message: "messages is required and must be an array." });
   }
   const result = await aiService.chat(req.user.id, messages);
   return sendSuccess(res, {
@@ -23,7 +23,7 @@ export const chat = asyncHandler(async (req, res) => {
 
 /**
  * GET /api/ai/recommendations
- * Cache-Control: 5 phút phía client
+ * Cache-Control: 5 minutes on client side
  */
 export const getRecommendations = asyncHandler(async (req, res) => {
   const data = await aiService.getRecommendations(req.user.id);
