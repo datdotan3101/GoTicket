@@ -29,11 +29,42 @@ export default function QRScanPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [cameraStatus, setCameraStatus] = useState('idle')
   const [showSuccess, setShowSuccess] = useState(false)
+  
+  const [cameras, setCameras] = useState([])
+  const [selectedCameraId, setSelectedCameraId] = useState('')
+  const [isGettingCameras, setIsGettingCameras] = useState(true)
 
   const html5QrCodeRef = useRef(null)
   const scanLockedRef = useRef(false)
   const handleCheckinRef = useRef(null)
   const inputRef = useRef(null)
+
+  useEffect(() => {
+    let mounted = true
+    setIsGettingCameras(true)
+    Html5Qrcode.getCameras().then(devices => {
+      if (!mounted) return
+      if (devices && devices.length > 0) {
+        setCameras(devices)
+        const saved = localStorage.getItem('preferred_camera_id')
+        let camIdToUse = devices[0].id
+        if (saved && devices.find(d => d.id === saved)) {
+          camIdToUse = saved
+        } else {
+          const camo = devices.find(d => d.label.toLowerCase().includes('camo'))
+          const back = devices.find(d => d.label.toLowerCase().includes('back'))
+          if (camo) camIdToUse = camo.id
+          else if (back) camIdToUse = back.id
+        }
+        setSelectedCameraId(camIdToUse)
+      }
+      setIsGettingCameras(false)
+    }).catch(err => {
+      console.warn('Could not get cameras', err)
+      if (mounted) setIsGettingCameras(false)
+    })
+    return () => { mounted = false }
+  }, [])
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -134,7 +165,7 @@ export default function QRScanPage() {
     }
   }
 
-  const startCamera = async () => {
+  const startCamera = async (overrideId) => {
     if (html5QrCodeRef.current) return
     const el = document.getElementById(VIEWPORT_ID)
     if (!el) return
@@ -143,13 +174,17 @@ export default function QRScanPage() {
     const scanner = new Html5Qrcode(VIEWPORT_ID)
     html5QrCodeRef.current = scanner
 
+    const camId = overrideId || selectedCameraId
+    const config = camId ? camId : { facingMode: 'environment' }
+
     try {
       await scanner.start(
-        { facingMode: 'environment' },
+        config,
         {
-          fps: 15,
+          fps: 30,
           disableFlip: true,
-          experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
         },
         (decoded) => handleCheckinRef.current(decoded, 'qr')
       )
@@ -178,12 +213,26 @@ export default function QRScanPage() {
 
   useEffect(() => {
     if (mode === 'scan') {
-      startCamera()
+      if (!isGettingCameras) {
+        startCamera(selectedCameraId)
+      }
     } else {
       stopCamera()
     }
     return () => { stopCamera() }
-  }, [mode])
+  }, [mode, isGettingCameras])
+
+  const handleCameraChange = async (e) => {
+    const newId = e.target.value
+    setSelectedCameraId(newId)
+    localStorage.setItem('preferred_camera_id', newId)
+    if (mode === 'scan') {
+      await stopCamera()
+      setTimeout(() => {
+        startCamera(newId)
+      }, 100)
+    }
+  }
 
   const onSubmit = (e) => {
     e.preventDefault()
@@ -234,7 +283,7 @@ export default function QRScanPage() {
           <div className="bg-slate-900 rounded-3xl overflow-hidden relative shadow-lg flex flex-col h-[400px] lg:h-[450px]">
             
             {/* Header overlay */}
-            <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-20 bg-gradient-to-b from-slate-900/80 to-transparent">
+            <div className="absolute top-0 left-0 right-0 p-6 flex flex-col md:flex-row justify-between items-start md:items-center z-20 bg-linear-to-b from-slate-900/80 to-transparent gap-4">
               <div className="flex items-center gap-3">
                 <div className={`w-3 h-3 rounded-full ${cameraStatus === 'active' ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : 'bg-red-500 animate-pulse'}`}></div>
                 <span className="text-white font-bold text-sm tracking-wide uppercase">
@@ -242,12 +291,25 @@ export default function QRScanPage() {
                 </span>
               </div>
               
-              <button
-                onClick={() => setMode(mode === 'scan' ? 'manual' : 'scan')}
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all border border-white/10"
-              >
-                {mode === 'scan' ? <><Keyboard size={16} /> Manual Entry</> : <><Camera size={16} /> Switch to Camera</>}
-              </button>
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                {mode === 'scan' && cameras.length > 0 && (
+                  <select 
+                    value={selectedCameraId} 
+                    onChange={handleCameraChange}
+                    className="bg-black/50 text-white border border-white/20 rounded-lg px-3 py-2 text-sm w-full md:w-auto max-w-full md:max-w-[200px] outline-none focus:border-indigo-500 truncate"
+                  >
+                    {cameras.map(c => (
+                      <option key={c.id} value={c.id}>{c.label || `Camera ${c.id.substring(0,5)}`}</option>
+                    ))}
+                  </select>
+                )}
+                <button
+                  onClick={() => setMode(mode === 'scan' ? 'manual' : 'scan')}
+                  className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all border border-white/10 whitespace-nowrap"
+                >
+                  {mode === 'scan' ? <><Keyboard size={16} /> Manual</> : <><Camera size={16} /> Camera</>}
+                </button>
+              </div>
             </div>
 
             {/* Viewport Area */}

@@ -172,6 +172,26 @@ export const ticketsService = {
   },
 
   async giftTicket({ userId, ticketCode, email }) {
+    let recipientId;
+    // Kiểm tra người nhận có tồn tại không
+    const recipientRes = await query(`SELECT id FROM users WHERE email = $1`, [email]);
+    if (recipientRes.rowCount === 0) {
+      // Tự động tạo tài khoản placeholder
+      const newUserRes = await query(
+        `INSERT INTO users (email, full_name, role, is_active, is_approved)
+         VALUES ($1, $2, 'audience', true, true)
+         RETURNING id`,
+        [email, email.split('@')[0]]
+      );
+      recipientId = newUserRes.rows[0].id;
+    } else {
+      recipientId = recipientRes.rows[0].id;
+    }
+
+    if (recipientId === userId) {
+      throw new Error("Bạn không thể tự tặng vé cho chính mình.");
+    }
+
     // Chỉ check xem vé có tồn tại, thuộc về user và trạng thái có hợp lệ (ví dụ: 'paid')
     const result = await query(
       `SELECT id, is_gifted FROM tickets WHERE ticket_code = $1 AND user_id = $2 AND status = 'paid'`,
@@ -185,15 +205,15 @@ export const ticketsService = {
       throw new Error("Vé này đã được tặng trước đó.");
     }
 
-    // Gửi email
+    // Gửi email bằng ID người tặng
     await sendGiftTicketEmail(userId, ticketCode, email);
 
-    // Đánh dấu vé đã tặng
+    // Chuyển nhượng vé cho người nhận
     await query(
-      `UPDATE tickets SET is_gifted = true WHERE ticket_code = $1 AND user_id = $2`,
-      [ticketCode, userId]
+      `UPDATE tickets SET is_gifted = true, user_id = $1 WHERE ticket_code = $2 AND user_id = $3`,
+      [recipientId, ticketCode, userId]
     );
 
-    return { success: true, message: "Gift ticket sent successfully" };
+    return { success: true, message: "Gift ticket sent and transferred successfully" };
   }
 };

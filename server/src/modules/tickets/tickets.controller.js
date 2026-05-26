@@ -2,6 +2,8 @@ import { HTTP_STATUS } from "../../constants/httpStatus.js";
 import { asyncHandler } from "../../middlewares/asyncHandler.js";
 import { sendSuccess } from "../../utils/response.js";
 import QRCode from "qrcode";
+import jwt from "jsonwebtoken";
+import { query } from "../../config/db.js";
 import { ticketsService } from "./tickets.service.js";
 
 export const bookTickets = asyncHandler(async (req, res) => {
@@ -44,7 +46,45 @@ export const generateQrImage = asyncHandler(async (req, res) => {
   const { token } = req.params;
   if (!token) return res.status(400).send("Token required");
   
-  const buffer = await QRCode.toBuffer(token, {
+  let qrData = token;
+  let ticketCode = null;
+
+  if (token.startsWith("ticket-group-")) {
+    ticketCode = token.replace("ticket-group-", "");
+  } else {
+    try {
+      const payload = jwt.decode(token);
+      if (payload) ticketCode = payload.ticketCode;
+    } catch (e) {
+      // Bỏ qua lỗi giải mã
+    }
+  }
+
+  if (ticketCode) {
+    const result = await query(
+      `SELECT m.home_team, m.away_team, m.match_date, std.name as stadium_name
+       FROM tickets t
+       JOIN matches m ON m.id = t.match_id
+       JOIN stadiums std ON std.id = m.stadium_id
+       WHERE t.ticket_code = $1
+       LIMIT 1`,
+      [ticketCode]
+    );
+
+    if (result.rows.length > 0) {
+      const match = result.rows[0];
+      const matchDateStr = new Date(match.match_date).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+      qrData = JSON.stringify({
+        token: token,
+        ticketCode: ticketCode,
+        match: `${match.home_team} vs ${match.away_team}`,
+        date: matchDateStr,
+        stadium: match.stadium_name
+      });
+    }
+  }
+
+  const buffer = await QRCode.toBuffer(qrData, {
     width: 280,
     margin: 2,
     type: "png",

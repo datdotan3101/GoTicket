@@ -5,13 +5,23 @@ import { TICKET_STATUS } from "../../constants/ticketStatus.js";
 
 export const checkinService = {
   async scanQrToken(qrToken) {
+    let tokenStr = qrToken;
+    try {
+      const parsed = JSON.parse(qrToken);
+      if (parsed && parsed.token) {
+        tokenStr = parsed.token;
+      }
+    } catch (e) {
+      // Không phải JSON, giữ nguyên token ban đầu
+    }
+
     let ticketCode = null;
     let ticketId = null;
 
-    if (qrToken.startsWith("ticket-group-")) {
-      ticketCode = qrToken.replace("ticket-group-", "");
+    if (tokenStr.startsWith("ticket-group-")) {
+      ticketCode = tokenStr.replace("ticket-group-", "");
     } else {
-      const payload = jwt.decode(qrToken);
+      const payload = jwt.decode(tokenStr);
       if (!payload) {
         throw new Error("Mã QR không thể giải mã.");
       }

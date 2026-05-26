@@ -267,6 +267,7 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
         </tr>
 
         <!-- CTA BUTTON -->
+        ${!recipientEmail ? `
         <tr>
           <td style="padding:32px 32px 0;text-align:center;">
             <a href="${myTicketsUrl}"
@@ -278,6 +279,7 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
             </p>
           </td>
         </tr>
+        ` : ""}
 
         <!-- NOTICE -->
         <tr>
@@ -329,12 +331,20 @@ export const sendTicketConfirmationEmail = async (userId, ticketIds, qrToken) =>
     return;
   }
 
+  const first = rows[0];
+  const qrData = JSON.stringify({
+    token: qrToken,
+    ticketCode: first.ticket_code,
+    match: `${first.home_team} vs ${first.away_team}`,
+    date: formatMatchDate(first.match_date),
+    stadium: first.stadium_name
+  });
+
   // Sử dụng Public QR API (QuickChart) để đảm bảo mọi Mail Client (bao gồm Gmail) đều có thể tải được ảnh, không bị block base64 hay lỗi CID
-  const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(qrToken)}&size=300&margin=2`;
+  const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(qrData)}&size=300&margin=2`;
   const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
   const html = buildEmailHTML({ user, rows, qrUrl, clientUrl });
-  const first = rows[0];
   const subject = `✅ Đặt vé thành công — ${first.home_team} vs ${first.away_team} | GoTicket`;
 
   await mailer.sendMail({
@@ -363,11 +373,18 @@ export const sendGiftTicketEmail = async (userId, ticketCode, recipientEmail) =>
   }
 
   const qrToken = rows[0].qr_token;
-  const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(qrToken)}&size=300&margin=2`;
+  const first = rows[0];
+  const qrData = JSON.stringify({
+    token: qrToken,
+    ticketCode: first.ticket_code,
+    match: `${first.home_team} vs ${first.away_team}`,
+    date: formatMatchDate(first.match_date),
+    stadium: first.stadium_name
+  });
+  const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(qrData)}&size=300&margin=2`;
   const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
   const html = buildEmailHTML({ user, rows, qrUrl, clientUrl, recipientEmail });
-  const first = rows[0];
   const subject = `🎁 ${user.full_name || user.email} đã tặng bạn một vé: ${first.home_team} vs ${first.away_team} | GoTicket`;
 
   await mailer.sendMail({

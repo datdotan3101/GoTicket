@@ -24,22 +24,38 @@ const signAccessToken = (user) => {
 export const authService = {
   async register(payload) {
     const { email, password, fullName, phone } = payload;
-    const existed = await query("SELECT id FROM users WHERE email = $1", [email]);
-    if (existed.rowCount > 0) {
-      throw new Error("Email đã tồn tại.");
-    }
-
+    const existed = await query("SELECT id, password_hash FROM users WHERE email = $1", [email]);
+    
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await withTransaction(async (tx) => {
-      const inserted = await tx.query(
-        `INSERT INTO users (email, password_hash, full_name, phone, role, is_active, is_approved)
-         VALUES ($1, $2, $3, $4, 'audience', true, true)
-         RETURNING id, email, full_name, role, club_id, is_approved, password_hash`,
-        [email, passwordHash, fullName, phone || null]
-      );
-      const createdUser = inserted.rows[0];
-      return createdUser;
-    });
+    let user;
+
+    if (existed.rowCount > 0) {
+      if (existed.rows[0].password_hash) {
+        throw new Error("Email đã tồn tại.");
+      } else {
+        // Tài khoản placeholder (được tạo qua tính năng tặng vé hoặc Google), cập nhật password và thông tin
+        user = await withTransaction(async (tx) => {
+          const updated = await tx.query(
+            `UPDATE users 
+             SET password_hash = $1, full_name = $2, phone = $3
+             WHERE id = $4
+             RETURNING id, email, full_name, role, club_id, is_approved, password_hash`,
+            [passwordHash, fullName, phone || null, existed.rows[0].id]
+          );
+          return updated.rows[0];
+        });
+      }
+    } else {
+      user = await withTransaction(async (tx) => {
+        const inserted = await tx.query(
+          `INSERT INTO users (email, password_hash, full_name, phone, role, is_active, is_approved)
+           VALUES ($1, $2, $3, $4, 'audience', true, true)
+           RETURNING id, email, full_name, role, club_id, is_approved, password_hash`,
+          [email, passwordHash, fullName, phone || null]
+        );
+        return inserted.rows[0];
+      });
+    }
 
     return getPublicUser(user);
   },

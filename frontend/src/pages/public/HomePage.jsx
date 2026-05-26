@@ -1,11 +1,13 @@
 import { useEffect, useState, useMemo, useRef, Suspense, lazy } from 'react'
-import { Loader2, X, MapPin, Calendar, ChevronDown } from 'lucide-react'
+import { Loader2, X, Calendar } from 'lucide-react'
 const MatchCard = lazy(() => import('../../components/ui/MatchCard'))
 import Pagination from '../../components/ui/Pagination'
+import StadiumAutocomplete from '../../components/ui/StadiumAutocomplete'
 import { matchService } from '../../services/matchService'
-import { stadiumService } from '../../services/stadiumService'
 import { unwrapData } from '../../utils/apiData'
 import { usePagination } from '../../hooks/usePagination'
+import { useStadiums } from '../../hooks/useStadiums'
+import { useMatchSearch } from '../../hooks/useMatchSearch'
 
 export default function HomePage() {
   const [matches, setMatches] = useState([])
@@ -15,11 +17,16 @@ export default function HomePage() {
   const [heroQuery, setHeroQuery] = useState('')
   const [heroLocation, setHeroLocation] = useState('')
   const [heroDate, setHeroDate] = useState('')
-  const [searchResults, setSearchResults] = useState([])
-  const [isSearching, setIsSearching] = useState(false)
-  const [stadiums, setStadiums] = useState([])
-  const [showStadiumDropdown, setShowStadiumDropdown] = useState(false)
   const debounceRef = useRef(null)
+
+  // Shared hooks
+  const stadiums = useStadiums()
+  const {
+    searchMatches,
+    clearResults,
+    results: searchResults,
+    isLoading: isSearching,
+  } = useMatchSearch()
 
   const isSearchActive = heroQuery.trim().length > 0 || heroLocation.trim().length > 0 || heroDate.trim().length > 0
 
@@ -27,7 +34,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchMatches = async () => {
       try {
-        const response = await matchService.getAll({ limit: 20, status: 'published' })
+        const response = await matchService.getAll({ limit: 50, status: 'published' })
         const payload = unwrapData(response)
         let items = []
         if (Array.isArray(payload)) items = payload
@@ -40,54 +47,33 @@ export default function HomePage() {
       }
     }
     fetchMatches()
-
-    // Fetch stadiums for dropdown
-    stadiumService.getAll().then(res => {
-      const payload = unwrapData(res)
-      if (Array.isArray(payload)) setStadiums(payload)
-      else if (payload && Array.isArray(payload.data)) setStadiums(payload.data)
-    }).catch(() => {})
   }, [])
 
   // Debounced real-time search
   useEffect(() => {
     if (!isSearchActive) {
-      setSearchResults([])
-      setIsSearching(false)
+      clearResults()
       return
     }
 
-    setIsSearching(true)
     clearTimeout(debounceRef.current)
 
     debounceRef.current = setTimeout(async () => {
-      try {
-        const params = { limit: 50, status: 'published' }
-        if (heroQuery.trim()) params.q = heroQuery.trim()
-        if (heroLocation.trim()) params.stadium = heroLocation.trim()
-        if (heroDate) params.date = heroDate
-
-        const response = await matchService.getAll(params)
-        const payload = unwrapData(response)
-        let items = []
-        if (Array.isArray(payload)) items = payload
-        else if (payload && Array.isArray(payload.data)) items = payload.data
-        setSearchResults(items)
-      } catch {
-        setSearchResults([])
-      } finally {
-        setIsSearching(false)
-      }
+      const params = { limit: 50, status: 'published' }
+      if (heroQuery.trim()) params.q = heroQuery.trim()
+      if (heroLocation.trim()) params.stadium = heroLocation.trim()
+      if (heroDate) params.date = heroDate
+      searchMatches(params)
     }, 400)
 
     return () => clearTimeout(debounceRef.current)
-  }, [heroQuery, heroLocation])
+  }, [heroQuery, heroLocation, heroDate, isSearchActive, searchMatches, clearResults])
 
   const clearSearch = () => {
     setHeroQuery('')
     setHeroLocation('')
     setHeroDate('')
-    setSearchResults([])
+    clearResults()
   }
 
   // Split matches into categories
@@ -173,57 +159,15 @@ export default function HomePage() {
                 )}
               </div>
 
-              {/* Location input */}
-              <div className="hs-input-wrap" style={{ position: 'relative' }}>
-                <span style={{ fontSize: '1rem', opacity: 0.5, flexShrink: 0 }}>📍</span>
-                <input
-                  type="text"
-                  placeholder="Stadium"
-                  value={heroLocation}
-                  onChange={e => {
-                    setHeroLocation(e.target.value)
-                    setShowStadiumDropdown(true)
-                  }}
-                  onFocus={() => setShowStadiumDropdown(true)}
-                  onBlur={() => setTimeout(() => setShowStadiumDropdown(false), 200)}
-                  id="hero-location-input"
-                  autoComplete="off"
-                />
-                {showStadiumDropdown && stadiums.length > 0 && (
-                  <div className="custom-autocomplete-dropdown">
-                    {stadiums.filter(s => s.name.toLowerCase().includes(heroLocation.toLowerCase())).length > 0 ? (
-                      stadiums.filter(s => s.name.toLowerCase().includes(heroLocation.toLowerCase())).map(s => (
-                        <div 
-                          key={s.id} 
-                          className="custom-autocomplete-item"
-                          onClick={() => {
-                            setHeroLocation(s.name)
-                            setShowStadiumDropdown(false)
-                          }}
-                        >
-                          <MapPin size={14} color="#94a3b8" />
-                          {s.name}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="custom-autocomplete-empty">No stadiums found</div>
-                    )}
-                  </div>
-                )}
-                {heroLocation && (
-                  <button
-                    className="hs-clear-btn"
-                    onClick={() => setHeroLocation('')}
-                    aria-label="Clear"
-                    type="button"
-                  >
-                    <X size={13} />
-                  </button>
-                )}
-                {!heroLocation && (
-                  <ChevronDown size={14} color="#94a3b8" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-                )}
-              </div>
+              {/* Location input — now uses shared component */}
+              <StadiumAutocomplete
+                value={heroLocation}
+                onChange={setHeroLocation}
+                stadiums={stadiums}
+                id="hero-location-input"
+                className="hs-input-wrap"
+                iconSize={16}
+              />
               
               {/* Date input */}
               <div className="hs-input-wrap" style={{ position: 'relative' }}>
@@ -341,7 +285,7 @@ export default function HomePage() {
             <section className="featured-section" style={{ paddingTop: 0 }}>
               <div className="container">
                 <div className="section-head" style={{ marginBottom: '24px' }}>
-                  <h2 className="section-title" style={{ margin: 0 }}>UPCOMING MATCHES</h2>
+                  <h2 className="section-title" style={{ margin: 0 }}>UPCOMING TICKET SALES</h2>
                 </div>
                 {upcomingMatches.length > 0 ? (
                   <div className="match-cards-grid">
@@ -351,7 +295,7 @@ export default function HomePage() {
                   </div>
                 ) : (
                   <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
-                    No matches available.
+                    No upcoming ticket sales at the moment.
                   </div>
                 )}
               </div>

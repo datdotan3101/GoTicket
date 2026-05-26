@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { Search, MapPin, X, Loader2, SlidersHorizontal, Calendar, ChevronDown } from 'lucide-react'
+import { Search, X, Loader2, SlidersHorizontal, Calendar } from 'lucide-react'
 import MatchCard from '../../components/ui/MatchCard'
-import { matchService } from '../../services/matchService'
-import { stadiumService } from '../../services/stadiumService'
-import { unwrapData } from '../../utils/apiData'
+import StadiumAutocomplete from '../../components/ui/StadiumAutocomplete'
+import { useStadiums } from '../../hooks/useStadiums'
+import { useMatchSearch } from '../../hooks/useMatchSearch'
 
 export default function SearchResultsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -13,46 +13,31 @@ export default function SearchResultsPage() {
   const [query, setQuery] = useState(searchParams.get('q') || '')
   const [location, setLocation] = useState(searchParams.get('location') || '')
   const [date, setDate] = useState(searchParams.get('date') || '')
-  const [results, setResults] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [totalCount, setTotalCount] = useState(0)
   const [hasSearched, setHasSearched] = useState(false)
-  const [stadiums, setStadiums] = useState([])
-  const [showStadiumDropdown, setShowStadiumDropdown] = useState(false)
+
+  // Shared hooks
+  const stadiums = useStadiums()
+  const {
+    searchMatches,
+    clearResults,
+    results,
+    totalCount,
+    isLoading,
+  } = useMatchSearch()
 
   const doSearch = useCallback(async (q, loc, d) => {
     if (!q && !loc && !d) {
-      setResults([])
+      clearResults()
       setHasSearched(false)
       return
     }
-    setIsLoading(true)
     setHasSearched(true)
-    try {
-      const params = { limit: 50, status: 'published' }
-      if (q) params.q = q
-      if (loc) params.stadium = loc
-      if (d) params.date = d
-      const response = await matchService.getAll(params)
-      const payload = unwrapData(response)
-      let items = []
-      let total = 0
-      if (Array.isArray(payload)) {
-        items = payload
-        total = payload.length
-      } else if (payload && Array.isArray(payload.data)) {
-        items = payload.data
-        total = payload.total ?? payload.data.length
-      }
-      setResults(items)
-      setTotalCount(total)
-    } catch {
-      setResults([])
-      setTotalCount(0)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+    const params = { limit: 50, status: 'published' }
+    if (q) params.q = q
+    if (loc) params.stadium = loc
+    if (d) params.date = d
+    searchMatches(params)
+  }, [searchMatches, clearResults])
 
   // Run search on mount & when URL params change
   useEffect(() => {
@@ -63,13 +48,6 @@ export default function SearchResultsPage() {
     setLocation(loc)
     setDate(d)
     doSearch(q, loc, d)
-
-    // Fetch stadiums for dropdown
-    stadiumService.getAll().then(res => {
-      const payload = unwrapData(res)
-      if (Array.isArray(payload)) setStadiums(payload)
-      else if (payload && Array.isArray(payload.data)) setStadiums(payload.data)
-    }).catch(() => {})
   }, [searchParams, doSearch])
 
   const handleSubmit = (e) => {
@@ -131,53 +109,19 @@ export default function SearchResultsPage() {
                 </button>
               )}
             </div>
-            <div className="sr-field-wrap" style={{ position: 'relative' }}>
-              <MapPin size={18} className="sr-icon" />
-              <input
-                type="text"
-                className="sr-input"
-                placeholder="Stadium"
-                value={location}
-                onChange={e => {
-                  setLocation(e.target.value)
-                  setShowStadiumDropdown(true)
-                }}
-                onFocus={() => setShowStadiumDropdown(true)}
-                onBlur={() => setTimeout(() => setShowStadiumDropdown(false), 200)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(e) }}
-                id="search-location-input"
-                autoComplete="off"
-              />
-              {showStadiumDropdown && stadiums.length > 0 && (
-                <div className="custom-autocomplete-dropdown">
-                  {stadiums.filter(s => s.name.toLowerCase().includes(location.toLowerCase())).length > 0 ? (
-                    stadiums.filter(s => s.name.toLowerCase().includes(location.toLowerCase())).map(s => (
-                      <div 
-                        key={s.id} 
-                        className="custom-autocomplete-item"
-                        onClick={() => {
-                          setLocation(s.name)
-                          setShowStadiumDropdown(false)
-                        }}
-                      >
-                        <MapPin size={14} color="#94a3b8" />
-                        {s.name}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="custom-autocomplete-empty">No stadiums found</div>
-                  )}
-                </div>
-              )}
-              {location && (
-                <button type="button" className="sr-clear-btn" onClick={clearLocation} aria-label="Clear">
-                  <X size={14} />
-                </button>
-              )}
-              {!location && (
-                <ChevronDown size={14} color="#94a3b8" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-              )}
-            </div>
+
+            {/* Stadium — now uses shared component */}
+            <StadiumAutocomplete
+              value={location}
+              onChange={setLocation}
+              stadiums={stadiums}
+              id="search-location-input"
+              className="sr-field-wrap"
+              inputClassName="sr-input"
+              clearBtnClassName="sr-clear-btn"
+              iconSize={18}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(e) }}
+            />
             
             {/* DATE INPUT */}
             <div className="sr-field-wrap sr-border-l" style={{ position: 'relative' }}>
