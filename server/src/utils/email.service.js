@@ -153,10 +153,10 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
         <tr>
           <td style="background:linear-gradient(135deg,#1d4ed8 0%,#2563eb 50%,#0ea5e9 100%);padding:40px 32px 32px;text-align:center;">
             <div style="display:inline-block;background:rgba(255,255,255,0.15);border-radius:50px;padding:8px 24px;margin-bottom:20px;">
-              <span style="color:#ffffff;font-size:22px;font-weight:900;letter-spacing:2px;">⚽ GoTicket</span>
+              <span style="color:#ffffff;font-size:22px;font-weight:900;letter-spacing:2px;">GoTicket</span>
             </div>
             <h1 style="margin:0 0 8px;color:#ffffff;font-size:28px;font-weight:800;letter-spacing:-0.5px;">
-              ${recipientEmail ? "You received a gift ticket! 🎁" : "Booking successful! 🎉"}
+              ${recipientEmail ? "You received a gift ticket! " : "Booking successful!"}
             </h1>
             <p style="margin:0;color:rgba(255,255,255,0.85);font-size:15px;">
               ${recipientEmail 
@@ -198,17 +198,17 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
                   <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                       <td style="padding:6px 0;width:50%;">
-                        <span style="font-size:13px;color:#6b7280;">🕐 Time</span><br/>
+                        <span style="font-size:13px;color:#6b7280;">Time</span><br/>
                         <span style="font-size:14px;font-weight:700;color:#1e293b;">${matchDate}</span>
                       </td>
                       <td style="padding:6px 0;width:50%;">
-                        <span style="font-size:13px;color:#6b7280;">🏟️ Stadium</span><br/>
+                        <span style="font-size:13px;color:#6b7280;">Stadium</span><br/>
                         <span style="font-size:14px;font-weight:700;color:#1e293b;">${first.stadium_name}</span>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2" style="padding:6px 0;">
-                        <span style="font-size:13px;color:#6b7280;">📍 Address</span><br/>
+                        <span style="font-size:13px;color:#6b7280;">Address</span><br/>
                         <span style="font-size:14px;font-weight:700;color:#1e293b;">${first.stadium_address}, ${first.stadium_city}</span>
                       </td>
                     </tr>
@@ -222,7 +222,7 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
         <!-- TICKET SUMMARY TABLE -->
         <tr>
           <td style="padding:24px 32px 0;">
-            <h3 style="margin:0 0 12px;color:#0f172a;font-size:16px;font-weight:700;">🎟️ Ticket Details</h3>
+            <h3 style="margin:0 0 12px;color:#0f172a;font-size:16px;font-weight:700;">Ticket Details</h3>
             <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
               <thead>
                 <tr style="background:#f8fafc;">
@@ -256,7 +256,7 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
         <!-- QR CODE -->
         <tr>
           <td style="padding:24px 32px 0;text-align:center;">
-            <h3 style="margin:0 0 16px;color:#0f172a;font-size:16px;font-weight:700;">📲 QR Code for Check-in</h3>
+            <h3 style="margin:0 0 16px;color:#0f172a;font-size:16px;font-weight:700;">QR Code for Check-in</h3>
             <div style="display:inline-block;background:#ffffff;border:2px solid #e2e8f0;border-radius:16px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
               <img src="${qrUrl}" alt="Ticket QR Code" width="220" height="220" style="display:block;border-radius:8px;" />
             </div>
@@ -272,7 +272,7 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
           <td style="padding:32px 32px 0;text-align:center;">
             <a href="${myTicketsUrl}"
                style="display:inline-block;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#ffffff;font-size:16px;font-weight:800;text-decoration:none;padding:16px 40px;border-radius:50px;letter-spacing:0.5px;box-shadow:0 4px 16px rgba(37,99,235,0.4);">
-              🎟️ View My Tickets
+              View My Tickets
             </a>
             <p style="margin:12px 0 0;font-size:12px;color:#94a3b8;">
               Or visit: <a href="${myTicketsUrl}" style="color:#2563eb;">${myTicketsUrl}</a>
@@ -286,7 +286,7 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
           <td style="padding:24px 32px 0;">
             <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:12px;padding:14px 18px;">
               <p style="margin:0;font-size:13px;color:#92400e;line-height:1.6;">
-                <strong>⚠️ Note:</strong> Please arrive at the stadium <strong>30 minutes</strong> before kick-off to check in. 
+                <strong>Note:</strong> Please arrive at the stadium <strong>30 minutes</strong> before kick-off to check in. 
                 The QR code is only valid for this specific match and is non-transferable.
               </p>
             </div>
@@ -296,7 +296,7 @@ const buildEmailHTML = ({ user, rows, qrUrl, clientUrl, recipientEmail }) => {
         <!-- FOOTER -->
         <tr>
           <td style="padding:32px;text-align:center;border-top:1px solid #f1f5f9;margin-top:32px;">
-            <p style="margin:0 0 6px;font-size:15px;font-weight:800;color:#1e40af;">⚽ GoTicket</p>
+            <p style="margin:0 0 6px;font-size:15px;font-weight:800;color:#1e40af;">GoTicket</p>
             <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6;">
               This email was sent automatically, please do not reply directly.<br/>
               If you did not perform this transaction, please contact support immediately.
@@ -385,7 +385,7 @@ export const sendGiftTicketEmail = async (userId, ticketCode, recipientEmail) =>
   const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
   const html = buildEmailHTML({ user, rows, qrUrl, clientUrl, recipientEmail });
-  const subject = `🎁 ${user.full_name || user.email} has gifted you a ticket: ${first.home_team} vs ${first.away_team} | GoTicket`;
+  const subject = `${user.full_name || user.email} has gifted you a ticket: ${first.home_team} vs ${first.away_team} | GoTicket`;
 
   await mailer.sendMail({
     from: `"GoTicket" <${process.env.GMAIL_USER}>`,

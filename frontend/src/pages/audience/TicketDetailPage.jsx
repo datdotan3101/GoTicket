@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { useEffect, useState, useRef } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import QRCodeLib from 'react-qr-code'
 import { toPng } from 'html-to-image'
 import { ticketService } from '../../services/ticketService'
@@ -16,6 +16,7 @@ const QRCodeComponent = typeof QRCodeLib === 'object' && QRCodeLib.default ? QRC
 
 export default function TicketDetailPage() {
   const { ticketId } = useParams()
+  const navigate = useNavigate()
   const [ticket, setTicket] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const ticketRef = useRef(null)
@@ -80,9 +81,10 @@ export default function TicketDetailPage() {
       setIsGifting(true)
       await ticketService.giftTicket(ticket.ticket_code, giftEmail)
       toast.success(`Ticket has been successfully gifted to ${giftEmail}!`)
-      setTicket(prev => ({ ...prev, is_gifted: true }))
       setIsGiftModalOpen(false)
       setGiftEmail('')
+      // Smoothly navigate back to My Tickets without hard reload
+      navigate(APP_ROUTES.MY_TICKETS, { replace: true })
     } catch (err) {
       toast.error(err.response?.data?.message || "An error occurred while gifting the ticket.")
     } finally {
