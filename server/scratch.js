@@ -8,8 +8,8 @@ async function updateNotifications() {
     await query(`
       UPDATE notifications 
       SET 
-        title = REPLACE(title, 'Trận đấu của bạn đã được duyệt ✅', 'Your match has been approved ✅'),
-        title = REPLACE(title, 'Trận đấu của bạn bị từ chối ❌', 'Your match has been rejected ❌'),
+        title = REPLACE(title, 'Trận đấu của bạn đã được duyệt', 'Your match has been approved'),
+        title = REPLACE(title, 'Trận đấu của bạn bị từ chối ', 'Your match has been rejected '),
         body = REPLACE(body, 'Yêu cầu đã được duyệt và đã được đăng.', 'Your request has been approved and published.'),
         body = REPLACE(body, 'Yêu cầu bị từ chối.', 'Your request was rejected.')
     `);
