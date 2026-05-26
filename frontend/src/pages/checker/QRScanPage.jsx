@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState } from 'react'
-import { Html5Qrcode } from 'html5-qrcode'
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
@@ -187,8 +187,9 @@ export default function QRScanPage() {
       await scanner.start(
         config,
         {
-          fps: 10,
+          fps: 30, // Tăng fps để quét nhanh hơn
           disableFlip: false,
+          formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ], // Chỉ quét QR Code để tránh lãng phí tài nguyên xử lý barcode khác
         },
         (decoded) => handleCheckinRef.current(decoded, 'qr')
       )
