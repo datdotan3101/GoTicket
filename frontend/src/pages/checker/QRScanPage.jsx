@@ -115,53 +115,59 @@ export default function QRScanPage() {
 
       const data = unwrapData(response)
       setScanResult(data)
-      toast.success(`✅ Ticket verified: ${data.ticketCode}`)
 
-      setHistory(prev => [{
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        customer: data.fullName,
-        ticketCode: data.ticketCode,
-        status: 'VALID',
-        class: data.seatLabels || 'Standard'
-      }, ...prev].slice(0, 10))
+      if (data.alreadyCheckedIn) {
+        toast.error(`Ticket ${data.ticketCode} is already checked in!`)
+        setHistory(prev => [{
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          customer: data.fullName,
+          ticketCode: data.ticketCode,
+          status: 'USED',
+          class: data.seatLabels || 'Standard'
+        }, ...prev].slice(0, 10))
+        setIsSubmitting(false)
+        setTimeout(() => { scanLockedRef.current = false }, 2500)
+        return
+      }
+
+      // Auto-confirm check-in
+      try {
+        const confirmRes = await checkinService.confirm(data.ticketCode)
+        const confirmData = unwrapData(confirmRes)
+        
+        setShowSuccess(true)
+        toast.success(confirmData.message || 'Check-in successful.')
+
+        setHistory(prev => [{
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          customer: data.fullName,
+          ticketCode: data.ticketCode,
+          status: 'ENTERED',
+          class: data.seatLabels || 'Standard'
+        }, ...prev].slice(0, 10))
+
+        if (selectedMatchId) {
+          const statsRes = await checkinService.getStatsByMatch(selectedMatchId)
+          setStats(unwrapData(statsRes))
+        }
+
+        setIsSubmitting(false)
+        setTimeout(() => {
+          setShowSuccess(false)
+          setScanResult(prev => ({ ...prev, alreadyCheckedIn: true }))
+          setTicketCode('')
+          scanLockedRef.current = false
+        }, 3000)
+      } catch (confirmError) {
+        toast.error(confirmError.response?.data?.message ?? 'Check-in failed.')
+        setIsSubmitting(false)
+        setTimeout(() => { scanLockedRef.current = false }, 2500)
+      }
 
     } catch (error) {
       toast.error(error.response?.data?.message ?? 'Scan failed.')
-    } finally {
       setIsSubmitting(false)
-      setTimeout(() => { scanLockedRef.current = false }, 1500)
-    }
-  }
-
-  const handleConfirmCheckin = async () => {
-    if (!scanResult || scanResult.alreadyCheckedIn) return
-    
-    setIsSubmitting(true)
-    try {
-      const response = await checkinService.confirm(scanResult.ticketCode)
-      const data = unwrapData(response)
-      
-      setShowSuccess(true)
-      toast.success(data.message || 'Check-in successful.')
-
-      setHistory(prev => prev.map(item => 
-        item.ticketCode === scanResult.ticketCode ? { ...item, status: 'ENTERED' } : item
-      ))
-
-      if (selectedMatchId) {
-        const statsRes = await checkinService.getStatsByMatch(selectedMatchId)
-        setStats(unwrapData(statsRes))
-      }
-      
-      setTimeout(() => {
-        setShowSuccess(false)
-        setScanResult(prev => ({ ...prev, alreadyCheckedIn: true }))
-        setTicketCode('')
-      }, 3000)
-    } catch (error) {
-      toast.error(error.response?.data?.message ?? 'Check-in failed.')
-    } finally {
-      setIsSubmitting(false)
+      setTimeout(() => { scanLockedRef.current = false }, 2500)
     }
   }
 
@@ -181,10 +187,8 @@ export default function QRScanPage() {
       await scanner.start(
         config,
         {
-          fps: 30,
-          disableFlip: true,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0
+          fps: 10,
+          disableFlip: false,
         },
         (decoded) => handleCheckinRef.current(decoded, 'qr')
       )
@@ -319,12 +323,26 @@ export default function QRScanPage() {
                   <div id={VIEWPORT_ID} className="w-full h-full object-cover"></div>
                   {/* Camera frame decorations */}
                   {cameraStatus === 'active' && !showSuccess && (
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-white/10 rounded-3xl pointer-events-none">
-                      <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-indigo-500 rounded-tl-2xl"></div>
-                      <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-indigo-500 rounded-tr-2xl"></div>
-                      <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-indigo-500 rounded-bl-2xl"></div>
-                      <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-indigo-500 rounded-br-2xl"></div>
-                      <div className="absolute left-0 right-0 h-0.5 bg-indigo-500/80 animate-scan-line shadow-[0_0_15px_#6366f1]"></div>
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+                      <div 
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] rounded-[2rem] border border-white/20 transition-all duration-300" 
+                        style={{ boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)' }}
+                      >
+                        {/* Corners */}
+                        <div className="absolute -top-0.5 -left-0.5 w-10 h-10 border-t-4 border-l-4 border-indigo-500 rounded-tl-[2rem]"></div>
+                        <div className="absolute -top-0.5 -right-0.5 w-10 h-10 border-t-4 border-r-4 border-indigo-500 rounded-tr-[2rem]"></div>
+                        <div className="absolute -bottom-0.5 -left-0.5 w-10 h-10 border-b-4 border-l-4 border-indigo-500 rounded-bl-[2rem]"></div>
+                        <div className="absolute -bottom-0.5 -right-0.5 w-10 h-10 border-b-4 border-r-4 border-indigo-500 rounded-br-[2rem]"></div>
+                        
+                        {/* Scan line */}
+                        <div className="absolute left-2 right-2 h-0.5 bg-indigo-500/80 animate-scan-line shadow-[0_0_15px_#6366f1]"></div>
+                        
+                        {/* Target reticles */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 opacity-20">
+                          <div className="absolute top-1/2 left-0 right-0 h-px bg-white"></div>
+                          <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white"></div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </>
@@ -373,30 +391,7 @@ export default function QRScanPage() {
                 </div>
               )}
 
-              {/* Scan Result Action Panel (Before Confirmation) */}
-              {scanResult && !showSuccess && (
-                <div className="absolute bottom-6 left-6 right-6 bg-white rounded-2xl shadow-2xl z-20 flex flex-col md:flex-row justify-between items-center p-4 border border-slate-100 animate-fadeIn gap-4">
-                  <div className="flex gap-4 items-center w-full md:w-auto">
-                    <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
-                      <CheckCircle2 size={24} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-black text-slate-900 text-lg truncate">{scanResult.fullName}</div>
-                      <div className="text-sm text-slate-500 flex items-center gap-2">
-                        <span className="bg-slate-100 px-2 py-0.5 rounded font-bold text-slate-700">{scanResult.seatLabels}</span>
-                        <span className="font-mono font-medium text-indigo-600">{scanResult.ticketCode}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleConfirmCheckin}
-                    disabled={isSubmitting}
-                    className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl transition-colors shadow-md whitespace-nowrap"
-                  >
-                    Confirm Check-in
-                  </button>
-                </div>
-              )}
+
             </div>
           </div>
 
