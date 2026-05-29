@@ -104,17 +104,11 @@ export default function CheckerDashboard() {
         <div className="container">
           <div className="checker-header-inner">
             <div className="checker-title-section">
-              <div className="checker-badge">
-                <Activity size={14} className="pulse-icon" />
-                <span>Live Control</span>
-              </div>
               <h1>Checker Workspace</h1>
-              <p>Real-time attendance tracking and ticket validation</p>
             </div>
             
             <div className="match-selector-card">
               <div className="selector-label">
-                <Search size={16} />
                 <span>Select Active Match</span>
               </div>
               <select 
@@ -133,19 +127,17 @@ export default function CheckerDashboard() {
         </div>
       </div>
 
-      <main className="container">
-        <div className="dashboard-grid">
-          <div className="stats-main">
-            <div className="checker-actions-grid" style={{ marginBottom: '32px' }}>
-              <Link to="/checker/scan" className="action-card scan full-width">
-                <div className="action-icon"><QrCode size={32} /></div>
-                <div className="action-text">
-                  <h3>Launch QR Scanner</h3>
-                  <p>Validate ticket codes and grant entry access to the venue</p>
-                </div>
-                <ChevronRight className="action-arrow" />
-              </Link>
+      <main className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div className="checker-actions-grid" style={{ marginBottom: '32px' }}>
+          <Link to="/checker/scan" className="action-card scan full-width" style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: '#fff', border: 'none' }}>
+            <div className="action-icon" style={{ background: 'rgba(255,255,255,0.2)' }}><QrCode size={32} /></div>
+            <div className="action-text">
+              <h3 style={{ color: '#fff' }}>Launch QR Scanner</h3>
+              <p style={{ color: 'rgba(255,255,255,0.8)' }}>Validate ticket codes and grant entry access to the venue</p>
             </div>
+            <ChevronRight className="action-arrow" style={{ color: '#fff' }} />
+          </Link>
+        </div>
 
             <div className="stats-grid">
               <div className="stat-card" style={{ color: '#4f46e5' }}>
@@ -184,36 +176,6 @@ export default function CheckerDashboard() {
               </div>
             </div>
 
-          </div>
-
-          <aside className="checker-sidebar">
-            <div className="sidebar-card">
-              <h3>System Guidelines</h3>
-              <ul className="guideline-list">
-                <li>
-                  <span className="dot yellow"></span>
-                  <p>Verify identity if ticket category requires ID</p>
-                </li>
-                <li>
-                  <span className="dot blue"></span>
-                  <p>Each QR code is valid for single entry only</p>
-                </li>
-                <li>
-                  <span className="dot green"></span>
-                  <p>Sync status is live via WebSocket connection</p>
-                </li>
-              </ul>
-            </div>
-            
-            <div className="status-indicator-card">
-              <div className="status-pulse"></div>
-              <div className="status-text">
-                <span className="status-label">Network Status</span>
-                <span className="status-value">Connected & Secured</span>
-              </div>
-            </div>
-          </aside>
-        </div>
       </main>
     </div>
   )

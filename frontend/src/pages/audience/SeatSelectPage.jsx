@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Trash2, Minus, Plus } from 'lucide-react'
+import { Trash2, Minus, Plus, MapPin, Calendar, Clock, Ticket, ShoppingCart, Map } from 'lucide-react'
 import { toast } from 'react-toastify'
 import StadiumMap from '../../components/seat/StadiumMap'
 import { matchService } from '../../services/matchService'
@@ -54,7 +54,6 @@ export default function SeatSelectPage() {
         const newStand = blockId.charAt(0)
         if (currentStand !== newStand) {
           toast.error(`Stand not available for current selection. Please select tickets in the same stand ${currentStand} or clear old selections to change.`, {
-            icon: '🏟️',
             duration: 4000
           })
           return prev
@@ -117,7 +116,7 @@ export default function SeatSelectPage() {
     <section className="container page" style={{ paddingTop: '100px', maxWidth: '800px' }}>
       <div style={{ textAlign: 'center', background: '#fff', padding: '60px', borderRadius: '32px', boxShadow: '0 20px 40px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
         <div style={{ width: '80px', height: '80px', borderRadius: '40px', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
-          <span style={{ fontSize: '32px' }}>🛒</span>
+          <ShoppingCart size={36} color="#f97316" />
         </div>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#1e293b', marginBottom: '16px' }}>Tickets Not Yet On Sale</h1>
         <p style={{ fontSize: '1.1rem', color: '#64748b', marginBottom: '32px', lineHeight: 1.6 }}>
@@ -140,7 +139,7 @@ export default function SeatSelectPage() {
 
   if (stands.length === 0) return (
     <section className="container page" style={{ paddingTop: '60px' }}>
-      <EmptyState title="Sold Out" message="Sorry, this match is sold out." icon="🏟️" />
+      <EmptyState title="Sold Out" message="Sorry, this match is sold out." icon={<Map size={48} color="#cbd5e1" />} />
     </section>
   )
 
@@ -155,14 +154,14 @@ export default function SeatSelectPage() {
           <span 
             style={{ 
               color: step === 1 ? '#6366F1' : '#64748b', 
-              cursor: step === 2 ? 'pointer' : 'default', 
+              cursor: 'pointer', 
               fontSize: '1.25rem',
               fontWeight: 900,
               transition: 'color 0.2s'
             }} 
-            onClick={() => { if (step === 2) setStep(1) }}
+            onClick={() => navigate('/')}
           >
-            Booking ticket
+            Home page
           </span>
           <span style={{ color: '#cbd5e1', fontSize: '1.2rem' }}>›</span>
           <span 
@@ -228,15 +227,15 @@ export default function SeatSelectPage() {
             fontWeight: 600
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '1.1rem' }}>📍</span>
+              <MapPin size={18} color="#ef4444" style={{ flexShrink: 0 }} />
               {match?.stadium_name || 'Hang Day Stadium'}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '1.1rem' }}>📅</span>
+              <Calendar size={18} color="#3b82f6" style={{ flexShrink: 0 }} />
               {match ? formatDateTime(match.match_date, 'dd/MM/yyyy') : '--/--/----'}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '1.1rem' }}>🕒</span>
+              <Clock size={18} color="#64748b" style={{ flexShrink: 0 }} />
               {match ? new Date(match.match_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
             </div>
           </div>
@@ -388,9 +387,12 @@ export default function SeatSelectPage() {
                   borderRadius: '20px', 
                   border: '2px dashed #e2e8f0',
                   textAlign: 'center',
-                  color: '#94a3b8'
+                  color: '#94a3b8',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center'
                 }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🎫</div>
+                  <Ticket size={48} color="#fbbf24" style={{ marginBottom: '16px' }} />
                   <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#475569' }}>No sections selected</h3>
                   <p style={{ margin: '8px 0 0 0', fontSize: '0.9rem' }}>Click on the stadium map to pick your seats (max 2 sections).</p>
                 </div>

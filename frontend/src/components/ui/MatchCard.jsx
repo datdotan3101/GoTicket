@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { isMatchHot } from '../../utils/hotBadge'
 import { formatDateTime } from '../../utils/formatters'
-import { X, Calendar, ShoppingCart, Trophy } from 'lucide-react'
+import { X, Calendar, ShoppingCart, MapPin, Flame } from 'lucide-react'
 
 const DUMMY_IMAGES = [
   'https://images.unsplash.com/photo-1518605368461-1ee0676644ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
@@ -94,7 +94,7 @@ export default function MatchCard({ match, showHotBadge = false }) {
               alignItems: 'center',
               gap: '4px'
             }}>
-              🔥 HOT
+              <Flame size={12} style={{ marginBottom: '-1px' }} /> HOT
             </div>
           )}
 
@@ -129,11 +129,11 @@ export default function MatchCard({ match, showHotBadge = false }) {
 
             <div className="mc-info">
               <div className="mc-info-row">
-                <span className="mc-icon">📅</span>
+                <Calendar size={14} color="#64748b" className="mc-icon" />
                 <span>{formatDateTime(match.match_date)}</span>
               </div>
               <div className="mc-info-row">
-                <span className="mc-icon">🏟️</span>
+                <MapPin size={14} color="#64748b" className="mc-icon" />
                 <span>{match.stadium_name || 'Grand Arena, London'}</span>
               </div>
             </div>
@@ -252,20 +252,6 @@ export default function MatchCard({ match, showHotBadge = false }) {
             >
               <X size={18} />
             </button>
-
-            <div style={{
-              width: '72px',
-              height: '72px',
-              background: '#f1f5f9',
-              color: '#64748b',
-              borderRadius: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 24px',
-            }}>
-              <Trophy size={32} />
-            </div>
 
             <h2 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '12px', color: '#0f172a' }}>
               MATCH ENDED

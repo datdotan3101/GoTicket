@@ -270,7 +270,7 @@ export default function QRScanPage() {
               <ChevronLeft size={18} />
               <span className="text-sm uppercase tracking-wider">Back to Dashboard</span>
             </Link>
-            <h1 className="text-2xl font-black text-slate-900 m-0">Scanner Workspace</h1>
+
           </div>
           
           <div className="console-match-info text-right bg-slate-50 px-4 py-3 rounded-xl border border-slate-100">
@@ -350,7 +350,6 @@ export default function QRScanPage() {
               ) : (
                 <div className="w-full max-w-sm px-6 flex flex-col gap-6 z-10">
                   <div className="text-center text-white">
-                    <Search size={48} className="mx-auto mb-4 text-indigo-400 opacity-80" />
                     <h2 className="text-2xl font-bold mb-2">Manual Ticket Entry</h2>
                     <p className="text-slate-400 text-sm">Enter the ticket code manually if the QR code is unreadable or damaged.</p>
                   </div>

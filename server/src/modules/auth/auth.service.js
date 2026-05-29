@@ -10,7 +10,8 @@ const getPublicUser = (row) => ({
   role: row.role,
   club_id: row.club_id,
   is_approved: row.is_approved,
-  hasPassword: !!row.password_hash
+  hasPassword: !!row.password_hash,
+  avatar_url: row.avatar_url
 });
 
 const signAccessToken = (user) => {
@@ -176,7 +177,7 @@ export const authService = {
    * Update personal profile (full_name, email).
    */
   async updateProfile(userId, payload) {
-    const { fullName, email } = payload;
+    const { fullName, email, avatarUrl } = payload;
 
     // Check if email is already used by another user
     if (email) {
@@ -193,10 +194,11 @@ export const authService = {
       `UPDATE users
        SET full_name = COALESCE($1, full_name),
            email = COALESCE($2, email),
+           avatar_url = COALESCE($3, avatar_url),
            updated_at = NOW()
-       WHERE id = $3
-       RETURNING id, email, full_name, role, club_id, is_approved, password_hash`,
-      [fullName || null, email || null, userId]
+       WHERE id = $4
+       RETURNING id, email, full_name, role, club_id, is_approved, password_hash, avatar_url`,
+      [fullName || null, email || null, avatarUrl || null, userId]
     );
     if (result.rowCount === 0) throw new Error("User not found.");
     return getPublicUser(result.rows[0]);

@@ -157,7 +157,6 @@ export default function UserManagePage() {
       role: user.role || ROLES.MANAGER,
       clubId: user.club_id || ''
     })
-    setEditFormErrors({})
     setIsEditModalOpen(true)
   }
 
@@ -280,7 +279,7 @@ export default function UserManagePage() {
                 </select>
               )}
               <button 
-                onClick={() => { setIsAddModalOpen(true); setAddFormErrors({}); }}
+                onClick={() => { setIsAddModalOpen(true); }}
                 style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#0f172a', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}>
                 <UserPlus size={18} />
                 Add New

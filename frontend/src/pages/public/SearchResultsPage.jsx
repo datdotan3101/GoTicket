@@ -44,6 +44,7 @@ export default function SearchResultsPage() {
     const q = searchParams.get('q') || ''
     const loc = searchParams.get('location') || ''
     const d = searchParams.get('date') || ''
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setQuery(q)
     setLocation(loc)
     setDate(d)
@@ -63,14 +64,6 @@ export default function SearchResultsPage() {
     setQuery('')
     const params = {}
     if (location.trim()) params.location = location.trim()
-    if (date) params.date = date
-    setSearchParams(params)
-  }
-
-  const clearLocation = () => {
-    setLocation('')
-    const params = {}
-    if (query.trim()) params.q = query.trim()
     if (date) params.date = date
     setSearchParams(params)
   }

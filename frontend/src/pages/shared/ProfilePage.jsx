@@ -1,10 +1,13 @@
 /* eslint-disable no-unused-vars */
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { Camera, User, Lock, AlertTriangle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { useAuthStore } from '../../store/authStore'
 import { authService } from '../../services/authService'
 import { APP_ROUTES } from '../../constants/routes'
 import { validateForm } from '../../utils/validator'
+import { uploadService } from '../../services/uploadService'
 
 const getAvatarInitial = (fullName) => {
   if (!fullName) return 'U'
@@ -12,47 +15,23 @@ const getAvatarInitial = (fullName) => {
   return words[words.length - 1].charAt(0).toUpperCase()
 }
 
-/* ── small toast helper ── */
-function Toast({ msg, type }) {
-  if (!msg) return null
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        padding: '12px 18px',
-        borderRadius: '10px',
-        marginTop: '14px',
-        fontSize: '14px',
-        fontWeight: 500,
-        background: type === 'success' ? 'rgba(34,197,94,.15)' : 'rgba(239,68,68,.15)',
-        color: type === 'success' ? '#22c55e' : '#ef4444',
-        border: `1px solid ${type === 'success' ? 'rgba(34,197,94,.3)' : 'rgba(239,68,68,.3)'}`,
-      }}
-    >
-      <span>{type === 'success' ? '✓' : '✕'}</span>
-      {msg}
-    </div>
-  )
-}
+
 
 export default function ProfilePage() {
   const navigate = useNavigate()
   const { user, setUser, logout } = useAuthStore()
   const hasPassword = user?.hasPassword !== false
+  const fileInputRef = useRef(null)
 
   /* ── profile state ── */
   const [profileForm, setProfileForm] = useState({
     fullName: user?.full_name || '',
     email: user?.email || '',
   })
-  const [profileStatus, setProfileStatus] = useState({ msg: '', type: '' })
   const [profileLoading, setProfileLoading] = useState(false)
 
   /* ── password state ── */
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
-  const [pwStatus, setPwStatus] = useState({ msg: '', type: '' })
   const [pwLoading, setPwLoading] = useState(false)
 
   /* ── delete account state ── */
@@ -72,9 +51,32 @@ export default function ProfilePage() {
         email: profileForm.email.trim(),
       })
       setUser(res.data.data)
-      setProfileStatus({ msg: 'Profile updated successfully!', type: 'success' })
+      toast.success('Profile updated successfully!')
     } catch (err) {
-      setProfileStatus({ msg: err?.response?.data?.message || 'An error occurred.', type: 'error' })
+      toast.error(err?.response?.data?.message || 'An error occurred.')
+    } finally {
+      setProfileLoading(false)
+    }
+  }
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      setProfileLoading(true)
+      const uploadRes = await uploadService.uploadFile(file)
+      const avatarUrl = uploadRes.data.url
+      
+      const res = await authService.updateProfile({
+        fullName: profileForm.fullName.trim() || user.full_name,
+        email: profileForm.email.trim() || user.email,
+        avatarUrl
+      })
+      setUser(res.data.data)
+      toast.success('Avatar updated successfully!')
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Cannot upload avatar.')
     } finally {
       setProfileLoading(false)
     }
@@ -86,7 +88,7 @@ export default function ProfilePage() {
       oldPassword: { required: 'Current password is required' },
       newPassword: { required: 'New password is required', minLength: { value: 8, message: 'Password must be at least 8 characters' }, maxLength: { value: 15, message: 'Password exceeds 15 characters' }, regex: { pattern: /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_]).*$/, message: 'Password must contain a letter, a number, and a special character' } }
     }
-    if (!validateForm(passwordForm, schema)) return
+    if (!validateForm(pwForm, schema)) return
 
     try {
       setPwLoading(true)
@@ -95,10 +97,10 @@ export default function ProfilePage() {
         newPassword: pwForm.newPassword,
       })
       setUser({ ...user, hasPassword: true })
-      setPwStatus({ msg: hasPassword ? 'Password changed successfully!' : 'Password set successfully!', type: 'success' })
+      toast.success(hasPassword ? 'Password changed successfully!' : 'Password set successfully!')
       setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
     } catch (err) {
-      setPwStatus({ msg: err?.response?.data?.message || 'An error occurred.', type: 'error' })
+      toast.error(err?.response?.data?.message || 'An error occurred.')
     } finally {
       setPwLoading(false)
     }
@@ -111,7 +113,7 @@ export default function ProfilePage() {
       logout()
       navigate(APP_ROUTES.HOME)
     } catch (err) {
-      alert(err?.response?.data?.message || 'Cannot delete account at this time.')
+      toast.error(err?.response?.data?.message || 'Cannot delete account at this time.')
       setDeleteLoading(false)
       setShowDeleteModal(false)
       setDeleteConfirmText('')
@@ -130,9 +132,9 @@ export default function ProfilePage() {
 
   const [activeTab, setActiveTab] = useState('profile')
   const tabs = [
-    { id: 'profile', label: 'Personal Info', icon: '👤' },
-    { id: 'security', label: 'Password', icon: '🔒' },
-    { id: 'danger', label: 'Delete Account', icon: '⚠️' }
+    { id: 'profile', label: 'Personal Info', icon: <User size={18} /> },
+    { id: 'security', label: 'Password', icon: <Lock size={18} /> },
+    ...(user?.role !== 'checker' ? [{ id: 'danger', label: 'Delete Account', icon: <AlertTriangle size={18} /> }] : [])
   ]
 
   return (
@@ -158,24 +160,58 @@ export default function ProfilePage() {
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
             textAlign: 'center'
           }}>
-            <div
-              style={{
-                width: '80px',
-                height: '80px',
-                margin: '0 auto 16px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '32px',
-                fontWeight: 700,
-                color: '#fff',
-                boxShadow: '0 0 0 4px rgba(99,102,241,.1)',
-              }}
-            >
-              {getAvatarInitial(user?.full_name)}
+            <div style={{ position: 'relative', width: '80px', height: '80px', margin: '0 auto 16px' }}>
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: '50%',
+                  background: user?.avatar_url ? `url(${user.avatar_url}) center/cover` : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '32px',
+                  fontWeight: 700,
+                  color: '#fff',
+                  boxShadow: '0 0 0 4px rgba(99,102,241,.1)',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                onClick={() => fileInputRef.current?.click()}
+                title="Click to change avatar"
+              >
+                {!user?.avatar_url && getAvatarInitial(user?.full_name)}
+                {profileLoading && (
+                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: '14px' }}>⏳</span>
+                  </div>
+                )}
+              </div>
+              <div 
+                style={{
+                  position: 'absolute',
+                  bottom: '-2px',
+                  right: '-2px',
+                  background: '#ffffff',
+                  borderRadius: '50%',
+                  width: '28px',
+                  height: '28px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.15)',
+                  cursor: 'pointer',
+                  border: '2px solid #ffffff',
+                  fontSize: '14px'
+                }}
+                onClick={() => fileInputRef.current?.click()}
+                title="Click to change avatar"
+              >
+                <Camera size={14} color="#64748b" />
+              </div>
             </div>
+            <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleAvatarChange} />
             <h2 style={{ margin: '0 0 4px 0', fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>
               {user?.full_name || 'User'}
             </h2>
@@ -259,8 +295,8 @@ export default function ProfilePage() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                  👤
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4f46e5' }}>
+                  <User size={20} />
                 </div>
                 <div>
                   <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>Personal Info</h2>
@@ -311,8 +347,6 @@ export default function ProfilePage() {
                   />
                 </div>
 
-                <Toast msg={profileStatus.msg} type={profileStatus.type} />
-
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
                   <button
                     id="btn-save-profile"
@@ -352,8 +386,8 @@ export default function ProfilePage() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                  🔒
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
+                  <Lock size={20} />
                 </div>
                 <div>
                   <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>Password</h2>
@@ -453,8 +487,6 @@ export default function ProfilePage() {
                   </div>
                 )}
 
-                <Toast msg={pwStatus.msg} type={pwStatus.type} />
-
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
                   <button
                     id="btn-change-password"
@@ -494,8 +526,8 @@ export default function ProfilePage() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                  ⚠️
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
+                  <AlertTriangle size={20} />
                 </div>
                 <div>
                   <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#b91c1c' }}>Danger Zone</h2>
@@ -542,8 +574,8 @@ export default function ProfilePage() {
         <div className="modal-overlay" style={{ zIndex: 9999 }}>
           <div className="modal-content" style={{ maxWidth: '460px', padding: 0, overflow: 'hidden' }}>
             <div style={{ padding: '32px 32px 24px', textAlign: 'center' }}>
-              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', margin: '0 auto 20px', color: '#dc2626' }}>
-                ⚠️
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#dc2626' }}>
+                <AlertTriangle size={32} />
               </div>
               <h3 style={{ margin: '0 0 12px 0', fontSize: '22px', fontWeight: 900, color: '#111827', letterSpacing: '-0.5px' }}>
                 Confirm Account Deletion

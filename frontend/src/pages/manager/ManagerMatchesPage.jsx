@@ -27,8 +27,6 @@ import { matchService } from '../../services/matchService'
 import { stadiumService } from '../../services/stadiumService'
 import MatchEditModal from '../../components/manager/MatchEditModal'
 import { unwrapData } from '../../utils/apiData'
-import { formatVND } from '../../utils/formatters'
-import { formatDateTime } from '../../utils/formatters'
 
 export default function ManagerMatchesPage() {
   const [data, setData] = useState([])

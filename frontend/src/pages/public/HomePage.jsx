@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef, Suspense, lazy } from 'react'
-import { Loader2, X, Calendar } from 'lucide-react'
+import { Loader2, X, Calendar, Search } from 'lucide-react'
 const MatchCard = lazy(() => import('../../components/ui/MatchCard'))
 import Pagination from '../../components/ui/Pagination'
 import StadiumAutocomplete from '../../components/ui/StadiumAutocomplete'
@@ -138,7 +138,7 @@ export default function HomePage() {
             <div className="hero-search-box">
               {/* Query input */}
               <div className="hs-input-wrap hs-border-r" style={{ position: 'relative' }}>
-                <span style={{ fontSize: '1rem', opacity: 0.5, flexShrink: 0 }}>🔍</span>
+                <Search size={16} color="#94a3b8" style={{ flexShrink: 0 }} />
                 <input
                   type="text"
                   placeholder="Search by team, league..."
@@ -192,10 +192,7 @@ export default function HomePage() {
               </div>
               {/* Loading indicator or static icon */}
               <div className="hs-search-status">
-                {isSearching
-                  ? <Loader2 size={18} className="hs-spinner" />
-                  : <span style={{ fontSize: '1rem' }}>⚡</span>
-                }
+                {isSearching && <Loader2 size={18} className="hs-spinner" />}
               </div>
             </div>
           </div>

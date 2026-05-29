@@ -57,7 +57,7 @@ export default function Navbar() {
           {user?.role === ROLES.CHECKER && (
             <>
               <NavLink to={APP_ROUTES.CHECKER_DASHBOARD} className={linkClassName} end>Dashboard</NavLink>
-              <NavLink to={APP_ROUTES.CHECKER_SCAN} className={linkClassName}>Scanner</NavLink>
+
             </>
           )}
         </nav>
@@ -68,8 +68,12 @@ export default function Navbar() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <div className="user-menu-wrapper">
                 <div className="google-avatar">
-                  <div className="google-avatar-inner" title={user?.full_name}>
-                    {getAvatarInitial(user?.full_name)}
+                  <div 
+                    className="google-avatar-inner" 
+                    title={user?.full_name}
+                    style={user?.avatar_url ? { background: `url(${user.avatar_url}) center/cover` } : {}}
+                  >
+                    {!user?.avatar_url && getAvatarInitial(user?.full_name)}
                   </div>
                 </div>
                 <div className="user-dropdown">

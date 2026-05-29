@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import { useNavigate, useParams } from 'react-router-dom'
 import { matchService } from '../../services/matchService'
@@ -12,11 +12,9 @@ export default function MatchEditPage() {
   const [form, setForm] = useState(null)
   const [clubs, setClubs] = useState([])
 
-  const clubOptions = useMemo(() => {
-    return clubs
-      .filter(c => form?.leagueId ? String(c.league_id) === String(form.leagueId) : false)
-      .map(c => ({ value: c.name, label: c.name }));
-  }, [clubs, form?.leagueId]);
+  const clubOptions = clubs
+    .filter(c => form?.leagueId ? String(c.league_id) === String(form.leagueId) : false)
+    .map(c => ({ value: c.name, label: c.name }));
 
   useEffect(() => {
     const load = async () => {

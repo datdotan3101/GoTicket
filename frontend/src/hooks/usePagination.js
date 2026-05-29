@@ -5,6 +5,7 @@ export function usePagination(items, itemsPerPage = 6, resetDependency = null) {
 
   // Reset to first page when the reset dependency changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1)
   }, [resetDependency])
 

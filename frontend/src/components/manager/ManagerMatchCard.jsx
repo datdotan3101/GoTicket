@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Calendar, Clock, MapPin, Map, Edit3, Settings, BarChart2, Trash2 } from 'lucide-react'
+import { Calendar, Clock, MapPin, Map, Edit3, Settings, BarChart2, Trash2, ShoppingCart } from 'lucide-react'
 import { formatDateTime } from '../../utils/formatters'
 import { formatVND } from '../../utils/formatters'
 
@@ -60,7 +60,7 @@ export default function ManagerMatchCard({ match, onOpenEdit, onDelete }) {
         </div>
         {match.ticket_sale_open_at && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f97316', fontSize: '0.7rem', fontWeight: 700, marginTop: '8px', background: '#fff7ed', padding: '4px 8px', borderRadius: '4px', border: '1px solid #ffedd5', width: 'fit-content' }}>
-            <span style={{ fontSize: '10px' }}>🛒</span>
+            <ShoppingCart size={12} style={{ marginBottom: '-1px' }} />
             <span>SALE OPENS: {formatDateTime(match.ticket_sale_open_at)}</span>
           </div>
         )}

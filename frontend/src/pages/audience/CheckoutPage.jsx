@@ -87,6 +87,7 @@ function CheckoutForm({ totalAmount, clientSecret, onProcessing, onSuccess }) {
   const stripe = useStripe()
   const elements = useElements()
   const [isPaying, setIsPaying] = useState(false)
+  const isPayingRef = useRef(false)
   const [cardholderName, setCardholderName] = useState('')
   const [cardBrand, setCardBrand] = useState('visa')
 
@@ -96,12 +97,14 @@ function CheckoutForm({ totalAmount, clientSecret, onProcessing, onSuccess }) {
 
   const handleConfirmPayment = async (event) => {
     event.preventDefault()
+    if (isPayingRef.current) return
     if (!stripe || !elements) return
     if (!cardholderName.trim()) {
       toast.error('Please enter the cardholder name')
       return
     }
 
+    isPayingRef.current = true
     setIsPaying(true)
     onProcessing(true)
 
@@ -115,6 +118,7 @@ function CheckoutForm({ totalAmount, clientSecret, onProcessing, onSuccess }) {
 
       if (result.error) {
         toast.error(result.error.message || 'Payment failed.')
+        isPayingRef.current = false
         setIsPaying(false)
         onProcessing(false)
       } else {
@@ -124,6 +128,7 @@ function CheckoutForm({ totalAmount, clientSecret, onProcessing, onSuccess }) {
             onSuccess()
           } catch (confirmError) {
             toast.error('Transaction successful but status update failed. Please contact support.');
+            isPayingRef.current = false
             setIsPaying(false);
             onProcessing(false);
           }
@@ -131,6 +136,7 @@ function CheckoutForm({ totalAmount, clientSecret, onProcessing, onSuccess }) {
       }
     } catch (err) {
       toast.error('An error occurred. Please try again.')
+      isPayingRef.current = false
       setIsPaying(false)
       onProcessing(false)
     }
@@ -271,6 +277,7 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
   const [isExpired, setIsExpired] = useState(false)
   const isPaidRef = useRef(false)
   const ticketIdsRef = useRef([])
+  const bookingInitiated = useRef(false)
 
   useEffect(() => {
     ticketIdsRef.current = ticketIds
@@ -341,6 +348,9 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
       setTimeLeft(600)
       return
     }
+
+    if (bookingInitiated.current) return
+    bookingInitiated.current = true
 
     if (!checkoutData?.matchId || (!checkoutData?.standId && !checkoutData?.selections)) {
       toast.error('Invalid payment data.')
