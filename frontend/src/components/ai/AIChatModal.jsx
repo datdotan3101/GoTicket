@@ -19,26 +19,63 @@ const formatDate = (dateStr) => {
 
 /* ─── MATCH CARD ─── */
 function MatchCard({ match, onSelect }) {
+  const isComingSoon = match.ticketSaleOpenAt && new Date(match.ticketSaleOpenAt) > new Date()
+  const isHot = !isComingSoon && match.availableSeats > 0 && match.availableSeats < 100
+  const isSoldOut = !isComingSoon && match.availableSeats === 0
+
   return (
-    <div className="ai-match-card" onClick={() => onSelect(match)}>
+    <div
+      className={`ai-match-card ${isHot ? 'ai-match-card--hot' : ''} ${isSoldOut ? 'ai-match-card--soldout' : ''} ${isComingSoon ? 'ai-match-card--comingsoon' : ''}`}
+      onClick={() => !isSoldOut && onSelect(match)}
+      style={isSoldOut ? { opacity: 0.6, cursor: 'not-allowed' } : isComingSoon ? { opacity: 0.8, cursor: 'pointer' } : {}}
+    >
+      {isComingSoon && <div className="ai-match-coming-soon-badge">Coming Soon</div>}
+      {isHot && <div className="ai-match-hot-badge">🔥 HOT</div>}
+      {isSoldOut && <div className="ai-match-soldout-badge">Sold out</div>}
+
+      {match.leagueName && (
+        <div className="ai-match-league">{match.leagueName}</div>
+      )}
+
       <div className="ai-match-card-teams">
         <span className="ai-match-team">{match.homeTeam}</span>
-        <span className="ai-match-vs">VS</span>
+        <div className="ai-match-vs-wrapper">
+          <span className="ai-match-vs">VS</span>
+        </div>
         <span className="ai-match-team">{match.awayTeam}</span>
       </div>
+
       <div className="ai-match-card-info">
         <span>📅 {formatDate(match.matchDate)}</span>
         <span>🏟️ {match.stadiumName || 'N/A'}</span>
-        {match.availableSeats > 0 && <span>🎫 {match.availableSeats} tickets left</span>}
       </div>
-      <button type="button" className="ai-match-card-btn">Select this match</button>
+
+      <div className="ai-match-card-footer">
+        <span className={`ai-match-seats ${isHot ? 'ai-match-seats--hot' : ''} ${isSoldOut || isComingSoon ? 'ai-match-seats--out' : ''}`}>
+          {isComingSoon ? `Opens ${formatDate(match.ticketSaleOpenAt)}` : isSoldOut ? 'Sold out' : `🎫 ${match.availableSeats} tickets left`}
+        </span>
+        {!isSoldOut && !isComingSoon && (
+          <button type="button" className="ai-match-card-btn">Select match →</button>
+        )}
+        {isComingSoon && (
+          <button type="button" className="ai-match-card-btn" style={{background: '#f59e0b'}}>Get Info</button>
+        )}
+      </div>
     </div>
   )
 }
 
 /* ─── STAND LIST CARD ─── */
 function StandListCard({ data, onSelectStand }) {
+  const [quantities, setQuantities] = useState({})
   if (!data?.stands) return null
+
+  const getQty = (standId) => quantities[standId] ?? 1
+  const setQty = (standId, val, max) => {
+    const clamped = Math.max(1, Math.min(max, val))
+    setQuantities(prev => ({ ...prev, [standId]: clamped }))
+  }
+
   return (
     <div className="ai-stand-card">
       <div className="ai-stand-card-header">
@@ -53,13 +90,30 @@ function StandListCard({ data, onSelectStand }) {
               <span className="ai-stand-seats">{stand.availableSeats > 0 ? `${stand.availableSeats} seats left` : 'Sold out'}</span>
             </div>
             {stand.availableSeats > 0 && (
-              <button
-                type="button"
-                className="ai-stand-select-btn"
-                onClick={() => onSelectStand(data.match, stand)}
-              >
-                Select
-              </button>
+              <div className="ai-stand-actions">
+                <div className="ai-qty-stepper">
+                  <button
+                    type="button"
+                    className="ai-qty-btn"
+                    onClick={() => setQty(stand.id, getQty(stand.id) - 1, stand.availableSeats)}
+                    disabled={getQty(stand.id) <= 1}
+                  >−</button>
+                  <span className="ai-qty-value">{getQty(stand.id)}</span>
+                  <button
+                    type="button"
+                    className="ai-qty-btn"
+                    onClick={() => setQty(stand.id, getQty(stand.id) + 1, stand.availableSeats)}
+                    disabled={getQty(stand.id) >= stand.availableSeats}
+                  >+</button>
+                </div>
+                <button
+                  type="button"
+                  className="ai-stand-select-btn"
+                  onClick={() => onSelectStand(data.match, stand, getQty(stand.id))}
+                >
+                  Book {getQty(stand.id)} ticket{getQty(stand.id) > 1 ? 's' : ''}
+                </button>
+              </div>
             )}
           </div>
         ))}
@@ -75,7 +129,7 @@ function BookingCard({ data, onCheckout }) {
     <div className="ai-booking-card">
       <div className="ai-booking-card-header">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-        Booking successful!
+        Tickets reserved
       </div>
       <div className="ai-booking-card-body">
         <div className="ai-booking-row">
@@ -177,8 +231,8 @@ export default function AIChatModal({ onClose }) {
     submitMessage(`I'd like to see stands and ticket prices for ${match.homeTeam} vs ${match.awayTeam}`)
   }
 
-  const handleSelectStand = (match, stand) => {
-    submitMessage(`Book me 1 ticket for stand ${stand.name} for the match ${match.homeTeam} vs ${match.awayTeam}`)
+  const handleSelectStand = (match, stand, quantity = 1) => {
+    submitMessage(`Book me ${quantity} ticket${quantity > 1 ? 's' : ''} for stand ${stand.name} for the match ${match.homeTeam} vs ${match.awayTeam}`)
   }
 
   const handleCheckout = (bookingData) => {
@@ -282,7 +336,7 @@ export default function AIChatModal({ onClose }) {
           <div className="ai-welcome-container">
             <div className="ai-waving">🎫</div>
             <div className="ai-welcome-text">
-              Hello! I'm your GoTicket advisor. I can help you find matches and book tickets right here in chat!
+              Hello! I'm <strong>GoTicket Advisor</strong>.<br />I can help you find matches and book tickets right here in chat!
             </div>
             <div className="ai-quick-actions">
               <button type="button" onClick={() => submitMessage('Show me the upcoming match schedule')} className="ai-quick-btn">📅 Match Schedule</button>

@@ -1,10 +1,10 @@
-import { getGroq } from "../../config/groq.js";
+import { getGemini } from "../../config/gemini.js";
 import { query } from "../../config/db.js";
 import { ticketsService } from "../tickets/tickets.service.js";
 import { paymentsService } from "../payments/payments.service.js";
 import { matchesService } from "../matches/matches.service.js";
 
-const GROQ_MODEL = "llama-3.1-8b-instant";
+const GEMINI_MODEL = "gemini-2.0-flash";
 const MAX_TOKENS = 1024;
 
 /**
@@ -13,15 +13,21 @@ const MAX_TOKENS = 1024;
 const SYSTEM_PROMPT = `You are an AI sports ticket advisor for GoTicket — an online ticketing platform.
 Role: Be a proactive, professional, and enthusiastic advisor. Your job is not just to provide information, but also to SUGGEST and ANALYZE to help users make the best decisions.
 
-Important rules:
-- Respond in English, in a friendly and natural manner like an expert consultant.
+IMPORTANT LANGUAGE RULE:
+- Detect the language the user is writing in and ALWAYS respond in the SAME language.
+- If the user writes in Vietnamese, respond entirely in Vietnamese.
+- If the user writes in English, respond in English.
+- Be natural and friendly regardless of language.
+
+Other important rules:
 - NEVER display raw IDs (such as match IDs, Stand IDs) to the user.
 - When listing matches or stands, use a numbered list or clear bullet points.
+- Keep responses concise — the match cards will be shown automatically by the UI, so you don't need to list them in text.
 
 Standard CONSULTATION process:
-1. SHOW MATCHES: When user asks, show a list of matches, especially highlighting "HOT" matches (nearly sold out). Then ASK: "Which match are you interested in?"
-2. ADVISE ON STANDS: Once the user has chosen a match, use an action to get the stand list. Instead of just listing them, you MUST ADVISE: "Do you prefer the best view (VIP stand), the most budget-friendly, or a mid-range option?" Use the information provided to name which stand is VIP and which is cheapest.
-3. CONFIRM QUANTITY AND BOOK: After the user chooses a stand, ask how many tickets they need (if not yet stated). Once you have all information, proceed to create the booking.
+1. SHOW MATCHES: When the user asks about matches (in any language: "có trận đấu nào", "show matches", "lịch thi đấu", etc.), immediately trigger the search_matches action. The UI will display interactive match cards automatically. Just write a short, friendly intro (e.g., "Đây là các trận đấu sắp diễn ra! 🏟️" or "Here are the upcoming matches!").
+2. ADVISE ON STANDS: Once the user has chosen a match, use get_availability action. Then advise on stand choices — VIP for best view, budget-friendly, or mid-range.
+3. CONFIRM QUANTITY AND BOOK: After the user chooses a stand, ask how many tickets they need (if not stated). Then create the booking.
 4. PAYMENT: After a successful booking, congratulate them and remind them to click the Pay Now button.
 
 When you need to perform an action to fetch data or book tickets, you MUST return JSON in the following special block:
@@ -30,9 +36,11 @@ When you need to perform an action to fetch data or book tickets, you MUST retur
 ###END_ACTION###
 
 Available actions:
-1. search_matches - Get list of matches currently on sale. Params: {"keyword": "team/league name (optional)"}
+1. search_matches - Get list of matches currently on sale. Params: {"keyword": "specific team or league name only (optional, leave empty or omit when user asks generally)"}
+   IMPORTANT: Only set keyword if the user mentions a SPECIFIC team name (e.g. "Manchester", "Arsenal") or league name. For general requests like "show matches", "upcoming", "schedule" — always leave keyword empty: {"keyword": ""}
 2. get_availability - View stand info + pricing for a match. Params: {"match_id": number}
 3. create_booking - Create a booking order. Params: {"match_id": number, "stand_id": number, "quantity": number}
+   IMPORTANT FOR BOOKING: You MUST extract the exact quantity of tickets the user requested (e.g., if user says "Book me 2 tickets", quantity is 2).
 
 Note: Return a MAXIMUM of ONE action at a time. Keep responses concise and focused on the current step.`;
 
@@ -59,7 +67,7 @@ const getActiveMatchesContext = async (keyword) => {
      FROM matches m
      LEFT JOIN stadiums st ON st.id = m.stadium_id
      LEFT JOIN leagues l ON l.id = m.league_id
-     WHERE m.status IN ('published', 'upcoming')
+     WHERE m.status IN ('published', 'upcoming', 'approved')
        AND m.match_date > NOW()
        ${whereExtra}
      ORDER BY m.match_date ASC
@@ -96,23 +104,42 @@ const parseAction = (text) => {
 };
 
 /**
+ * Strip internal markers (IDs) from text before sending to user.
+ */
+const stripInternalMarkers = (text) =>
+  text
+    .replace(/\[ID:\d+\]/g, "")
+    .replace(/\[StandID:\d+\]/g, "")
+    .replace(/\[INTERNAL_STAND_MAP[\s\S]*?\n\n/g, "")
+    .replace(/\[Internal analysis[\s\S]*?\n\n/g, "")
+    .replace(/###ACTION###[\s\S]*?###END_ACTION###/g, "")
+    .trim();
+
+/**
  * Execute an action and return additional context for the AI.
  */
 const executeAction = async (action, userId) => {
   switch (action.action) {
     case "search_matches": {
-      const matches = await getActiveMatchesContext(action.params?.keyword);
+      const keyword = action.params?.keyword?.trim() || "";
+      let matches = keyword ? await getActiveMatchesContext(keyword) : [];
+      // If keyword search returns nothing (or no keyword), fall back to all matches
+      if (matches.length === 0) {
+        matches = await getActiveMatchesContext();
+      }
       if (matches.length === 0) {
         return {
           actionType: "show_matches",
           actionData: [],
-          contextForAI: "No matching matches found."
+          contextForAI: "No matches are currently available."
         };
       }
       const lines = matches.map((m) => {
+        const isOpen = !m.ticket_sale_open_at || new Date(m.ticket_sale_open_at) <= new Date();
         const available = m.total_seats - m.sold_count;
-        const isHot = (m.total_seats > 0 && available < m.total_seats * 0.2) || available < 100 ? " [🔥 HOT - Almost sold out]" : "";
-        return `- [ID:${m.id}] ${m.home_team} vs ${m.away_team} | ${new Date(m.match_date).toLocaleString("en-US")} | Stadium: ${m.stadium_name || "N/A"} | Available: ${available} tickets${isHot}`;
+        const isHot = isOpen && ((m.total_seats > 0 && available < m.total_seats * 0.2) || available < 100) ? " [🔥 HOT - Almost sold out]" : "";
+        const statusText = isOpen ? `Available: ${available} tickets${isHot}` : `COMING SOON (Sale opens at ${new Date(m.ticket_sale_open_at).toLocaleString("en-US")})`;
+        return `- [ID:${m.id}] ${m.home_team} vs ${m.away_team} | ${new Date(m.match_date).toLocaleString("en-US")} | Stadium: ${m.stadium_name || "N/A"} | ${statusText}`;
       });
       return {
         actionType: "show_matches",
@@ -121,11 +148,12 @@ const executeAction = async (action, userId) => {
           homeTeam: m.home_team,
           awayTeam: m.away_team,
           matchDate: m.match_date,
+          ticketSaleOpenAt: m.ticket_sale_open_at,
           stadiumName: m.stadium_name,
           leagueName: m.league_name,
           availableSeats: m.total_seats - m.sold_count
         })),
-        contextForAI: `Search results:\n${lines.join("\n")}\n\nList the matches for the user (DO NOT show IDs), emphasize HOT matches and ask: "Which match are you interested in?"`
+        contextForAI: `Search results:\n${lines.join("\n")}\n\nList the matches for the user. Emphasize HOT matches. For COMING SOON matches, mention when the sale opens and say they cannot book yet. Then ask: "Which match are you interested in?"`
       };
     }
 
@@ -138,9 +166,41 @@ const executeAction = async (action, userId) => {
           contextForAI: "Match not found with this ID."
         };
       }
+
+      const isComingSoon = match.ticket_sale_open_at && new Date(match.ticket_sale_open_at) > new Date();
+      if (isComingSoon) {
+        // Fetch recommendations (only currently open matches)
+        let activeMatches = await getActiveMatchesContext("");
+        activeMatches = activeMatches.filter(m => !m.ticket_sale_open_at || new Date(m.ticket_sale_open_at) <= new Date());
+        
+        const lines = activeMatches.map(m => `- [ID:${m.id}] ${m.home_team} vs ${m.away_team} | Available: ${m.total_seats - m.sold_count} tickets`);
+        
+        return {
+          actionType: "show_matches",
+          actionData: activeMatches.map(m => ({
+            id: m.id,
+            homeTeam: m.home_team,
+            awayTeam: m.away_team,
+            matchDate: m.match_date,
+            ticketSaleOpenAt: m.ticket_sale_open_at,
+            stadiumName: m.stadium_name,
+            leagueName: m.league_name,
+            availableSeats: m.total_seats - m.sold_count
+          })),
+          contextForAI: `Action failed: The match ${match.home_team} vs ${match.away_team} is NOT on sale yet. Ticket sales will open at ${new Date(match.ticket_sale_open_at).toLocaleString("en-US")}.
+Tell the user that this match is coming soon and give them the exact opening time. Then, recommend the following currently active matches for them to consider:\n${lines.join("\n")}`
+        };
+      }
+
+      // Lines shown to user (no IDs)
       const lines = stands.map(
-        (s) => `- [StandID:${s.id}] Stand ${s.name} | Price: ${Number(s.price).toLocaleString("en-US")} VND | Available: ${s.available_seats}/${s.total_seats} seats`
+        (s) => `- Stand ${s.name} | Price: ${Number(s.price).toLocaleString("en-US")} VND | Available: ${s.available_seats}/${s.total_seats} seats`
       );
+
+      // Internal ID mapping for AI to use in create_booking (stripped before sending to user)
+      const idMap = stands.map(
+        (s) => `  ${s.name} → [StandID:${s.id}]`
+      ).join("\n");
 
       let priceAnalysis = "";
       if (stands.length > 0) {
@@ -174,13 +234,14 @@ const executeAction = async (action, userId) => {
             totalSeats: s.total_seats
           }))
         },
-        contextForAI: `Stand information for ${match.home_team} vs ${match.away_team}:\n${lines.join("\n")}\n${priceAnalysis}\n\nList the stands for the user (DO NOT show StandIDs). Then ASK: "Do you prefer the best view stand, the most budget-friendly, or a mid-range option?" and ask how many tickets they need.`
+        contextForAI: `Stand information for ${match.home_team} vs ${match.away_team}:\n${lines.join("\n")}\n${priceAnalysis}\n\n[INTERNAL_STAND_MAP - use these IDs for create_booking, DO NOT show to user]:\n${idMap}\n\nList the stands for the user. Then ASK: "Do you prefer the best view stand, the most budget-friendly, or a mid-range option?" and ask how many tickets they need.`
       };
     }
 
     case "create_booking": {
       const { match_id, stand_id, quantity } = action.params || {};
-      if (!match_id || !stand_id || !quantity) {
+      const numQuantity = Number(quantity);
+      if (!match_id || !stand_id || !numQuantity || numQuantity <= 0) {
         return {
           actionType: "none",
           actionData: null,
@@ -192,7 +253,7 @@ const executeAction = async (action, userId) => {
         // Create pending tickets
         const tickets = await ticketsService.bookTickets({
           matchId: match_id,
-          selections: [{ standId: stand_id, quantity }],
+          selections: [{ standId: stand_id, quantity: numQuantity }],
           userId
         });
 
@@ -209,6 +270,7 @@ const executeAction = async (action, userId) => {
         const match = await matchesService.getById(match_id);
         const stands = await matchesService.getAvailabilityByMatchId(match_id);
         const bookedStand = stands.find(s => Number(s.id) === Number(stand_id));
+        const standPrice = Number(bookedStand?.price || 0);
 
         return {
           actionType: "booking_created",
@@ -221,11 +283,11 @@ const executeAction = async (action, userId) => {
             matchDate: match?.match_date,
             stadiumName: match?.stadium_name,
             standName: bookedStand?.name || "N/A",
-            standPrice: Number(bookedStand?.price || 0),
-            quantity,
-            totalAmount: Number(bookedStand?.price || 0) * quantity
+            standPrice: standPrice,
+            quantity: numQuantity,
+            totalAmount: standPrice * numQuantity
           },
-          contextForAI: `Booking SUCCESSFUL! ${quantity} ticket(s) for stand ${bookedStand?.name || "N/A"} for the match ${match?.home_team} vs ${match?.away_team}. Total: ${(Number(bookedStand?.price || 0) * quantity).toLocaleString("en-US")} VND. Remind the user to click the "Pay Now" button to complete.`
+          contextForAI: `Booking SUCCESSFUL! ${numQuantity} ticket(s) for stand ${bookedStand?.name || "N/A"} for the match ${match?.home_team} vs ${match?.away_team}. Total: ${(standPrice * numQuantity).toLocaleString("en-US")} VND. Remind the user to click the "Pay Now" button to complete.`
         };
       } catch (err) {
         return {
@@ -252,10 +314,6 @@ export const aiService = {
    * @param {Array<{role: string, content: string}>} messages - Chat history from client
    */
   async chat(userId, messages) {
-    const OLLAMA_URL = process.env.OLLAMA_BASE_URL;
-    const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.1:8b";
-    const groq = getGroq();
-
     // Fetch current match context
     let matchContextLines = "";
     try {
@@ -273,61 +331,37 @@ export const aiService = {
     const systemPrompt = SYSTEM_PROMPT + matchContextLines;
     const recentMessages = messages.slice(-10);
 
-    // Call AI (Ollama -> Groq -> Offline fallback)
+    // Call AI (Gemini -> Offline fallback)
     let aiResponse = null;
+    const gemini = getGemini();
 
-    // 1. PREFER OLLAMA (Local AI)
-    if (OLLAMA_URL && !aiResponse) {
+    // 1. PREFER GEMINI (Google AI)
+    if (gemini) {
       try {
-        const safeUrl = OLLAMA_URL.replace('localhost', '127.0.0.1');
-        const ollamaController = new AbortController();
-        const ollamaTimeout = setTimeout(() => ollamaController.abort(), 5000);
-        const response = await fetch(`${safeUrl}/api/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: ollamaController.signal,
-          body: JSON.stringify({
-            model: OLLAMA_MODEL,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              ...recentMessages
-            ],
-            stream: false,
-            options: { temperature: 0.7, num_predict: MAX_TOKENS }
-          })
+        const model = gemini.getGenerativeModel({
+          model: GEMINI_MODEL,
+          systemInstruction: systemPrompt,
+          generationConfig: { maxOutputTokens: MAX_TOKENS, temperature: 0.7 }
         });
-        clearTimeout(ollamaTimeout);
-        if (response.ok) {
-          const data = await response.json();
-          aiResponse = {
-            message: data.message?.content || "",
-            provider: "ollama"
-          };
-        }
-      } catch (error) {
-        console.error("Ollama connection failed, falling back...", error.message);
+
+        // Convert messages to Gemini format (role: user/model, no system)
+        const history = recentMessages.slice(0, -1).map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }]
+        }));
+        const lastUserMsg = recentMessages[recentMessages.length - 1]?.content || "";
+
+        const chat = model.startChat({ history });
+        const result = await chat.sendMessage(lastUserMsg);
+        const text = result.response.text();
+
+        aiResponse = { message: text, provider: "gemini" };
+      } catch (geminiError) {
+        console.error("Gemini connection failed, falling back to offline...", geminiError.message);
       }
     }
 
-    // 2. FALLBACK TO GROQ (Cloud AI)
-    if (!aiResponse && groq) {
-      try {
-        const completion = await groq.chat.completions.create({
-          model: GROQ_MODEL,
-          messages: [{ role: "system", content: systemPrompt }, ...recentMessages],
-          max_tokens: MAX_TOKENS,
-          temperature: 0.7
-        });
-        aiResponse = {
-          message: completion.choices[0]?.message?.content ?? "",
-          provider: "groq"
-        };
-      } catch (groqError) {
-        console.error("Groq connection failed...", groqError.message);
-      }
-    }
-
-    // 3. OFFLINE FALLBACK (Rule-based)
+    // 2. OFFLINE FALLBACK (Rule-based)
     if (!aiResponse) {
       aiResponse = await this._offlineFallback(messages, userId);
     }
@@ -342,61 +376,37 @@ export const aiService = {
         const actionToExec = parsedAction || { action: finalAction, params: finalData?.params || {} };
         const actionResult = await executeAction(actionToExec, userId);
 
-        // If AI provider, call AI again to compose reply
-        if (aiResponse.provider !== "offline") {
-          const followUpMessages = [
-            ...recentMessages,
-            { role: "assistant", content: parsedAction?.cleanText || "Processing..." },
-            { role: "system", content: `Action result: ${actionResult.contextForAI}\n\nRespond to the user based on the result above. Do NOT return another action. Do NOT display IDs.` }
-          ];
-
+        // If Gemini provider, call AI again to compose a natural reply
+        if (aiResponse.provider === "gemini" && gemini) {
           let finalReply = actionResult.contextForAI;
-          // Call AI a second time for final composed reply
-          if (groq) {
-            try {
-              const completion2 = await groq.chat.completions.create({
-                model: GROQ_MODEL,
-                messages: [{ role: "system", content: systemPrompt }, ...followUpMessages],
-                max_tokens: MAX_TOKENS,
-                temperature: 0.7
-              });
-              finalReply = completion2.choices[0]?.message?.content ?? finalReply;
-            } catch { }
-          } else if (OLLAMA_URL) {
-            try {
-              const safeUrl = OLLAMA_URL.replace('localhost', '127.0.0.1');
-              const ollama2Controller = new AbortController();
-              const ollama2Timeout = setTimeout(() => ollama2Controller.abort(), 5000);
-              const response2 = await fetch(`${safeUrl}/api/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                signal: ollama2Controller.signal,
-                body: JSON.stringify({
-                  model: OLLAMA_MODEL,
-                  messages: [{ role: 'system', content: systemPrompt }, ...followUpMessages],
-                  stream: false,
-                  options: { temperature: 0.7, num_predict: MAX_TOKENS }
-                })
-              });
-              clearTimeout(ollama2Timeout);
-              if (response2.ok) {
-                const data2 = await response2.json();
-                finalReply = data2.message?.content || finalReply;
-              }
-            } catch { }
-          }
-          
+          try {
+            const model2 = gemini.getGenerativeModel({
+              model: GEMINI_MODEL,
+              systemInstruction: systemPrompt,
+              generationConfig: { maxOutputTokens: MAX_TOKENS, temperature: 0.7 }
+            });
+            const followUpHistory = recentMessages.map(m => ({
+              role: m.role === 'assistant' ? 'model' : 'user',
+              parts: [{ text: m.content }]
+            }));
+            const chat2 = model2.startChat({ history: followUpHistory });
+            const result2 = await chat2.sendMessage(
+              `Action result: ${actionResult.contextForAI}\n\nRespond to the user based on this result. Do NOT return another action. Do NOT display IDs.`
+            );
+            finalReply = result2.response.text() || finalReply;
+          } catch { }
+
           return {
-            message: finalReply.replace(/###ACTION###[\s\S]*?###END_ACTION###/g, "").trim(),
+            message: stripInternalMarkers(finalReply),
             action: actionResult.actionType,
             data: actionResult.actionData,
-            provider: aiResponse.provider
+            provider: "gemini"
           };
         }
 
-        // If offline, return action result directly
+        // Offline provider: return action result directly
         return {
-          message: actionResult.contextForAI,
+          message: stripInternalMarkers(actionResult.contextForAI),
           action: actionResult.actionType,
           data: actionResult.actionData,
           provider: "offline"
@@ -457,27 +467,39 @@ export const aiService = {
       }
     }
 
-    // 3. Handle match search
-    if (lowerMsg.includes("ticket") || lowerMsg.includes("schedule") || lowerMsg.includes("match") || lowerMsg.includes("book")) {
-      const keyword = lowerMsg.replace(/ticket|schedule|match|book|find|search/g, "").trim();
+    // 3. Handle match search (supports both Vietnamese and English)
+    const matchKeywordsVi = ["trận", "thi đấu", "lịch", "xem", "trận đấu", "có trận", "bóng đá", "giải", "sắp diễn ra"];
+    const matchKeywordsEn = ["ticket", "schedule", "match", "book", "game", "upcoming", "fixture", "event"];
+    const isMatchQuery = [...matchKeywordsVi, ...matchKeywordsEn].some(kw => lowerMsg.includes(kw));
+    
+    if (isMatchQuery) {
+      const stopWordsPattern = /ticket|schedule|match|book|find|search|trận|đấu|lịch|xem|bóng đá|giải|có không|sắp|diễn ra/g;
+      const keyword = lowerMsg.replace(stopWordsPattern, "").trim();
+      const isVietnamese = matchKeywordsVi.some(kw => lowerMsg.includes(kw));
       return {
-        message: keyword ? `Searching for matches related to "${keyword}". Which match are you interested in?` : "Here are the upcoming matches. Which one would you like to see?",
+        message: isVietnamese
+          ? (keyword ? `Đang tìm kiếm trận đấu liên quan đến "${keyword}". Bạn muốn chọn trận nào? 🏟️` : "Đây là các trận đấu sắp diễn ra! Bạn quan tâm đến trận nào? 🏟️")
+          : (keyword ? `Searching for matches related to "${keyword}". Which match are you interested in?` : "Here are the upcoming matches. Which one would you like to see?"),
         action: "search_matches",
         data: { params: { keyword: keyword || undefined } },
         provider: "offline"
       };
     }
 
-    // 4. Greeting
-    if (lowerMsg.includes("hello") || lowerMsg.includes("hi") || lowerMsg.includes("hey")) {
+    // 4. Greeting (Vietnamese + English)
+    const greetVi = ["xin chào", "chào", "hello", "hi", "hey", "alo"];
+    if (greetVi.some(kw => lowerMsg.includes(kw))) {
+      const isVi = ["xin chào", "chào", "alo"].some(kw => lowerMsg.includes(kw));
       return {
-        message: "Hello! 👋 I'm your GoTicket ticket advisor. I can help you find the hottest matches. Which match are you interested in?",
+        message: isVi
+          ? "Xin chào! 👋 Tôi là GoTicket Advisor. Tôi có thể giúp bạn tìm kiếm các trận đấu hot nhất và đặt vé ngay trong chat. Bạn muốn xem trận đấu nào?"
+          : "Hello! 👋 I'm your GoTicket ticket advisor. I can help you find the hottest matches. Which match are you interested in?",
         provider: "offline"
       };
     }
 
     return {
-      message: "Hello! I'm the GoTicket advisor. Which match are you interested in? I can help you find the best stand with the greatest view!",
+      message: "Xin chào! Tôi là GoTicket Advisor. Bạn muốn xem lịch trận đấu, hoặc đặt vé không? Hãy hỏi tôi bất cứ điều gì! 🎫",
       provider: "offline"
     };
   },

@@ -49,6 +49,10 @@ export default function MatchEditModal({
       toast.error('Ticket sale opening date cannot be in the past')
       return
     }
+    if (form.ticketSaleOpenAt && form.matchDate && form.ticketSaleOpenAt >= form.matchDate) {
+      toast.error('Ticket sale date must be before the match date')
+      return
+    }
 
     onUpdate({
       ...form,

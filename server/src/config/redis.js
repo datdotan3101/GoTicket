@@ -22,7 +22,7 @@ export const checkRedisConnection = async () => {
   }
   try {
     await redis.ping();
-    console.log("Redis (Upstash) connected successfully!");
+    console.log("Redis connected successfully!");
     return true;
   } catch (error) {
     console.error("Redis connection failed:", error.message);

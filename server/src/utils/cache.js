@@ -51,9 +51,9 @@ export const invalidateCache = async (pattern) => {
     const keys = await redis.keys(pattern);
     if (keys && keys.length > 0) {
       await redis.del(...keys);
-      console.log(`🧹 Invalidated ${keys.length} cache keys matching pattern: ${pattern}`);
+      console.log(`Invalidated ${keys.length} cache keys matching pattern: ${pattern}`);
     }
   } catch (error) {
-    console.error(`⚠️ Redis Cache Invalidation Error (Pattern: ${pattern}):`, error.message);
+    console.error(`Redis Cache Invalidation Error (Pattern: ${pattern}):`, error.message);
   }
 };

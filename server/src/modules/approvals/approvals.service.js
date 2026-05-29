@@ -1,6 +1,7 @@
 import { APPROVAL_RESOURCE_MAP } from "../../constants/approvalConfig.js";
 import { query, withTransaction } from "../../config/db.js";
 import { notificationsService } from "../notifications/notifications.service.js";
+import { invalidateCache } from "../../utils/cache.js";
 
 export const approvalsService = {
   /**
@@ -184,6 +185,11 @@ export const approvalsService = {
 
     // Send notification after transaction commits
     await notificationsService.createNotification(notificationPayload);
+
+    // Bust cache so homepage reflects the updated match status immediately
+    if (approval.resource_type === "match") {
+      await invalidateCache("matches:*");
+    }
 
     return { id: approvalId, status: approvalStatus, resourceStatus };
   }

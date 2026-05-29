@@ -32,6 +32,14 @@ export const ticketsService = {
       throw new Error("Invalid booking information.");
     }
 
+    // Check if match sale is open
+    const matchCheck = await query(`SELECT ticket_sale_open_at FROM matches WHERE id = $1`, [matchId]);
+    if (matchCheck.rows[0] && matchCheck.rows[0].ticket_sale_open_at) {
+      if (new Date(matchCheck.rows[0].ticket_sale_open_at) > new Date()) {
+        throw new Error("Tickets for this match are not on sale yet.");
+      }
+    }
+
     const bookedTickets = await withTransaction(async (tx) => {
       const run = (text, params) => tx.query(text, params);
       const allBooked = [];

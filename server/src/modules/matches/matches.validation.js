@@ -33,7 +33,15 @@ export const createMatchRules = [
     .isInt({ min: 1 }).withMessage("leagueId must be a positive integer."),
   body("ticketSaleOpenAt")
     .optional()
-    .isISO8601().withMessage("ticketSaleOpenAt must be an ISO8601 datetime."),
+    .isISO8601().withMessage("ticketSaleOpenAt must be an ISO8601 datetime.")
+    .custom((value, { req }) => {
+      if (value && req.body.matchDate) {
+        if (new Date(value) >= new Date(req.body.matchDate)) {
+          throw new Error("ticketSaleOpenAt must be before the match date.");
+        }
+      }
+      return true;
+    }),
   body("description")
     .optional()
     .trim()

@@ -151,6 +151,8 @@ export default function MatchCreatePage() {
         newErrors.ticketSaleOpenAt = 'Please select ticket sale opening date'
       } else if (new Date(form.ticketSaleOpenAt) < now) {
         newErrors.ticketSaleOpenAt = 'Ticket sale opening date cannot be in the past'
+      } else if (form.matchDate && new Date(form.ticketSaleOpenAt) >= new Date(form.matchDate)) {
+        newErrors.ticketSaleOpenAt = 'Ticket sale date must be before the match date'
       }
 
       if (!form.stadiumId) newErrors.stadiumId = 'Please select a stadium'
