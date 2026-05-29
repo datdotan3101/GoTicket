@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import Pagination from '../../components/ui/Pagination'
 const ManagerMatchCard = lazy(() => import('../../components/manager/ManagerMatchCard'))
 import { usePagination } from '../../hooks/usePagination'
-import toast from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import { 
@@ -27,8 +27,8 @@ import { matchService } from '../../services/matchService'
 import { stadiumService } from '../../services/stadiumService'
 import MatchEditModal from '../../components/manager/MatchEditModal'
 import { unwrapData } from '../../utils/apiData'
-import { formatVND } from '../../utils/formatCurrency'
-import { formatDateTime } from '../../utils/formatDate'
+import { formatVND } from '../../utils/formatters'
+import { formatDateTime } from '../../utils/formatters'
 
 export default function ManagerMatchesPage() {
   const [data, setData] = useState([])

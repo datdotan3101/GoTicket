@@ -1,17 +1,19 @@
 /* eslint-disable no-unused-vars */
 import { useEffect, useState, useMemo } from 'react'
-import toast from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
 import { matchService } from '../../services/matchService'
 import { stadiumService } from '../../services/stadiumService'
 import { leagueService } from '../../services/leagueService'
+import { clubService } from '../../services/clubService'
 import { uploadService } from '../../services/uploadService'
 import { unwrapData } from '../../utils/apiData'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { format } from 'date-fns'
-import InlineError, { getInputErrorStyle } from '../../components/ui/InlineError'
-import { redistributeStadiumSeats } from '../../common/seatDistribution'
+import { validateForm } from '../../utils/validator'
+import { redistributeStadiumSeats } from '../../utils/seatDistribution'
+import Select from 'react-select'
 
 const STADIUM_COLUMNS = [
   { id: 'A1', stand: 'A', tiers: ['T1', 'T2'] },
@@ -55,30 +57,38 @@ export default function MatchCreatePage() {
 
   const [stadiums, setStadiums] = useState([])
   const [leagues, setLeagues] = useState([])
+  const [clubs, setClubs] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [previewBannerUrl, setPreviewBannerUrl] = useState(null)
   const [selectedBannerFile, setSelectedBannerFile] = useState(null)
   const [showConfirmPopup, setShowConfirmPopup] = useState(false)
-  const [errors, setErrors] = useState({})
 
   const navigate = useNavigate()
 
-  const inputErrorStyle = (field) => getInputErrorStyle(!!errors[field])
-  const renderError = (field) => <InlineError message={errors[field]} />
+
+  const clubOptions = useMemo(() => {
+    return clubs
+      .filter(c => form.leagueId ? String(c.league_id) === String(form.leagueId) : false)
+      .map(c => ({ value: c.name, label: c.name }))
+  }, [clubs, form.leagueId])
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [stadiumsRes, leaguesRes] = await Promise.all([
+        const [stadiumsRes, leaguesRes, clubsRes] = await Promise.all([
           stadiumService.getAll(),
-          leagueService.getAll()
+          leagueService.getAll(),
+          clubService.getAll({ limit: 200 })
         ])
         setStadiums(unwrapData(stadiumsRes) || [])
         const leaguePayload = unwrapData(leaguesRes)
         setLeagues(leaguePayload?.data || leaguePayload || [])
+        const clubPayload = unwrapData(clubsRes)
+        setClubs(clubPayload?.data || clubPayload || [])
       } catch {
         setStadiums([])
         setLeagues([])
+        setClubs([])
       }
     }
     load()
@@ -135,45 +145,52 @@ export default function MatchCreatePage() {
   }, [columnConfigs, totalCapacity])
 
   const validateStep = (currentStep) => {
-    const newErrors = {}
     if (currentStep === 1) {
-      const now = new Date()
-      if (!form.leagueId) newErrors.leagueId = 'Please select a league'
-      if (!form.homeTeam) newErrors.homeTeam = 'Please enter home team name'
-      if (!form.awayTeam) newErrors.awayTeam = 'Please enter away team name'
-      if (!form.matchDate) {
-        newErrors.matchDate = 'Please select date and time'
-      } else if (new Date(form.matchDate) < now) {
-        newErrors.matchDate = 'Match date cannot be in the past'
+      const dataToValidate = {
+        ...form,
+        banner: selectedBannerFile ? 'yes' : ''
       }
-      
-      if (!form.ticketSaleOpenAt) {
-        newErrors.ticketSaleOpenAt = 'Please select ticket sale opening date'
-      } else if (new Date(form.ticketSaleOpenAt) < now) {
-        newErrors.ticketSaleOpenAt = 'Ticket sale opening date cannot be in the past'
-      } else if (form.matchDate && new Date(form.ticketSaleOpenAt) >= new Date(form.matchDate)) {
-        newErrors.ticketSaleOpenAt = 'Ticket sale date must be before the match date'
+      const schema = {
+        leagueId: { required: 'League' },
+        stadiumId: { required: 'Stadium' },
+        homeTeam: { required: 'Home Team' },
+        awayTeam: { required: 'Away Team' },
+        matchDate: { 
+          required: 'Date & Time',
+          custom: (val) => new Date(val) < new Date() ? 'Match date cannot be in the past' : null
+        },
+        ticketSaleOpenAt: {
+          required: 'Ticket sale opening date',
+          custom: (val) => {
+            if (new Date(val) < new Date()) return 'Ticket sale opening date cannot be in the past'
+            if (form.matchDate && new Date(val) >= new Date(form.matchDate)) return 'Ticket sale date must be before the match date'
+            return null
+          }
+        },
+        description: { required: 'Description' },
+        banner: { required: 'Banner Image' }
       }
-
-      if (!form.stadiumId) newErrors.stadiumId = 'Please select a stadium'
-      if (!form.description) newErrors.description = 'Please enter a description'
-      if (!selectedBannerFile) newErrors.banner = 'Please upload a banner image'
+      return validateForm(dataToValidate, schema)
     }
     if (currentStep === 2) {
-      if (!totalCapacity || Number(totalCapacity) <= 0) newErrors.totalCapacity = 'Invalid capacity'
-      
-      STADIUM_COLUMNS.forEach(col => {
+      if (!totalCapacity || Number(totalCapacity) <= 0) {
+        toast.error('Invalid capacity')
+        return false
+      }
+      for (const col of STADIUM_COLUMNS) {
         if (!columnConfigs[col.id].price || Number(columnConfigs[col.id].price) < 0) {
-          newErrors[`price_${col.id}`] = 'Invalid price'
+          toast.error('Invalid price for Block ' + col.id)
+          return false
         }
-      })
-
+      }
       const activeAny = Object.keys(blockConfigs).some(k => blockConfigs[k].active)
-      if (!activeAny) newErrors.general = 'Please enable at least one stand'
+      if (!activeAny) {
+        toast.error('Please enable at least one stand')
+        return false
+      }
+      return true
     }
-
-    setErrors(newErrors)
-    return newErrors
+    return true
   }
 
   const toggleTier = (colId, tier) => {
@@ -282,29 +299,27 @@ export default function MatchCreatePage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
                   <div className="mc-input-group">
                     <label>LEAGUE NAME</label>
-                    <select className="mc-nice-input" style={inputErrorStyle('leagueId')} value={form.leagueId} onChange={e => {setForm(p => ({...p, leagueId: e.target.value})); setErrors(p => ({...p, leagueId: null}))}}>
+                    <select className="mc-nice-input" value={form.leagueId} onChange={e => {setForm(p => ({...p, leagueId: e.target.value}))}}>
                       <option value="" disabled>Select league</option>
                       {leagues.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                     </select>
-                    {renderError('leagueId')}
                   </div>
                   <div className="mc-input-group">
                     <label>STADIUM</label>
-                    <select className="mc-nice-input" style={inputErrorStyle('stadiumId')} value={form.stadiumId} onChange={e => {setForm(p => ({...p, stadiumId: e.target.value})); setErrors(p => ({...p, stadiumId: null}))}}>
+                    <select className="mc-nice-input" value={form.stadiumId} onChange={e => {setForm(p => ({...p, stadiumId: e.target.value}))}}>
                       <option value="" disabled>Select stadium</option>
                       {stadiums.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                     </select>
-                    {renderError('stadiumId')}
                   </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
                   <div className="mc-input-group">
                     <label>MATCH DATE & TIME</label>
-                    <div style={{ border: errors.matchDate ? '1px solid #ef4444' : 'none', borderRadius: '8px' }}>
+                    <div style={{ borderRadius: "8px" }}>
                       <DatePicker
                         selected={form.matchDate ? new Date(form.matchDate) : null}
-                        onChange={(date) => {setForm(p => ({...p, matchDate: date ? date.toISOString() : ''})); setErrors(p => ({...p, matchDate: null}))}}
+                        onChange={(date) => {setForm(p => ({...p, matchDate: date ? date.toISOString() : ''}))}}
                         showTimeSelect
                         timeFormat="HH:mm"
                         timeIntervals={15}
@@ -314,14 +329,13 @@ export default function MatchCreatePage() {
                         placeholderText="mm/dd/yyyy --:--"
                       />
                     </div>
-                    {renderError('matchDate')}
                   </div>
                   <div className="mc-input-group">
                     <label>TICKET SALE OPEN AT</label>
-                    <div style={{ border: errors.ticketSaleOpenAt ? '1px solid #ef4444' : 'none', borderRadius: '8px' }}>
+                    <div style={{ borderRadius: "8px" }}>
                       <DatePicker
                         selected={form.ticketSaleOpenAt ? new Date(form.ticketSaleOpenAt) : null}
-                        onChange={(date) => {setForm(p => ({...p, ticketSaleOpenAt: date ? date.toISOString() : ''})); setErrors(p => ({...p, ticketSaleOpenAt: null}))}}
+                        onChange={(date) => {setForm(p => ({...p, ticketSaleOpenAt: date ? date.toISOString() : ''}))}}
                         showTimeSelect
                         timeFormat="HH:mm"
                         timeIntervals={15}
@@ -331,27 +345,63 @@ export default function MatchCreatePage() {
                         placeholderText="mm/dd/yyyy --:--"
                       />
                     </div>
-                    {renderError('ticketSaleOpenAt')}
                   </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                   <div className="mc-input-group">
                     <label>HOME TEAM</label>
-                    <input className="mc-nice-input" style={inputErrorStyle('homeTeam')} placeholder="Select home team" value={form.homeTeam} onChange={e => {setForm(p => ({...p, homeTeam: e.target.value})); setErrors(p => ({...p, homeTeam: null}))}} />
-                    {renderError('homeTeam')}
+                    <Select
+                      options={clubOptions}
+                      value={clubOptions.find(o => o.value === form.homeTeam) || null}
+                      onChange={(selected) => {
+                        setForm(p => ({...p, homeTeam: selected ? selected.value : ''}))
+                      }}
+                      placeholder="Select home team"
+                      isClearable
+                      isSearchable
+                      noOptionsMessage={() => form.leagueId ? 'No teams found' : 'Please select a league first'}
+                      styles={{
+                        control: (base) => ({
+                          ...base,
+                          borderColor: '#e2e8f0',
+                          borderRadius: '8px',
+                          minHeight: '44px',
+                          boxShadow: 'none',
+                          '&:hover': { borderColor: '#cbd5e1' }
+                        })
+                      }}
+                    />
                   </div>
                   <div className="mc-input-group">
                     <label>AWAY TEAM</label>
-                    <input className="mc-nice-input" style={inputErrorStyle('awayTeam')} placeholder="Select away team" value={form.awayTeam} onChange={e => {setForm(p => ({...p, awayTeam: e.target.value})); setErrors(p => ({...p, awayTeam: null}))}} />
-                    {renderError('awayTeam')}
+                    <Select
+                      options={clubOptions}
+                      value={clubOptions.find(o => o.value === form.awayTeam) || null}
+                      onChange={(selected) => {
+                        setForm(p => ({...p, awayTeam: selected ? selected.value : ''}))
+                      }}
+                      placeholder="Select away team"
+                      isClearable
+                      isSearchable
+                      noOptionsMessage={() => form.leagueId ? 'No teams found' : 'Please select a league first'}
+                      styles={{
+                        control: (base) => ({
+                          ...base,
+                          borderColor: '#e2e8f0',
+                          borderRadius: '8px',
+                          minHeight: '44px',
+                          boxShadow: 'none',
+                          '&:hover': { borderColor: '#cbd5e1' }
+                        })
+                      }}
+                    />
                   </div>
                 </div>
 
                 <div className="mc-input-group" style={{ marginTop: '24px' }}>
                   <label>DESCRIPTION</label>
-                  <textarea className="mc-nice-input" style={inputErrorStyle('description')} rows={3} placeholder="Enter match description" value={form.description} onChange={e => {setForm(p => ({...p, description: e.target.value})); setErrors(p => ({...p, description: null}))}} />
-                  {renderError('description')}
+                  <textarea className="mc-nice-input" rows={3} placeholder="Enter match description" value={form.description} onChange={e => {setForm(p => ({...p, description: e.target.value}))}} />
                 </div>
               </div>
 
@@ -362,7 +412,7 @@ export default function MatchCreatePage() {
                   </h3>
                 </div>
                 
-                <div style={{ border: `2px dashed ${errors.banner ? '#ef4444' : '#cbd5e1'}`, borderRadius: '16px', padding: '8px', textAlign: 'center', background: '#f8fafc', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '220px' }}>
+                <div style={{ border: `2px dashed #cbd5e1`, borderRadius: '16px', padding: '8px', textAlign: 'center', background: '#f8fafc', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '220px' }}>
                   {previewBannerUrl ? (
                     <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
                       <img src={previewBannerUrl} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -389,12 +439,10 @@ export default function MatchCreatePage() {
                     if(file){
                       setPreviewBannerUrl(URL.createObjectURL(file));
                       setSelectedBannerFile(file);
-                      setErrors(p => ({...p, banner: null}));
                     }
                   }} />
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  {renderError('banner')}
                 </div>
                 <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>
                   This image will be displayed on the match list and ticket.
@@ -418,7 +466,7 @@ export default function MatchCreatePage() {
                   <input 
                     type="number" 
                     className="mc-nice-input" 
-                    style={{ fontSize: '1.5rem', fontWeight: 900, color: '#f97316', ...(errors.totalCapacity ? { borderColor: '#ef4444' } : {}) }}
+                    style={{ fontSize: '1.5rem', fontWeight: 900, color: '#f97316' }}
                     value={totalCapacity} 
                     min="0"
                     onChange={e => {
@@ -426,13 +474,9 @@ export default function MatchCreatePage() {
                       setTotalCapacity(val);
                       if (Number(val) < 0) {
                         toast.error('Capacity cannot be negative');
-                        setErrors(p => ({...p, totalCapacity: 'Capacity cannot be negative'}));
-                      } else {
-                        setErrors(p => ({...p, totalCapacity: null}));
                       }
                     }} 
                   />
-                  {renderError('totalCapacity')}
                   <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '8px' }}>This total will be divided into Stands A, B, C, D automatically.</div>
                 </div>
 
@@ -457,7 +501,7 @@ export default function MatchCreatePage() {
                                 <div style={{ position: 'relative', marginBottom: '16px' }}>
                                   <input 
                                     type="number" className="mc-nice-input" placeholder="Ticket Price" 
-                                    style={{ width: '100%', paddingLeft: '45px', ...(errors[`price_${col.id}`] ? { borderColor: '#ef4444' } : {}) }} 
+                                    style={{ width: '100%', paddingLeft: '45px' }} 
                                     value={columnConfigs[col.id]?.price} 
                                     min="0"
                                     onChange={(e) => {
@@ -465,17 +509,12 @@ export default function MatchCreatePage() {
                                       setColumnConfigs(p => ({ ...p, [col.id]: { ...p[col.id], price: val } }));
                                       if (Number(val) < 0) {
                                         toast.error('Ticket price cannot be negative');
-                                        setErrors(p => ({...p, [`price_${col.id}`]: 'Ticket price cannot be negative'}));
-                                      } else {
-                                        setErrors(p => ({...p, [`price_${col.id}`]: null}));
                                       }
                                     }} 
                                   />
                                   <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '0.75rem', fontWeight: 800 }}>VND</span>
                                 </div>
-                                <div style={{ marginTop: '-12px', marginBottom: '8px' }}>
-                                  {renderError(`price_${col.id}`)}
-                                </div>
+
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                   {col.tiers.map(tier => (
                                     <label key={tier} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: '#475569', background: '#f8fafc', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
@@ -509,31 +548,12 @@ export default function MatchCreatePage() {
           <div className="mc-footer-right">
             {step > 1 && <button className="mc-btn mc-btn-secondary" onClick={() => setStep(step - 1)}>Back</button>}
             {step === 1 && <button className="mc-btn mc-btn-primary" onClick={() => {
-              const errs = validateStep(1)
-              const errorKeys = Object.keys(errs)
-              if(errorKeys.length > 0) {
-                const fieldNamesMap = {
-                  leagueId: 'League',
-                  homeTeam: 'Home Team',
-                  awayTeam: 'Away Team',
-                  matchDate: 'Date & Time',
-                  stadiumId: 'Stadium',
-                  description: 'Description',
-                  banner: 'Banner Image'
-                }
-                const missingFields = errorKeys.map(key => fieldNamesMap[key]).join(', ')
-                toast.error(`Please enter: ${missingFields}`)
-              } else {
+              if(validateStep(1)) {
                 setStep(2)
               }
             }}>Configure Stadium ➔</button>}
             {step === 2 && <button className="mc-btn mc-btn-primary" onClick={() => {
-              const errs = validateStep(2)
-              if(Object.keys(errs).length > 0) {
-                if(errs.general) toast.error(errs.general)
-                else toast.error('Please check price configuration.')
-              }
-              else setShowConfirmPopup(true)
+              if(validateStep(2)) setShowConfirmPopup(true)
             }}>Review & Publish ✨</button>}
           </div>
         </div>

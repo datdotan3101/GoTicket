@@ -59,6 +59,7 @@ export const matchesService = {
       values.push(limit, offset);
       const result = await query(
         `SELECT m.*, s.name AS stadium_name, s.address AS stadium_address, l.name AS league_name,
+                hc.logo_url AS home_team_logo, ac.logo_url AS away_team_logo,
                 (SELECT MIN(price) FROM stands st WHERE st.match_id = m.id) AS min_price,
                 (SELECT MAX(price) FROM stands st WHERE st.match_id = m.id) AS max_price,
                 (SELECT COUNT(*)::int FROM tickets t WHERE t.match_id = m.id AND t.status IN ('paid', 'checked_in')) AS sold_count,
@@ -66,6 +67,8 @@ export const matchesService = {
          FROM matches m
          LEFT JOIN stadiums s ON s.id = m.stadium_id
          LEFT JOIN leagues l ON l.id = m.league_id
+         LEFT JOIN clubs hc ON hc.name = m.home_team
+         LEFT JOIN clubs ac ON ac.name = m.away_team
          ${whereClause}
          ORDER BY m.match_date ASC
          LIMIT $${values.length - 1} OFFSET $${values.length}`,
@@ -81,11 +84,14 @@ export const matchesService = {
     return getOrSetCache(cacheKey, 60, async () => {
       const result = await query(
         `SELECT m.*, s.name AS stadium_name, s.address AS stadium_address, l.name AS league_name,
+                hc.logo_url AS home_team_logo, ac.logo_url AS away_team_logo,
                 (SELECT COUNT(*)::int FROM tickets t WHERE t.match_id = m.id AND t.status IN ('paid', 'checked_in')) AS sold_count,
                 (SELECT COALESCE(SUM(total_seats), 0)::int FROM stands st WHERE st.match_id = m.id) AS total_seats
          FROM matches m
          LEFT JOIN stadiums s ON s.id = m.stadium_id
          LEFT JOIN leagues l ON l.id = m.league_id
+         LEFT JOIN clubs hc ON hc.name = m.home_team
+         LEFT JOIN clubs ac ON ac.name = m.away_team
          WHERE m.id = $1`,
         [id]
       );

@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import toast from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import MatchCard from '../../components/ui/MatchCard'
 import SportsBanner from '../../components/ui/SportsBanner'
 import { matchService } from '../../services/matchService'
 import { unwrapData } from '../../utils/apiData'
-import { formatDateTime } from '../../common/formatters'
+import { formatDateTime } from '../../utils/formatters'
 
 export default function SportPage() {
   const { sportId } = useParams()
@@ -141,12 +141,24 @@ export default function SportPage() {
                         <div className="smc-divider"></div>
                         <div className="smc-teams-info">
                           <div className="smc-team-row">
-                            <div className="smc-team-logo">{match.home_team.substring(0, 3).toUpperCase()}</div>
+                            <div className="smc-team-logo">
+                              {match.home_team_logo ? (
+                                <img src={match.home_team_logo} alt={match.home_team} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '50%' }} />
+                              ) : (
+                                match.home_team.substring(0, 3).toUpperCase()
+                              )}
+                            </div>
                             <span className="smc-team-name">{match.home_team}</span>
                           </div>
                           <span className="smc-vs">VS</span>
                           <div className="smc-team-row">
-                            <div className="smc-team-logo">{match.away_team.substring(0, 3).toUpperCase()}</div>
+                            <div className="smc-team-logo">
+                              {match.away_team_logo ? (
+                                <img src={match.away_team_logo} alt={match.away_team} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '50%' }} />
+                              ) : (
+                                match.away_team.substring(0, 3).toUpperCase()
+                              )}
+                            </div>
                             <span className="smc-team-name">{match.away_team}</span>
                           </div>
                         </div>

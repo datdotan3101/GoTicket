@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { matchService } from '../../services/matchService'
 import { unwrapData } from '../../utils/apiData'
-import { formatDateTime } from '../../utils/formatDate'
+import { formatDateTime } from '../../utils/formatters'
 
 export default function MatchDetailPage() {
   const { matchId } = useParams()

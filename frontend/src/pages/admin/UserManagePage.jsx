@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { APP_ROUTES } from '../../constants/routes'
-import toast from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import { 
   Search, UserPlus, Edit2, Lock, Unlock, 
   X, TrendingUp, AlertCircle, Users
@@ -12,8 +12,8 @@ import { userService } from '../../services/userService'
 import { approvalsService } from '../../services/approvalsService'
 import { clubService } from '../../services/clubService'
 import { unwrapData } from '../../utils/apiData'
-import { formatDateTime } from '../../utils/formatDate'
-import InlineError, { getInputErrorStyle } from '../../components/ui/InlineError'
+import { formatDateTime } from '../../utils/formatters'
+import { validateForm } from '../../utils/validator'
 import '../../common/AdminStyles.css'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 
@@ -44,11 +44,9 @@ export default function UserManagePage() {
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [addForm, setAddForm] = useState({ fullName: '', email: '', password: '', role: ROLES.MANAGER, clubId: '' })
-  const [addFormErrors, setAddFormErrors] = useState({})
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editForm, setEditForm] = useState({ id: null, fullName: '', email: '', role: '', clubId: '' })
-  const [editFormErrors, setEditFormErrors] = useState({})
 
   useEffect(() => {
     const fetchInitial = async () => {
@@ -126,37 +124,26 @@ export default function UserManagePage() {
     }
   }
 
-  const validateForm = () => {
-    const errors = {}
-    if (!addForm.fullName.trim()) errors.fullName = "Full Name is required."
-    else if (addForm.fullName.length > 255) errors.fullName = "Full Name exceeds 255 characters."
-    
-    if (!addForm.email.trim()) errors.email = "Email is required."
-    else if (!/\S+@\S+\.\S+/.test(addForm.email)) errors.email = "Invalid email format."
-    
-    if (!addForm.password) errors.password = "Password is required."
-    else if (addForm.password.length < 6) errors.password = "Password must be at least 6 characters."
-    else if (addForm.password.length > 100) errors.password = "Password exceeds 100 characters."
-
-    if (addForm.role === ROLES.MANAGER && !addForm.clubId) {
-      errors.clubId = "Please assign a club for Manager role."
+  const validateAddForm = () => {
+    const schema = {
+      fullName: { required: 'Full Name is required', maxLength: { value: 255, message: 'Full Name exceeds 255 characters' } },
+      email: { required: 'Email is required', regex: { pattern: /\S+@\S+\.\S+/, message: 'Invalid email format' } },
+      password: { required: 'Password is required', minLength: { value: 6, message: 'Password must be at least 6 characters' }, maxLength: { value: 100, message: 'Password exceeds 100 characters' } },
+      clubId: { custom: (val) => (addForm.role === ROLES.MANAGER && !val) ? 'Please assign a club for Manager role' : null }
     }
-    
-    setAddFormErrors(errors)
-    return Object.keys(errors).length === 0
+    return validateForm(addForm, schema)
   }
 
   const handleAddUser = async (e) => {
     e.preventDefault()
-    if (!validateForm()) return
+    if (!validateAddForm()) return
     
     try {
       await userService.create(addForm)
       toast.success("User created successfully.")
       setIsAddModalOpen(false)
       setAddForm({ fullName: '', email: '', password: '', role: ROLES.MANAGER, clubId: '' })
-      setAddFormErrors({})
-      refreshUsers()
+            refreshUsers()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to create user.')
     }
@@ -175,15 +162,12 @@ export default function UserManagePage() {
   }
 
   const validateEditForm = () => {
-    const errors = {}
-    if (!editForm.fullName.trim()) errors.fullName = "Full Name is required."
-    if (!editForm.email.trim()) errors.email = "Email is required."
-    else if (!/\\S+@\\S+\\.\\S+/.test(editForm.email)) errors.email = "Invalid email format."
-    if (editForm.role === ROLES.MANAGER && !editForm.clubId) {
-      errors.clubId = "Please assign a club for Manager role."
+    const schema = {
+      fullName: { required: 'Full Name is required', maxLength: { value: 255, message: 'Full Name exceeds 255 characters' } },
+      email: { required: 'Email is required', regex: { pattern: /\S+@\S+\.\S+/, message: 'Invalid email format' } },
+      clubId: { custom: (val) => (editForm.role === ROLES.MANAGER && !val) ? 'Please assign a club for Manager role' : null }
     }
-    setEditFormErrors(errors)
-    return Object.keys(errors).length === 0
+    return validateForm(editForm, schema)
   }
 
   const handleEditUser = async (e) => {
@@ -417,22 +401,19 @@ export default function UserManagePage() {
             <form noValidate onSubmit={handleAddUser} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
                 <label className="admin-label">Full Name *</label>
-                <input type="text" maxLength={255} value={addForm.fullName} onChange={e => {setAddForm({...addForm, fullName: e.target.value}); setAddFormErrors(prev => ({...prev, fullName: null}))}} className="admin-input" style={getInputErrorStyle(!!addFormErrors.fullName)} placeholder="John Doe" />
-                <InlineError message={addFormErrors.fullName} />
+                <input type="text" maxLength={255} value={addForm.fullName} onChange={e => {setAddForm({...addForm, fullName: e.target.value})}} className="admin-input" placeholder="John Doe" />
               </div>
               <div>
                 <label className="admin-label">Email *</label>
-                <input type="email" maxLength={255} value={addForm.email} onChange={e => {setAddForm({...addForm, email: e.target.value}); setAddFormErrors(prev => ({...prev, email: null}))}} className="admin-input" style={getInputErrorStyle(!!addFormErrors.email)} placeholder="john@example.com" />
-                <InlineError message={addFormErrors.email} />
+                <input type="email" maxLength={255} value={addForm.email} onChange={e => {setAddForm({...addForm, email: e.target.value})}} className="admin-input" placeholder="john@example.com" />
               </div>
               <div>
                 <label className="admin-label">Password *</label>
-                <input type="password" minLength={6} maxLength={100} value={addForm.password} onChange={e => {setAddForm({...addForm, password: e.target.value}); setAddFormErrors(prev => ({...prev, password: null}))}} className="admin-input" style={getInputErrorStyle(!!addFormErrors.password)} placeholder="Min 6 characters" />
-                <InlineError message={addFormErrors.password} />
+                <input type="password" minLength={6} maxLength={100} value={addForm.password} onChange={e => {setAddForm({...addForm, password: e.target.value})}} className="admin-input" placeholder="Min 6 characters" />
               </div>
               <div>
                 <label className="admin-label">Role</label>
-                <select value={addForm.role} onChange={e => {setAddForm({...addForm, role: e.target.value, clubId: ''}); setAddFormErrors(prev => ({...prev, clubId: null}))}} className="admin-input">
+                <select value={addForm.role} onChange={e => {setAddForm({...addForm, role: e.target.value, clubId: ''})}} className="admin-input">
                   <option value={ROLES.MANAGER}>Manager</option>
                   <option value={ROLES.ADMIN}>Admin</option>
                   <option value={ROLES.EDITOR}>Editor</option>
@@ -442,13 +423,12 @@ export default function UserManagePage() {
               {addForm.role === ROLES.MANAGER && (
                 <div>
                   <label className="admin-label">Assign Club *</label>
-                  <select value={addForm.clubId} onChange={e => {setAddForm({...addForm, clubId: e.target.value}); setAddFormErrors(prev => ({...prev, clubId: null}))}} className="admin-input" style={getInputErrorStyle(!!addFormErrors.clubId)}>
+                  <select value={addForm.clubId} onChange={e => {setAddForm({...addForm, clubId: e.target.value})}} className="admin-input">
                     <option value="">Select a club...</option>
                     {clubs.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
-                  <InlineError message={addFormErrors.clubId} />
                 </div>
               )}
               <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
@@ -473,17 +453,15 @@ export default function UserManagePage() {
             <form noValidate onSubmit={handleEditUser} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
                 <label className="admin-label">Full Name *</label>
-                <input type="text" maxLength={255} value={editForm.fullName} onChange={e => {setEditForm({...editForm, fullName: e.target.value}); setEditFormErrors(prev => ({...prev, fullName: null}))}} className="admin-input" style={getInputErrorStyle(!!editFormErrors.fullName)} placeholder="John Doe" />
-                <InlineError message={editFormErrors.fullName} />
+                <input type="text" maxLength={255} value={editForm.fullName} onChange={e => {setEditForm({...editForm, fullName: e.target.value})}} className="admin-input" placeholder="John Doe" />
               </div>
               <div>
                 <label className="admin-label">Email *</label>
-                <input type="email" maxLength={255} value={editForm.email} onChange={e => {setEditForm({...editForm, email: e.target.value}); setEditFormErrors(prev => ({...prev, email: null}))}} className="admin-input" style={getInputErrorStyle(!!editFormErrors.email)} placeholder="john@example.com" />
-                <InlineError message={editFormErrors.email} />
+                <input type="email" maxLength={255} value={editForm.email} onChange={e => {setEditForm({...editForm, email: e.target.value})}} className="admin-input" placeholder="john@example.com" />
               </div>
               <div>
                 <label className="admin-label">Role</label>
-                <select value={editForm.role} onChange={e => {setEditForm({...editForm, role: e.target.value, clubId: ''}); setEditFormErrors(prev => ({...prev, clubId: null}))}} className="admin-input">
+                <select value={editForm.role} onChange={e => {setEditForm({...editForm, role: e.target.value, clubId: ''})}} className="admin-input">
                   <option value={ROLES.MANAGER}>Manager</option>
                   <option value={ROLES.ADMIN}>Admin</option>
                   <option value={ROLES.EDITOR}>Editor</option>
@@ -494,13 +472,12 @@ export default function UserManagePage() {
               {editForm.role === ROLES.MANAGER && (
                 <div>
                   <label className="admin-label">Assign Club *</label>
-                  <select value={editForm.clubId || ''} onChange={e => {setEditForm({...editForm, clubId: e.target.value}); setEditFormErrors(prev => ({...prev, clubId: null}))}} className="admin-input" style={getInputErrorStyle(!!editFormErrors.clubId)}>
+                  <select value={editForm.clubId || ''} onChange={e => {setEditForm({...editForm, clubId: e.target.value})}} className="admin-input">
                     <option value="">Select a club...</option>
                     {clubs.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
-                  <InlineError message={editFormErrors.clubId} />
                 </div>
               )}
               <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>

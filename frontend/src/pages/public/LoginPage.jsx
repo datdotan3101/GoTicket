@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import toast from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import { APP_ROUTES } from '../../constants/routes'
 import { authService } from '../../services/authService'
 import { useAuth } from '../../hooks/useAuth'
 import { getRedirectPath } from '../../utils/authUtils'
 import GoogleAuthButton from '../../common/GoogleAuthButton'
-import { validateEmail, validateLoginFields } from '../../utils/validation'
+import { validateForm } from '../../utils/validator'
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
-  const [errors, setErrors] = useState({ email: '', password: '' })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { login, isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
@@ -28,28 +27,21 @@ export default function LoginPage() {
     const { name, value } = event.target
     setForm((prev) => ({ ...prev, [name]: value }))
     // Clear field error as soon as user starts typing again
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }))
-  }
-
-  const onBlur = (event) => {
-    const { name, value } = event.target
-    if (name === 'email') {
-      const { isValid, message } = validateEmail(value)
-      if (!isValid) setErrors((prev) => ({ ...prev, email: message }))
-    }
-    if (name === 'password' && !value) {
-      setErrors((prev) => ({ ...prev, password: 'Password is required.' }))
-    }
   }
 
   const onSubmit = async (event) => {
     event.preventDefault()
 
-    const { isValid, errors: fieldErrors } = validateLoginFields(form)
-    if (!isValid) {
-      setErrors(fieldErrors)
+    if (!form.email && !form.password) {
+      toast.error('Please enter email and password')
       return
     }
+
+    const schema = {
+      email: { required: 'Email is required', regex: { pattern: /\S+@\S+\.\S+/, message: 'Invalid email format' } },
+      password: { required: 'Password is required' }
+    }
+    if (!validateForm(form, schema)) return
 
     setIsSubmitting(true)
 
@@ -82,10 +74,8 @@ export default function LoginPage() {
             placeholder="Email Address"
             value={form.email}
             onChange={onChange}
-            onBlur={onBlur}
-            className={errors.email ? 'input-error' : ''}
+           
           />
-          {errors.email && <span className="field-error">{errors.email}</span>}
         </div>
 
         <div className="field-group">
@@ -95,10 +85,8 @@ export default function LoginPage() {
             placeholder="Password"
             value={form.password}
             onChange={onChange}
-            onBlur={onBlur}
-            className={errors.password ? 'input-error' : ''}
+           
           />
-          {errors.password && <span className="field-error">{errors.password}</span>}
         </div>
 
         <button

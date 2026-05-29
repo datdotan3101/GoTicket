@@ -5,12 +5,12 @@ import QRCodeLib from 'react-qr-code'
 import { toPng } from 'html-to-image'
 import { ticketService } from '../../services/ticketService'
 import { unwrapData } from '../../utils/apiData'
-import { formatDateTime } from '../../utils/formatDate'
-import { formatVND } from '../../utils/formatCurrency'
+import { formatDateTime } from '../../utils/formatters'
+import { formatVND } from '../../utils/formatters'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import { APP_ROUTES } from '../../constants/routes'
 import { ArrowLeft, Download, MapPin, Building2, Gift, X } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { toast } from 'react-toastify'
 
 const QRCodeComponent = typeof QRCodeLib === 'object' && QRCodeLib.default ? QRCodeLib.default : (QRCodeLib.QRCode || QRCodeLib);
 

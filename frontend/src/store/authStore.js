@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import toast from 'react-hot-toast'
+import { toast } from 'react-toastify'
 
 const TOKEN_KEY = 'goticket_access_token'
 const USER_KEY = 'goticket_user'

@@ -6,7 +6,7 @@ import {
 import { DollarSign, Ticket, TrendingUp, Trophy, Activity } from 'lucide-react'
 import { dashboardService } from '../../services/dashboardService'
 import { unwrapData } from '../../utils/apiData'
-import { formatVND } from '../../utils/formatCurrency'
+import { formatVND } from '../../utils/formatters'
 
 const MOCK_DATA = {
   bySport: [

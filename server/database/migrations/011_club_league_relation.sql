@@ -1,0 +1,2 @@
+ALTER TABLE clubs
+ADD COLUMN IF NOT EXISTS league_id BIGINT REFERENCES leagues(id);

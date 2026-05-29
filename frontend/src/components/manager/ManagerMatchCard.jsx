@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Calendar, Clock, MapPin, Map, Edit3, Settings, BarChart2, Trash2 } from 'lucide-react'
-import { formatDateTime } from '../../utils/formatDate'
-import { formatVND } from '../../utils/formatCurrency'
+import { formatDateTime } from '../../utils/formatters'
+import { formatVND } from '../../utils/formatters'
 
 export default function ManagerMatchCard({ match, onOpenEdit, onDelete }) {
   const isEnded = new Date(match.match_date) < new Date()

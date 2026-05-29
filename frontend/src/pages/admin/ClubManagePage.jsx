@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import toast from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import { clubService } from '../../services/clubService'
 import { sportService } from '../../services/sportService'
+import { leagueService } from '../../services/leagueService'
 import { unwrapData } from '../../utils/apiData'
 import '../../common/AdminStyles.css'
 import FormModal from '../../components/ui/FormModal'
@@ -11,26 +12,32 @@ import FileUploadField from '../../components/ui/FileUploadField'
 export default function ClubManagePage() {
   const [clubs, setClubs] = useState([])
   const [sports, setSports] = useState([])
-  const [form, setForm] = useState({ name: '', logoUrl: '', sportId: '' })
+  const [leagues, setLeagues] = useState([])
+  const [form, setForm] = useState({ name: '', logoUrl: '', sportId: '', leagueId: '' })
   const [initialForm, setInitialForm] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [confirmModal, setConfirmModal] = useState({ show: false, type: null, target: null })
   const [searchTerm, setSearchTerm] = useState('')
+  const [activeLeagueTab, setActiveLeagueTab] = useState('V.League 1')
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [clubsRes, sportsRes] = await Promise.all([
+        const [clubsRes, sportsRes, leaguesRes] = await Promise.all([
           clubService.getAll({ limit: 200 }),
           sportService.getAll(),
+          leagueService.getAll()
         ])
         const clubsPayload = unwrapData(clubsRes)
         setClubs(clubsPayload?.data ?? clubsPayload ?? [])
         setSports(unwrapData(sportsRes) || [])
+        const leaguePayload = unwrapData(leaguesRes)
+        setLeagues(leaguePayload?.data ?? leaguePayload ?? [])
       } catch {
         setClubs([])
         setSports([])
+        setLeagues([])
       }
     }
     fetchAll()
@@ -48,10 +55,18 @@ export default function ClubManagePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.name.trim()) {
-      toast.error('Club name is required.')
+    
+    const errors = []
+    if (!form.name.trim()) errors.push('Club Name')
+    if (!form.sportId) errors.push('Sport Category')
+    if (!form.leagueId) errors.push('League')
+    if (!form.logoUrl) errors.push('Club Logo')
+
+    if (errors.length > 0) {
+      toast.error(`Please enter: ${errors.join(', ')}`)
       return
     }
+
     if (editingId) {
       setConfirmModal({ show: true, type: 'update', target: null })
     } else {
@@ -65,6 +80,7 @@ export default function ClubManagePage() {
         name: form.name.trim(),
         logoUrl: form.logoUrl || undefined,
         sportId: form.sportId ? parseInt(form.sportId) : undefined,
+        leagueId: form.leagueId ? parseInt(form.leagueId) : undefined,
       }
       if (editingId) {
         await clubService.update(editingId, payload)
@@ -86,6 +102,7 @@ export default function ClubManagePage() {
       name: club.name,
       logoUrl: club.logo_url || '',
       sportId: club.sport_id ? String(club.sport_id) : '',
+      leagueId: club.league_id ? String(club.league_id) : '',
     }
     setEditingId(club.id)
     setForm(data)
@@ -96,7 +113,7 @@ export default function ClubManagePage() {
   const clearForm = () => {
     setEditingId(null)
     setInitialForm(null)
-    setForm({ name: '', logoUrl: '', sportId: '' })
+    setForm({ name: '', logoUrl: '', sportId: '', leagueId: '' })
     setIsFormModalOpen(false)
   }
 
@@ -105,7 +122,8 @@ export default function ClubManagePage() {
     return (
       form.name !== initialForm.name ||
       form.logoUrl !== initialForm.logoUrl ||
-      form.sportId !== initialForm.sportId
+      form.sportId !== initialForm.sportId ||
+      form.leagueId !== initialForm.leagueId
     )
   }
 
@@ -124,9 +142,11 @@ export default function ClubManagePage() {
     }
   }
 
-  const filteredClubs = clubs.filter((c) =>
-    c.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredClubs = clubs.filter((c) => {
+    const matchesSearch = c.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesTab = c.league_name === activeLeagueTab
+    return matchesSearch && matchesTab
+  })
 
   const getSportName = (sportId) => {
     const sport = sports.find((s) => s.id === sportId)
@@ -168,7 +188,6 @@ export default function ClubManagePage() {
             placeholder="e.g. Manchester United"
             value={form.name}
             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-            required
             className="admin-input"
           />
         </div>
@@ -187,6 +206,20 @@ export default function ClubManagePage() {
           </select>
         </div>
 
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label className="admin-label">League</label>
+          <select
+            value={form.leagueId}
+            onChange={(e) => setForm((p) => ({ ...p, leagueId: e.target.value }))}
+            className="admin-input"
+          >
+            <option value="">— Select League —</option>
+            {leagues.map((l) => (
+              <option key={l.id} value={l.id}>{l.name}</option>
+            ))}
+          </select>
+        </div>
+
         <FileUploadField
           label="Club Logo"
           value={form.logoUrl}
@@ -197,18 +230,43 @@ export default function ClubManagePage() {
         />
       </FormModal>
 
-      {/* Search */}
-      <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <input
-          type="text"
-          placeholder="Search clubs..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.9rem', width: '280px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
-        />
-        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
-          {filteredClubs.length} club{filteredClubs.length !== 1 ? 's' : ''} found
-        </span>
+      {/* Search and Tabs */}
+      <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <input
+            type="text"
+            placeholder="Search clubs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.9rem', width: '280px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
+          />
+          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+            {filteredClubs.length} club{filteredClubs.length !== 1 ? 's' : ''} found
+          </span>
+        </div>
+
+        {/* League Tabs */}
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0' }}>
+          {[...leagues].sort((a, b) => a.name.localeCompare(b.name)).map(l => (
+            <button
+              key={l.id}
+              onClick={() => setActiveLeagueTab(l.name)}
+              style={{
+                padding: '8px 20px',
+                borderRadius: '999px',
+                border: 'none',
+                background: activeLeagueTab === l.name ? '#111827' : '#f1f5f9',
+                color: activeLeagueTab === l.name ? '#fff' : '#64748b',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {l.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Club Cards */}
@@ -234,8 +292,13 @@ export default function ClubManagePage() {
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#111827', lineHeight: 1.2 }}>{club.name}</h3>
                   {sportName && (
-                    <span style={{ display: 'inline-block', marginTop: '6px', background: '#dbeafe', color: '#1e40af', padding: '3px 10px', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700 }}>
+                    <span style={{ display: 'inline-block', marginTop: '6px', marginRight: '6px', background: '#dbeafe', color: '#1e40af', padding: '3px 10px', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700 }}>
                       {sportName}
+                    </span>
+                  )}
+                  {club.league_name && (
+                    <span style={{ display: 'inline-block', marginTop: '6px', background: '#fce7f3', color: '#be185d', padding: '3px 10px', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700 }}>
+                      {club.league_name}
                     </span>
                   )}
                 </div>

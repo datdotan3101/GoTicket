@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { matchService } from '../../services/matchService'
 import { unwrapData } from '../../utils/apiData'
-import { formatDateTime } from '../../utils/formatDate'
+import { formatDateTime } from '../../utils/formatters'
 
 export default function ApprovedMatchesPage() {
   const [matches, setMatches] = useState([])

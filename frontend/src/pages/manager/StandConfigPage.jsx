@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { useMemo, useState, useEffect } from 'react'
-import toast from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Save, Eye, ShieldCheck, Loader2 } from 'lucide-react'
 import { STAND_NAMES } from '../../constants/standRatios'
@@ -9,7 +9,7 @@ import { generateStandsPreview } from '../../utils/standGenerator'
 import StadiumMap from '../../components/seat/StadiumMap'
 import { unwrapData } from '../../utils/apiData'
 import ConfirmModal from '../../components/ui/ConfirmModal'
-import { redistributeStadiumSeats } from '../../common/seatDistribution'
+import { redistributeStadiumSeats } from '../../utils/seatDistribution'
 
 const STADIUM_COLUMNS = [
   { id: 'A1', stand: 'A', tiers: ['T1', 'T2'] },

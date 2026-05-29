@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { X, Shield, FileText } from 'lucide-react'
 import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
-import toast from 'react-hot-toast'
+import { toast } from 'react-toastify'
 
 export default function MatchEditModal({ 
   isOpen, 

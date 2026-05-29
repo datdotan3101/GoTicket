@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import toast from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import { 
@@ -15,8 +15,8 @@ import { APP_ROUTES } from '../../constants/routes'
 import { dashboardService } from '../../services/dashboardService'
 import { notificationService } from '../../services/notificationService'
 import { unwrapData } from '../../utils/apiData'
-import { formatVND } from '../../utils/formatCurrency'
-import { formatDateTime } from '../../utils/formatDate'
+import { formatVND } from '../../utils/formatters'
+import { formatDateTime } from '../../utils/formatters'
 import {
   BarChart,
   Bar,

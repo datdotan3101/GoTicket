@@ -5,7 +5,7 @@ import { Bell, Check, MailOpen, CalendarCheck, ShieldX, X, Loader2 } from 'lucid
 import { notificationService } from '../../services/notificationService'
 import { matchService } from '../../services/matchService'
 import { unwrapData } from '../../utils/apiData'
-import { formatDateTime } from '../../utils/formatDate'
+import { formatDateTime } from '../../utils/formatters'
 import { APP_ROUTES } from '../../constants/routes'
 
 export default function ManagerNotificationsPage() {

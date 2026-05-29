@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { authService } from '../../services/authService'
 import { APP_ROUTES } from '../../constants/routes'
-import { validatePassword } from '../../utils/validation'
+import { validateForm } from '../../utils/validator'
 
 const getAvatarInitial = (fullName) => {
   if (!fullName) return 'U'
@@ -63,16 +63,8 @@ export default function ProfilePage() {
   /* ── handlers ── */
   const handleProfileSubmit = async (e) => {
     e.preventDefault()
-    setProfileStatus({ msg: '', type: '' })
-    if (!profileForm.fullName.trim()) {
-      setProfileStatus({ msg: 'Full name cannot be empty.', type: 'error' })
-      return
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(profileForm.email)) {
-      setProfileStatus({ msg: 'Invalid email address.', type: 'error' })
-      return
-    }
+    if (!validateForm({ fullName: profileForm.fullName }, { fullName: { required: 'Full Name is required', maxLength: { value: 255, message: 'Full name exceeds 255 characters.' } } })) return
+
     try {
       setProfileLoading(true)
       const res = await authService.updateProfile({
@@ -90,20 +82,12 @@ export default function ProfilePage() {
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault()
-    setPwStatus({ msg: '', type: '' })
-    if ((hasPassword && !pwForm.currentPassword) || !pwForm.newPassword || !pwForm.confirmPassword) {
-      setPwStatus({ msg: 'Please fill in all fields.', type: 'error' })
-      return
+    const schema = {
+      oldPassword: { required: 'Current password is required' },
+      newPassword: { required: 'New password is required', minLength: { value: 8, message: 'Password must be at least 8 characters' }, maxLength: { value: 15, message: 'Password exceeds 15 characters' }, regex: { pattern: /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_]).*$/, message: 'Password must contain a letter, a number, and a special character' } }
     }
-    const { isValid, message } = validatePassword(pwForm.newPassword)
-    if (!isValid) {
-      setPwStatus({ msg: message, type: 'error' })
-      return
-    }
-    if (pwForm.newPassword !== pwForm.confirmPassword) {
-      setPwStatus({ msg: 'Passwords do not match.', type: 'error' })
-      return
-    }
+    if (!validateForm(passwordForm, schema)) return
+
     try {
       setPwLoading(true)
       await authService.changePassword({

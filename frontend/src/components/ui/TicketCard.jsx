@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { formatDateTime } from '../../utils/formatDate'
+import { formatDateTime } from '../../utils/formatters'
 import { APP_ROUTES } from '../../constants/routes'
 
 export default function TicketCard({ ticket }) {

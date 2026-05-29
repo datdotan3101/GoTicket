@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import toast from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
 import { APP_ROUTES } from '../../constants/routes'
 import { newsService } from '../../services/newsService'

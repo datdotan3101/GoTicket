@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import toast from 'react-hot-toast'
+import { toast } from 'react-toastify'
 import { authService } from '../services/authService'
 import { useAuth } from '../hooks/useAuth'
 import { APP_ROUTES } from '../constants/routes'
@@ -24,7 +24,8 @@ export default function GoogleAuthButton() {
       // Save token and user info to store
       login({ token: payload.accessToken, user: payload.user })
       
-      toast.success('Google Sign-in successful!', { id: loadingToast })
+      toast.dismiss(loadingToast)
+      toast.success('Google Sign-in successful!')
 
       // Redirect user to the appropriate page
       const defaultPath = location.state?.from?.pathname ?? APP_ROUTES.HOME
@@ -33,7 +34,8 @@ export default function GoogleAuthButton() {
     } catch (error) {
       console.error('Google Auth Error:', error)
       const errorMsg = error.response?.data?.message ?? 'Google Sign-in failed.'
-      toast.error(errorMsg, { id: loadingToast })
+      toast.dismiss(loadingToast)
+      toast.error(errorMsg)
     }
   }, [login, navigate, location.state]);
 
