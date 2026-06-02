@@ -41,6 +41,10 @@ export default function MatchEditModal({
     e.preventDefault()
     
     const now = new Date()
+    if (form.homeTeam && form.awayTeam && form.homeTeam.trim().toLowerCase() === form.awayTeam.trim().toLowerCase()) {
+      toast.error('Home and Away teams must be different')
+      return
+    }
     if (form.matchDate && form.matchDate < now) {
       toast.error('Match date cannot be in the past')
       return

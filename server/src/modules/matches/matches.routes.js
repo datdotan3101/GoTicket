@@ -15,7 +15,7 @@ import {
   submitMatch,
   updateMatch
 } from "./matches.controller.js";
-import { configStandsRules, createMatchRules } from "./matches.validation.js";
+import { configStandsRules, createMatchRules, updateMatchRules } from "./matches.validation.js";
 
 const router = Router();
 
@@ -150,7 +150,7 @@ router.post("/", auth, requireRoles(ROLES.MANAGER), runValidation(createMatchRul
  *       404:
  *         description: "Not found"
  * */
-router.put("/:id", auth, requireRoles(ROLES.MANAGER), updateMatch);
+router.put("/:id", auth, requireRoles(ROLES.MANAGER), runValidation(updateMatchRules), updateMatch);
 
 router.delete("/:id", auth, requireRoles(ROLES.MANAGER), deleteMatch);
 

@@ -255,11 +255,10 @@ export const authService = {
     try {
       await query("DELETE FROM users WHERE id = $1", [userId]);
     } catch (error) {
-      // Fallback: Soft delete by setting is_active = false and obfuscating email
-      // to allow the user to potentially register again with the same email if they wanted,
-      // though typically we just deactivate.
+      // Fallback: Soft delete by setting is_active = false and obfuscating email and google_id
+      // to allow the user to potentially register again with the same email/google account if they wanted.
       await query(
-        "UPDATE users SET is_active = false, email = email || '_deleted_' || id, updated_at = NOW() WHERE id = $1",
+        "UPDATE users SET is_active = false, email = email || '_deleted_' || id, google_id = CASE WHEN google_id IS NOT NULL THEN google_id || '_deleted_' || id ELSE NULL END, updated_at = NOW() WHERE id = $1",
         [userId]
       );
     }

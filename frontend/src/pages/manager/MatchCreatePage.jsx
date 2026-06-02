@@ -154,7 +154,10 @@ export default function MatchCreatePage() {
         leagueId: { required: 'League' },
         stadiumId: { required: 'Stadium' },
         homeTeam: { required: 'Home Team' },
-        awayTeam: { required: 'Away Team' },
+        awayTeam: { 
+          required: 'Away Team',
+          custom: (val) => val === form.homeTeam ? 'Home and Away teams must be different' : null
+        },
         matchDate: { 
           required: 'Date & Time',
           custom: (val) => new Date(val) < new Date() ? 'Match date cannot be in the past' : null

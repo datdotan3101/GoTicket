@@ -11,6 +11,8 @@ import { ticketService } from '../../services/ticketService'
 import { formatVND } from '../../utils/formatters'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import { APP_ROUTES } from '../../constants/routes'
+import visaLogo from '../../assets/visa-logo.png'
+import mastercardLogo from '../../assets/Mastercard-logo.svg.png'
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
@@ -153,7 +155,7 @@ function CheckoutForm({ totalAmount, clientSecret, onProcessing, onSuccess }) {
             onClick={() => handleBrandChange('visa')}
           >
             <div className="brand-logo-wrapper">
-              <img src="https://logos-world.net/wp-content/uploads/2020/04/Visa-Logo.png" alt="Visa" />
+              <img src={visaLogo} alt="Visa" />
             </div>
             <span>Visa</span>
             {cardBrand === 'visa' && <CheckCircle2 size={16} className="check-icon" />}
@@ -165,7 +167,7 @@ function CheckoutForm({ totalAmount, clientSecret, onProcessing, onSuccess }) {
             onClick={() => handleBrandChange('mastercard')}
           >
             <div className="brand-logo-wrapper">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="MasterCard" />
+              <img src={mastercardLogo} alt="MasterCard" />
             </div>
             <span>MasterCard</span>
             {cardBrand === 'mastercard' && <CheckCircle2 size={16} className="check-icon" />}
@@ -188,9 +190,9 @@ function CheckoutForm({ totalAmount, clientSecret, onProcessing, onSuccess }) {
         </div>
         <div className="card-brand-logo">
           {cardBrand === 'visa' ? (
-            <img src="https://logos-world.net/wp-content/uploads/2020/04/Visa-Logo.png" alt="Visa" className="logo-img white-filter" />
+            <img src={visaLogo} alt="Visa" className="logo-img white-filter" />
           ) : (
-            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="MasterCard" className="logo-img" />
+            <img src={mastercardLogo} alt="MasterCard" className="logo-img" />
           )}
         </div>
       </div>
