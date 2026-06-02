@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { isMatchHot } from '../../utils/hotBadge'
 import { formatDateTime } from '../../utils/formatters'
 import { X, Calendar, ShoppingCart, MapPin, Flame } from 'lucide-react'
+import { getValidImageUrl } from '../../utils/imageUtils'
 
 const DUMMY_IMAGES = [
   'https://images.unsplash.com/photo-1518605368461-1ee0676644ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
@@ -106,10 +107,10 @@ export default function MatchCard({ match, showHotBadge = false }) {
             <div className="mc-teams">
               <div className="mc-team">
                 <div className="mc-logo">
-                  {match.home_team_logo ? (
-                    <img src={match.home_team_logo} alt={match.home_team} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '12px' }} />
+                  {getValidImageUrl(match.home_team_logo) ? (
+                    <img src={getValidImageUrl(match.home_team_logo)} alt={match.home_team} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '12px' }} />
                   ) : (
-                    match.home_team.substring(0, 3).toUpperCase()
+                    match.home_team?.substring(0, 3).toUpperCase()
                   )}
                 </div>
                 <span className="mc-team-name">{match.home_team}</span>
@@ -117,10 +118,10 @@ export default function MatchCard({ match, showHotBadge = false }) {
               <div className="mc-vs">VS</div>
               <div className="mc-team">
                 <div className="mc-logo">
-                  {match.away_team_logo ? (
-                    <img src={match.away_team_logo} alt={match.away_team} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '12px' }} />
+                  {getValidImageUrl(match.away_team_logo) ? (
+                    <img src={getValidImageUrl(match.away_team_logo)} alt={match.away_team} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '12px' }} />
                   ) : (
-                    match.away_team.substring(0, 3).toUpperCase()
+                    match.away_team?.substring(0, 3).toUpperCase()
                   )}
                 </div>
                 <span className="mc-team-name">{match.away_team}</span>

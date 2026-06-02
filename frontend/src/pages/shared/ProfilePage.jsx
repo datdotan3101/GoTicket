@@ -586,7 +586,7 @@ export default function ProfilePage() {
               
               <div style={{ textAlign: 'left', background: '#fef2f2', padding: '16px', borderRadius: '12px', border: '1px solid #fecaca' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#991b1b', marginBottom: '8px' }}>
-                  Please type <strong style={{ userSelect: 'none' }}>Delete</strong> to confirm:
+                  Please type <strong style={{ userSelect: 'none' }}>"Delete"</strong> to confirm:
                 </label>
                 <input
                   type="text"

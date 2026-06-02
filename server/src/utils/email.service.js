@@ -396,3 +396,131 @@ export const sendGiftTicketEmail = async (userId, ticketCode, recipientEmail) =>
 
   logger.info(`[Email] Gift ticket sent to ${recipientEmail} from user ${user.email} (ticketCode=${ticketCode})`);
 };
+
+/**
+ * Send account deletion confirmation email to the user.
+ * @param {{ email: string, full_name: string }} user
+ */
+export const sendAccountDeletionEmail = async (user) => {
+  const mailer = getMailer();
+  if (!mailer) {
+    logger.warn("[Email] Mailer not configured — skipping account deletion email.");
+    return;
+  }
+
+  const deletedAt = new Date().toLocaleString("en-US", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
+  const supportEmail = process.env.SUPPORT_EMAIL || process.env.GMAIL_USER || "support@goticket.vn";
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Deleted - GoTicket</title>
+</head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
+
+  <!-- Wrapper -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,0.10);">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#dc2626 0%,#ef4444 50%,#f97316 100%);padding:40px 32px 32px;text-align:center;">
+            <div style="display:inline-block;background:rgba(255,255,255,0.15);border-radius:50px;padding:8px 24px;margin-bottom:20px;">
+              <span style="color:#ffffff;font-size:22px;font-weight:900;letter-spacing:2px;">GoTicket</span>
+            </div>
+         
+            <h1 style="margin:0 0 8px;color:#ffffff;font-size:26px;font-weight:800;letter-spacing:-0.5px;">
+              Your Account Has Been Deleted
+            </h1>
+            <p style="margin:0;color:rgba(255,255,255,0.85);font-size:15px;">
+              Hi <strong>${user.full_name || user.email}</strong>, your account has been successfully deleted.
+            </p>
+          </td>
+        </tr>
+
+        <!-- INFO CARD -->
+        <tr>
+          <td style="padding:32px 32px 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#fef2f2,#fff7ed);border:1.5px solid #fecaca;border-radius:16px;overflow:hidden;">
+              <tr>
+                <td style="padding:24px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding:8px 0;width:50%;">
+                        <span style="font-size:13px;color:#6b7280;">Account</span><br/>
+                        <span style="font-size:14px;font-weight:700;color:#1e293b;">${user.email}</span>
+                      </td>
+                      <td style="padding:8px 0;width:50%;">
+                        <span style="font-size:13px;color:#6b7280;">Deleted At</span><br/>
+                        <span style="font-size:14px;font-weight:700;color:#1e293b;">${deletedAt}</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- MESSAGE -->
+        <tr>
+          <td style="padding:24px 32px 0;">
+            <p style="margin:0;font-size:15px;color:#374151;line-height:1.8;">
+              All of your personal data, including your profile information, transaction history, and related records,
+              have been permanently deleted from our system as per your request.
+            </p>
+          </td>
+        </tr>
+
+        <!-- WARNING BOX -->
+        <tr>
+          <td style="padding:20px 32px 0;">
+            <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:12px;padding:14px 18px;">
+              <p style="margin:0;font-size:13px;color:#92400e;line-height:1.6;">
+                <strong>⚠️ Important:</strong> This action is irreversible. If you did not initiate this request,
+                please contact our support team immediately at
+                <a href="mailto:${supportEmail}" style="color:#92400e;font-weight:700;">${supportEmail}</a>.
+              </p>
+            </div>
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="padding:32px;text-align:center;border-top:1px solid #f1f5f9;margin-top:32px;">
+            <p style="margin:0 0 6px;font-size:15px;font-weight:800;color:#1e40af;">GoTicket</p>
+            <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6;">
+              This email was sent automatically, please do not reply directly.<br/>
+              Thank you for using GoTicket.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+
+</body>
+</html>`;
+
+  await mailer.sendMail({
+    from: `"GoTicket" <${process.env.GMAIL_USER}>`,
+    to: user.email,
+    subject: `🗑️ Your GoTicket account has been deleted`,
+    html
+  });
+
+  logger.info(`[Email] Account deletion confirmation sent to ${user.email}`);
+};

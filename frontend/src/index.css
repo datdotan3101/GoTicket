@@ -1456,8 +1456,9 @@ input[type="date"] {
 .dashboard-section-title { font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 12px; }
 .dashboard-section-title::after { content: ''; width: 40px; height: 3px; background: #4f46e5; border-radius: 99px; }
 
-.manager-match-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
+.manager-match-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 .manager-match-card { background: #ffffff; border-radius: 16px; border: 1px solid #f1f5f9; overflow: hidden; transition: all 0.3s; display: flex; flex-direction: column; }
+.manager-match-card-override { aspect-ratio: 1 / 1; justify-content: space-between; }
 .manager-match-card:hover { border-color: #e2e8f0; box-shadow: 0 12px 30px rgba(0,0,0,0.05); }
 .mmc-head { padding: 24px; background: #fafcff; border-bottom: 1px solid #f1f5f9; }
 .mmc-teams { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }

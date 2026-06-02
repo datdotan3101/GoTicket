@@ -2,12 +2,21 @@ import { Link } from 'react-router-dom'
 import { Calendar, Clock, MapPin, Map, Edit3, Settings, BarChart2, Trash2, ShoppingCart } from 'lucide-react'
 import { formatDateTime } from '../../utils/formatters'
 import { formatVND } from '../../utils/formatters'
+import { getValidImageUrl } from '../../utils/imageUtils'
+
+const DUMMY_IMAGES = [
+  'https://images.unsplash.com/photo-1518605368461-1ee0676644ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1540747913346-19e32fc3e6ed?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1508344928928-7137b29de218?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+]
 
 export default function ManagerMatchCard({ match, onOpenEdit, onDelete }) {
   const isEnded = new Date(match.match_date) < new Date()
+  const matchId = parseInt(match.match_id || match.id, 10) || 0
+  const imgUrl = match.thumbnail_url || DUMMY_IMAGES[matchId % DUMMY_IMAGES.length]
 
   return (
-    <article className="manager-match-card" style={{ position: 'relative' }}>
+    <article className="match-card manager-match-card-override" style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {isEnded ? (
         <span className="status-badge end" style={{ 
           position: 'absolute', 
@@ -42,50 +51,53 @@ export default function ManagerMatchCard({ match, onOpenEdit, onDelete }) {
           {match.status === 'published' ? 'Published' : 'Approved'}
         </span>
       )}
-      <div className="mmc-head">
-        <div className="mmc-teams">
-          <span className="mmc-team-name">{match.home_team}</span>
-          <span className="mmc-vs">vs</span>
-          <span className="mmc-team-name">{match.away_team}</span>
-        </div>
-        <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '0.75rem', fontWeight: 600 }}>
-            <Calendar size={14} />
-            <span>{formatDateTime(match.match_date, 'dd/MM/yyyy')}</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '0.75rem', fontWeight: 600 }}>
-            <Clock size={14} />
-            <span>{match.match_date ? new Date(match.match_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
-          </div>
-        </div>
-        {match.ticket_sale_open_at && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f97316', fontSize: '0.7rem', fontWeight: 700, marginTop: '8px', background: '#fff7ed', padding: '4px 8px', borderRadius: '4px', border: '1px solid #ffedd5', width: 'fit-content' }}>
-            <ShoppingCart size={12} style={{ marginBottom: '-1px' }} />
-            <span>SALE OPENS: {formatDateTime(match.ticket_sale_open_at)}</span>
-          </div>
-        )}
+      <div className="mc-image" style={{ backgroundImage: `url(${imgUrl})` }}>
       </div>
-      
-      <div className="mmc-body">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontSize: '0.85rem', fontWeight: 700 }}>
-            <MapPin size={16} color="#ef4444" />
-            <span>{match.stadium_name || 'N/A'}</span>
+
+      <div className="mc-body" style={{ flex: 1, paddingBottom: '16px' }}>
+        <div className="mc-teams">
+          <div className="mc-team">
+            <div className="mc-logo">
+              {getValidImageUrl(match.home_team_logo) ? (
+                <img src={getValidImageUrl(match.home_team_logo)} alt={match.home_team} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '12px' }} />
+              ) : (
+                match.home_team?.substring(0, 3).toUpperCase()
+              )}
+            </div>
+            <span className="mc-team-name">{match.home_team}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '0.8rem', fontWeight: 600, paddingLeft: '24px' }}>
-            <Map size={14} color="#94a3b8" />
-            <span>{match.stadium_city || 'N/A'}</span>
+          <div className="mc-vs">VS</div>
+          <div className="mc-team">
+            <div className="mc-logo">
+              {getValidImageUrl(match.away_team_logo) ? (
+                <img src={getValidImageUrl(match.away_team_logo)} alt={match.away_team} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '12px' }} />
+              ) : (
+                match.away_team?.substring(0, 3).toUpperCase()
+              )}
+            </div>
+            <span className="mc-team-name">{match.away_team}</span>
           </div>
         </div>
 
-        <div className="mmc-metric-row">
+        <div className="mc-info">
+          <div className="mc-info-row">
+            <Calendar size={14} color="#64748b" className="mc-icon" />
+            <span>{formatDateTime(match.match_date)}</span>
+          </div>
+          <div className="mc-info-row">
+            <MapPin size={14} color="#64748b" className="mc-icon" />
+            <span>{match.stadium_name || 'Grand Arena'}</span>
+          </div>
+        </div>
+
+        <div className="mmc-metric-row" style={{ marginTop: '20px', borderTop: '1px solid #f1f5f9', paddingTop: '16px', display: 'flex', justifyContent: 'space-between' }}>
           <div className="mmc-metric">
-            <span className="mmc-metric-label">Revenue Generated</span>
-            <span className="mmc-metric-value" style={{ color: '#16a34a' }}>{formatVND(match.revenue)}</span>
+            <span className="mmc-metric-label" style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>Revenue Generated</span>
+            <span className="mmc-metric-value" style={{ color: '#16a34a', fontSize: '1rem', fontWeight: 900 }}>{formatVND(match.revenue)}</span>
           </div>
           <div className="mmc-metric">
-            <span className="mmc-metric-label">Tickets Sold</span>
-            <span className="mmc-metric-value">{match.tickets_sold}</span>
+            <span className="mmc-metric-label" style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>Tickets Sold</span>
+            <span className="mmc-metric-value" style={{ fontSize: '1rem', fontWeight: 900, color: '#1e293b' }}>{match.tickets_sold}</span>
           </div>
         </div>
 

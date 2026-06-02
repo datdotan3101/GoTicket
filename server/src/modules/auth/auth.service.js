@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { query, withTransaction } from "../../config/db.js";
 import { redis } from "../../config/redis.js";
+import { sendAccountDeletionEmail } from "../../utils/email.service.js";
+import { logger } from "../../utils/logger.js";
 
 const getPublicUser = (row) => ({
   id: row.id,
@@ -239,12 +241,19 @@ export const authService = {
 
   /**
    * Delete user account (self-initiated).
+   * Fetches user info first so we can send a confirmation email after deletion.
    * Attempts a hard delete; falls back to soft delete (deactivate) if foreign key constraints prevent it.
    */
   async deleteAccount(userId) {
+    // Fetch user info before deletion so we can send the confirmation email
+    const userResult = await query(
+      "SELECT id, email, full_name FROM users WHERE id = $1",
+      [userId]
+    );
+    const user = userResult.rows[0];
+
     try {
       await query("DELETE FROM users WHERE id = $1", [userId]);
-      return { success: true };
     } catch (error) {
       // Fallback: Soft delete by setting is_active = false and obfuscating email
       // to allow the user to potentially register again with the same email if they wanted,
@@ -253,8 +262,16 @@ export const authService = {
         "UPDATE users SET is_active = false, email = email || '_deleted_' || id, updated_at = NOW() WHERE id = $1",
         [userId]
       );
-      return { success: true };
     }
+
+    // Send deletion confirmation email (fire-and-forget — do not block the response)
+    if (user) {
+      sendAccountDeletionEmail(user).catch((err) =>
+        logger.error(`[Email] Failed to send account deletion email to ${user.email}: ${err.message}`)
+      );
+    }
+
+    return { success: true };
   },
 
   async logout(token, decoded) {
