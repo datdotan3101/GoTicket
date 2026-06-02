@@ -1,28 +1,28 @@
 # GoTicket Backend (Phase 4)
 
-## Mục tiêu hiện tại
-- Dựng backend nền tảng theo clean architecture + DRY.
-- Ưu tiên dịch vụ 100% free tier.
-- Triển khai luồng ticket end-to-end: `tickets`, `payments`, `checkin`, `notifications`, `approvals`.
-- Triển khai core modules còn thiếu: `news`, `clubs`, `leagues`, `stadiums`, `users`.
+## Current Goals
+- Build the core backend using clean architecture + DRY.
+- Prioritize 100% free tier services.
+- Implement end-to-end ticket flow: `tickets`, `payments`, `checkin`, `notifications`, `approvals`.
+- Implement missing core modules: `news`, `clubs`, `leagues`, `stadiums`, `users`.
 
-## Cách chạy local
-1. Cài dependency:
+## How to run locally
+1. Install dependencies:
    ```bash
    npm install
    ```
-2. Tạo `.env` từ `.env.example`.
-3. Chạy lần lượt migrations:
+2. Create `.env` from `.env.example`.
+3. Run migrations sequentially:
    - `database/migrations/001_init_core.sql`
    - `database/migrations/002_phase2_ticketing.sql`
    - `database/migrations/003_phase3_publish_support.sql`
    - `database/migrations/004_phase4_core_modules.sql`
-4. Chạy server:
+4. Start the server:
    ```bash
    npm run dev
    ```
 
-## API đã có
+## Available APIs
 - `GET /api/health`
 - `POST /api/auth/register`
 - `POST /api/auth/login`
@@ -72,15 +72,15 @@
 - `PUT /api/users/:id/role` (admin)
 - `PUT /api/users/:id/active` (admin)
 
-## Lưu ý
+## Notes
 - Stripe local webhook: `stripe listen --forward-to localhost:5000/api/payments/webhook`
-- Route webhook cần `STRIPE_WEBHOOK_SECRET` đúng từ Stripe CLI/dashboard.
-- QR token được ký bằng `QR_JWT_SECRET` (fallback `JWT_SECRET` nếu chưa set).
-- Socket.IO events đã có:
+- The webhook route requires the correct `STRIPE_WEBHOOK_SECRET` from the Stripe CLI/dashboard.
+- QR tokens are signed using `QR_JWT_SECRET` (falls back to `JWT_SECRET` if not set).
+- Available Socket.IO events:
   - `join:match` (client -> server)
   - `join:user` (client -> server)
   - `seat:booked`, `seat:checked_in`, `checkin:stats`, `notification:new` (server -> client)
-- Cron jobs chạy mỗi phút khi server start:
+- Cron jobs running every minute when the server starts:
   - Scheduled publish (`matches`, `news`)
-  - Match reminder email (60 phút trước trận)
-- Luồng đăng ký đã tạo approval `user_account` để admin duyệt tài khoản mới.
+  - Match reminder email (60 minutes before the match)
+- The registration flow has created a `user_account` approval for the admin to approve new accounts.
