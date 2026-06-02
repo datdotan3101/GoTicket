@@ -5,3 +5,9 @@ GoTicket_Backend.md
 GoTicket_Frontend.md 
 server/node_modules/ 
 server/.env
+server/query_clubs.js
+server/query_matches.js
+server/scratch.js
+server/stripe.exe
+server/test-ai.js
+server/test_api.js
