@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { authService } from '../services/authService'
@@ -6,52 +6,50 @@ import { useAuth } from '../hooks/useAuth'
 import { APP_ROUTES } from '../constants/routes'
 import { getRedirectPath } from '../utils/authUtils'
 
+// Module-level flag: Google GSI must only be initialized ONCE per page load.
+// Re-calling initialize() causes "called multiple times" warning and 500 errors.
+let gsiInitialized = false
+
 export default function GoogleAuthButton() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [isGsiLoaded, setIsGsiLoaded] = useState(false)
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+  const containerRef = useRef(null)
 
-  // Remove conditional return here to avoid violating the Rules of Hooks
-  // 1. Handler for the credential response — receives ID Token from Google and sends it to the backend
+  // Store the latest callback values in a ref so the GSI callback always has
+  // a fresh closure WITHOUT needing to re-initialize GSI on every render.
+  const authHandlerRef = useRef(null)
+  authHandlerRef.current = { login, navigate, locationState: location.state }
+
   const handleCredentialResponse = useCallback(async (response) => {
+    const { login: _login, navigate: _navigate, locationState } = authHandlerRef.current
     const loadingToast = toast.loading('Authenticating with Google...')
     try {
       const res = await authService.googleLogin({ idToken: response.credential })
       const payload = res.data?.data ?? res.data
-      
-      // Save token and user info to store
-      login({ token: payload.accessToken, user: payload.user })
-      
+      _login({ token: payload.accessToken, user: payload.user })
       toast.dismiss(loadingToast)
       toast.success('Google Sign-in successful!')
-
-      // Redirect user to the appropriate page
-      const defaultPath = location.state?.from?.pathname ?? APP_ROUTES.HOME
+      const defaultPath = locationState?.from?.pathname ?? APP_ROUTES.HOME
       const targetPath = getRedirectPath(payload.user, defaultPath)
-      navigate(targetPath, { replace: true })
+      _navigate(targetPath, { replace: true })
     } catch (error) {
       console.error('Google Auth Error:', error)
       const errorMsg = error.response?.data?.message ?? 'Google Sign-in failed.'
       toast.dismiss(loadingToast)
       toast.error(errorMsg)
     }
-  }, [login, navigate, location.state]);
+  }, []) // ← stable: no deps needed because we read from authHandlerRef
 
-  // 2. Dynamically load the Google Identity Services script and initialize
   useEffect(() => {
-    const initGoogleSignIn = () => {
+    if (!clientId) return
+
+    const initGSI = () => {
       if (!window.google) return
 
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
-      if (!clientId) {
-        console.warn('Google Client ID is missing. Please set VITE_GOOGLE_CLIENT_ID in your .env file.')
-        return
-      }
-
-      try {
-        // Initialize GIS Client
+      // FIX 2: Only initialize once — re-calling causes "multiple times" warning + 500 errors
+      if (!gsiInitialized) {
         window.google.accounts.id.initialize({
           client_id: clientId,
           callback: handleCredentialResponse,
@@ -59,65 +57,63 @@ export default function GoogleAuthButton() {
           cancel_on_tap_outside: true,
           locale: 'en',
         })
+        gsiInitialized = true
+      }
 
-        // Render the official Google branded button
-        const btnContainer = document.getElementById('google-signin-button-container')
-        if (btnContainer) {
-          window.google.accounts.id.renderButton(btnContainer, {
-            theme: 'outline',
-            size: 'large',
-            width: '100%',
-            text: 'continue_with',
-            shape: 'rectangular',
-          })
-          setIsGsiLoaded(true)
-        }
-      } catch (err) {
-        console.error('Error initializing Google GIS:', err)
+      // FIX 1: width must be a pixel number, not '100%' — measure the container
+      const container = containerRef.current
+      if (container) {
+        // Use the container's actual rendered width (or fall back to 400px)
+        const px = container.offsetWidth || 400
+        window.google.accounts.id.renderButton(container, {
+          theme: 'outline',
+          size: 'large',
+          width: px,           // ← number, not string with '%'
+          text: 'continue_with',
+          shape: 'rectangular',
+        })
       }
     }
 
-    // If script is already loaded in the DOM
     if (window.google) {
-      initGoogleSignIn()
+      initGSI()
     } else {
-      // Auto-insert GIS script into DOM if it doesn't exist yet
-      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]')
-      if (!existingScript) {
+      const existing = document.querySelector('script[src="https://accounts.google.com/gsi/client"]')
+      if (!existing) {
         const script = document.createElement('script')
         script.src = 'https://accounts.google.com/gsi/client'
         script.async = true
         script.defer = true
-        script.onload = initGoogleSignIn
+        script.onload = initGSI
         document.body.appendChild(script)
       } else {
-        existingScript.addEventListener('load', initGoogleSignIn)
+        existing.addEventListener('load', initGSI)
       }
     }
-  }, [handleCredentialResponse])
+  }, [clientId, handleCredentialResponse])
 
   if (!clientId) {
     return (
-      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <button 
-          type="button" 
-          className="btn-google" 
-          disabled 
-          style={{ 
-            width: '100%', 
-            color: '#E53E3E', 
+      <div style={{ width: '100%' }}>
+        <button
+          type="button"
+          className="btn-google"
+          disabled
+          style={{
+            width: '100%',
+            color: '#E53E3E',
             borderColor: '#FEB2B2',
             backgroundColor: '#FFF5F5',
-            opacity: 0.9, 
+            opacity: 0.9,
             cursor: 'not-allowed',
-            fontWeight: '600',
+            fontWeight: 600,
             padding: '12px',
             borderRadius: '6px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '8px',
-            fontSize: '0.9rem'
+            fontSize: '0.9rem',
           }}
         >
           ⚠️ VITE_GOOGLE_CLIENT_ID is not configured in .env
@@ -127,35 +123,10 @@ export default function GoogleAuthButton() {
   }
 
   return (
-    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      {/* Google Sign In container - Always stable in DOM, show/hide via CSS */}
-      <div 
-        id="google-signin-button-container" 
-        style={{ 
-          width: '100%', 
-          minHeight: '44px', 
-          display: isGsiLoaded ? 'flex' : 'none', 
-          justifyContent: 'center' 
-        }}
-      />
-
-      {/* Temporary loading button - Completely separated so React can safely remove it */}
-      {!isGsiLoaded && (
-        <button 
-          type="button" 
-          className="btn-google" 
-          disabled 
-          style={{ width: '100%', opacity: 0.6, cursor: 'not-allowed' }}
-        >
-          <svg width="20" height="20" viewBox="0 0 48 48" style={{ marginRight: '8px' }}>
-            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-          </svg>
-          Loading Google Sign In...
-        </button>
-      )}
+    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+      {/* ref lets us measure the real pixel width before calling renderButton */}
+      <div ref={containerRef} style={{ width: '100%', minHeight: '44px' }} />
     </div>
   )
 }
+
