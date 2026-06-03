@@ -19,6 +19,8 @@ import { formatDateTime } from '../../utils/formatters'
 import '../../common/AdminStyles.css'
 import FormModal from '../../components/ui/FormModal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
+import FileUploadField from '../../components/ui/FileUploadField'
+import KebabMenu from '../../components/ui/KebabMenu'
 
 export default function LeagueManagePage() {
   const [leagues, setLeagues] = useState([])
@@ -181,15 +183,20 @@ export default function LeagueManagePage() {
       ) : (
         <div className="league-grid">
           {filteredLeagues.map((league) => (
-            <article className="league-card" key={league.id}>
-              <div className="league-card-banner">
-                <div className="league-card-logo-wrap">
-                  {league.logo_url ? (
-                    <img src={league.logo_url} alt={league.name} className="league-card-logo" />
-                  ) : (
+            <article className="league-card" key={league.id} style={{ overflow: 'visible' }}>
+              <div 
+                className="league-card-banner" 
+                style={{ 
+                  ...(league.logo_url ? { background: `url(${league.logo_url}) center/cover` } : {}),
+                  display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: '12px'
+                }}
+              >
+                {!league.logo_url && (
+                  <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Trophy size={32} color="#cbd5e1" />
-                  )}
-                </div>
+                  </div>
+                )}
+                <KebabMenu variant="glass" onEdit={() => handleOpenModal(league)} onDelete={() => { setLeagueToDelete(league); setIsDeleteModalOpen(true); }} />
               </div>
               <div className="league-card-body">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -221,17 +228,6 @@ export default function LeagueManagePage() {
                     <Calendar size={14} />
                     <span>End: {formatDateTime(league.end_date, 'dd/MM/yyyy')}</span>
                   </div>
-                </div>
-              </div>
-              
-              <div className="league-card-footer">
-                <div className="league-actions">
-                  <button className="btn-icon" onClick={() => handleOpenModal(league)}>
-                    <Edit2 size={16} />
-                  </button>
-                  <button className="btn-icon delete" onClick={() => { setLeagueToDelete(league); setIsDeleteModalOpen(true); }}>
-                    <Trash2 size={16} />
-                  </button>
                 </div>
               </div>
             </article>
@@ -285,15 +281,14 @@ export default function LeagueManagePage() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label className="admin-label">Logo URL</label>
-          <input 
-            placeholder="https://example.com/logo.png" 
-            value={form.logoUrl} 
-            onChange={(e) => setForm((p) => ({ ...p, logoUrl: e.target.value }))}
-            className="admin-input"
-          />
-        </div>
+        <FileUploadField
+          label="Banner Image"
+          value={form.logoUrl}
+          onChange={(url) => setForm((p) => ({ ...p, logoUrl: url }))}
+          previewType="banner"
+          icon="🖼️"
+          placeholder="Click or drag & drop banner image"
+        />
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

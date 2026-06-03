@@ -3,6 +3,7 @@ import { Calendar, Clock, MapPin, Map, Edit3, Settings, BarChart2, Trash2, Shopp
 import { formatDateTime } from '../../utils/formatters'
 import { formatVND } from '../../utils/formatters'
 import { getValidImageUrl } from '../../utils/imageUtils'
+import KebabMenu from '../../components/ui/KebabMenu'
 
 const DUMMY_IMAGES = [
   'https://images.unsplash.com/photo-1518605368461-1ee0676644ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
@@ -15,14 +16,31 @@ export default function ManagerMatchCard({ match, onOpenEdit, onDelete }) {
   const matchId = parseInt(match.match_id || match.id, 10) || 0
   const imgUrl = match.thumbnail_url || DUMMY_IMAGES[matchId % DUMMY_IMAGES.length]
 
+  const isEditable = !['approved', 'published'].includes(match.status);
+  const isDeletable = ['draft', 'pending_review', 'rejected'].includes(match.status);
+
+  const menuItems = [];
+  if (isEditable) {
+    menuItems.push({
+      label: 'Stands',
+      icon: <Settings size={16} />,
+      to: `/manager/matches/${match.match_id}/stand-config`
+    });
+  }
+  menuItems.push({
+    label: 'Analytics',
+    icon: <BarChart2 size={16} />,
+    to: `/manager/matches/${match.match_id}/analytics`
+  });
+
   return (
     <article className="match-card manager-match-card-override" style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {isEnded ? (
         <span className="status-badge end" style={{ 
           position: 'absolute', 
           top: '12px', 
-          right: '12px', 
-          zIndex: 1,
+          left: '12px', 
+          zIndex: 20,
           boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
         }}>
           The End
@@ -31,8 +49,8 @@ export default function ManagerMatchCard({ match, onOpenEdit, onDelete }) {
         <span className="status-badge" style={{ 
           position: 'absolute', 
           top: '12px', 
-          right: '12px', 
-          zIndex: 1,
+          left: '12px', 
+          zIndex: 20,
           background: '#f59e0b',
           color: '#fff',
           boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
@@ -43,18 +61,25 @@ export default function ManagerMatchCard({ match, onOpenEdit, onDelete }) {
         <span className="status-badge approved" style={{ 
           position: 'absolute', 
           top: '12px', 
-          right: '12px', 
-          zIndex: 1,
+          left: '12px', 
+          zIndex: 20,
           background: '#10b981',
           boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
         }}>
           {match.status === 'published' ? 'Published' : 'Approved'}
         </span>
       )}
-      <div className="mc-image" style={{ backgroundImage: `url(${imgUrl})` }}>
-      </div>
 
-      <div className="mc-body" style={{ flex: 1, paddingBottom: '16px' }}>
+      <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 20 }}>
+        <KebabMenu 
+          variant="glass" 
+          onEdit={isEditable ? () => onOpenEdit(match) : undefined} 
+          onDelete={isDeletable ? () => onDelete(match.match_id) : undefined} 
+          customItems={menuItems} 
+        />
+      </div>
+      <div className="mc-image" style={{ backgroundImage: `url(${imgUrl})` }}>
+        <div className="mc-image-overlay"></div>
         <div className="mc-teams">
           <div className="mc-team">
             <div className="mc-logo">
@@ -78,12 +103,20 @@ export default function ManagerMatchCard({ match, onOpenEdit, onDelete }) {
             <span className="mc-team-name">{match.away_team}</span>
           </div>
         </div>
+      </div>
 
+      <div className="mc-body" style={{ flex: 1, paddingBottom: '16px', paddingTop: '0' }}>
         <div className="mc-info">
           <div className="mc-info-row">
             <Calendar size={14} color="#64748b" className="mc-icon" />
             <span>{formatDateTime(match.match_date)}</span>
           </div>
+          {match.ticket_sale_open_at && (
+            <div className="mc-info-row">
+              <ShoppingCart size={14} color="#f59e0b" className="mc-icon" />
+              <span style={{ color: '#b45309', fontWeight: 600 }}>Sale opens: {formatDateTime(match.ticket_sale_open_at)}</span>
+            </div>
+          )}
           <div className="mc-info-row">
             <MapPin size={14} color="#64748b" className="mc-icon" />
             <span>{match.stadium_name || 'Grand Arena'}</span>
@@ -106,38 +139,6 @@ export default function ManagerMatchCard({ match, onOpenEdit, onDelete }) {
             {match.status.replace('_', ' ').toUpperCase()}
           </span>
         </div>
-      </div>
-
-      <div className="mmc-footer">
-        {!['approved', 'published'].includes(match.status) && (
-          <>
-            <button 
-              className="mmc-btn" 
-              onClick={() => onOpenEdit(match)}
-            >
-              <Edit3 size={14} style={{ marginBottom: '4px', display: 'block', margin: '0 auto 4px' }} />
-              Edit
-            </button>
-            <Link className="mmc-btn" to={`/manager/matches/${match.match_id}/stand-config`}>
-              <Settings size={14} style={{ marginBottom: '4px', display: 'block', margin: '0 auto 4px' }} />
-              Stands
-            </Link>
-          </>
-        )}
-        <Link className="mmc-btn mmc-btn-primary" to={`/manager/matches/${match.match_id}/analytics`} style={{ flex: ['approved', 'published'].includes(match.status) ? 1 : 'unset' }}>
-          <BarChart2 size={14} style={{ marginBottom: '4px', display: 'block', margin: '0 auto 4px' }} />
-          Analytics
-        </Link>
-        {['draft', 'pending_review', 'rejected'].includes(match.status) && (
-          <button 
-            className="mmc-btn" 
-            onClick={() => onDelete(match.match_id)}
-            style={{ color: '#ef4444' }}
-          >
-            <Trash2 size={14} style={{ marginBottom: '4px', display: 'block', margin: '0 auto 4px' }} />
-            Delete
-          </button>
-        )}
       </div>
     </article>
   )

@@ -27,11 +27,11 @@ export default function ConfirmModal({
   if (!isOpen) return null
 
   const variantColors = {
-    danger: { bg: '#fee2e2', icon: '#ef4444', btn: '#ef4444', emoji: '⚠️' },
-    warning: { bg: '#fef3c7', icon: '#f59e0b', btn: '#f59e0b', emoji: '⚡' },
-    primary: { bg: '#e0e7ff', icon: '#4f46e5', btn: '#4f46e5', emoji: '💾' },
-    success: { bg: '#dcfce7', icon: '#22c55e', btn: '#22c55e', emoji: '✅' },
-    default: { bg: '#f1f5f9', icon: '#64748b', btn: '#0f172a', emoji: 'ℹ️' }
+    danger: { bg: '#fee2e2', icon: '#ef4444', btn: '#ef4444' },
+    warning: { bg: '#fef3c7', icon: '#f59e0b', btn: '#f59e0b' },
+    primary: { bg: '#e0e7ff', icon: '#4f46e5', btn: '#4f46e5' },
+    success: { bg: '#dcfce7', icon: '#22c55e', btn: '#22c55e' },
+    default: { bg: '#f1f5f9', icon: '#64748b', btn: '#0f172a' }
   }
 
   const colors = variantColors[variant] || variantColors.danger
@@ -72,22 +72,7 @@ export default function ConfirmModal({
           </div>
         )}
 
-        <div style={{
-          width: '64px',
-          height: '64px',
-          background: colors.bg,
-          color: colors.icon,
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 20px',
-          fontSize: '1.5rem'
-        }}>
-          {colors.emoji}
-        </div>
-
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '12px', color: '#0f172a' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '12px', color: '#0f172a' }}>
           {title}
         </h2>
         <div style={{ color: '#64748b', lineHeight: 1.5, marginBottom: '28px', fontSize: '0.95rem' }}>

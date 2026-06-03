@@ -5,7 +5,7 @@
  * Duplicate Add/Edit modal → UserFormModal (mode prop)
  * Header → AdminPageHeader shared component
  */
-import { Search, UserPlus, Edit2, Lock, Unlock, TrendingUp, Users } from 'lucide-react'
+import { Search, UserPlus, Edit2, Lock, Unlock, TrendingUp, Users, Trash2 } from 'lucide-react'
 import { ROLES } from '../../../constants/roles'
 import ConfirmModal from '../../../components/ui/ConfirmModal'
 import AdminPageHeader from '../shared/AdminPageHeader'
@@ -152,10 +152,13 @@ export default function UserManagePage() {
                       </button>
                       <button
                         onClick={() => u.openConfirmModal(user)}
-                        style={{ background: 'none', border: 'none', color: user.is_active ? '#64748b' : '#ef4444', cursor: 'pointer', padding: '8px' }}
+                        style={{ background: 'none', border: 'none', color: user.is_active ? '#64748b' : '#ef4444', cursor: 'pointer', padding: '8px', marginRight: '4px' }}
                         title={user.is_active ? 'Lock Account' : 'Unlock Account'}
                       >
                         {user.is_active ? <Lock size={16} /> : <Unlock size={16} />}
+                      </button>
+                      <button onClick={() => u.openDeleteConfirmModal(user)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '8px' }} title="Delete">
+                        <Trash2 size={16} />
                       </button>
                     </td>
                   </tr>
@@ -176,12 +179,25 @@ export default function UserManagePage() {
       {/* Modals */}
       <ConfirmModal
         isOpen={u.confirmModal.isOpen}
-        onClose={() => u.setConfirmModal({ isOpen: false, user: null })}
-        onConfirm={() => { u.toggleActive(u.confirmModal.user); u.setConfirmModal({ isOpen: false, user: null }) }}
-        title={`Confirm ${u.confirmModal.user?.is_active ? 'Lock' : 'Unlock'}`}
-        message={<>Are you sure you want to {u.confirmModal.user?.is_active ? 'lock' : 'unlock'} the account for <strong>{u.confirmModal.user?.full_name || u.confirmModal.user?.email}</strong>?</>}
-        confirmLabel={`Yes, ${u.confirmModal.user?.is_active ? 'Lock' : 'Unlock'} it`}
-        variant={u.confirmModal.user?.is_active ? 'danger' : 'success'}
+        onClose={() => u.setConfirmModal({ isOpen: false, user: null, type: 'toggle' })}
+        onConfirm={() => { 
+          if (u.confirmModal.type === 'delete') {
+            u.handleDeleteUser(u.confirmModal.user)
+          } else {
+            u.toggleActive(u.confirmModal.user)
+          }
+          u.setConfirmModal({ isOpen: false, user: null, type: 'toggle' }) 
+        }}
+        title={u.confirmModal.type === 'delete' ? 'Delete Account' : `Confirm ${u.confirmModal.user?.is_active ? 'Lock' : 'Unlock'}`}
+        message={
+          u.confirmModal.type === 'delete' ? (
+            <>Are you sure you want to completely delete the account for <strong>{u.confirmModal.user?.full_name || u.confirmModal.user?.email}</strong>? This action cannot be undone.</>
+          ) : (
+            <>Are you sure you want to {u.confirmModal.user?.is_active ? 'lock' : 'unlock'} the account for <strong>{u.confirmModal.user?.full_name || u.confirmModal.user?.email}</strong>?</>
+          )
+        }
+        confirmLabel={u.confirmModal.type === 'delete' ? 'Yes, Delete it' : `Yes, ${u.confirmModal.user?.is_active ? 'Lock' : 'Unlock'} it`}
+        variant={u.confirmModal.type === 'delete' ? 'danger' : (u.confirmModal.user?.is_active ? 'danger' : 'success')}
       />
 
       {/* DRY: single UserFormModal replaces two identical modals (Add + Edit) */}

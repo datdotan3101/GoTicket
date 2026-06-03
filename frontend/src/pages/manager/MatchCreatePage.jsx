@@ -14,6 +14,7 @@ import { format } from 'date-fns'
 import { validateForm } from '../../utils/validator'
 import { redistributeStadiumSeats } from '../../utils/seatDistribution'
 import Select from 'react-select'
+import { Info, Image as ImageIcon, UploadCloud, Rocket, ArrowRight, CheckCircle } from 'lucide-react'
 
 const STADIUM_COLUMNS = [
   { id: 'A1', stand: 'A', tiers: ['T1', 'T2'] },
@@ -259,11 +260,7 @@ export default function MatchCreatePage() {
 
   return (
     <section className="manager-create-page" style={{ padding: '60px 20px' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto 40px auto', textAlign: 'center' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', background: '#fef2f2', color: '#ef4444', padding: '6px 16px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800, marginBottom: '20px', border: '1px solid #fee2e2' }}>
-          <span style={{ width: '8px', height: '8px', background: '#ef4444', borderRadius: '50%', marginRight: '8px', display: 'inline-block' }}></span>
-          SYSTEM OPERATIONAL
-        </div>
+      <div style={{ width: '100%', maxWidth: '1100px', margin: '0 auto 40px auto', textAlign: 'center' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#1e1b4b', marginBottom: '12px', letterSpacing: '-0.02em' }}>Create New Match</h1>
         <p style={{ fontSize: '1.1rem', color: '#64748b', maxWidth: '600px', margin: '0 auto 40px auto', lineHeight: '1.6' }}>
           Configure your tournament event details, stadium seating, and dynamic pricing in two simple steps.
@@ -289,17 +286,17 @@ export default function MatchCreatePage() {
 
       <div className="mc-step-content" style={{ padding: '40px 0' }}>
         {step === 1 && (
-          <div style={{ maxWidth: '1100px', margin: '0 auto', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: '40px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' }}>
-            <div className="mc-form-step" style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '40px', alignItems: 'start' }}>
-              <div>
+          <div style={{ width: '100%', maxWidth: '1100px', margin: '0 auto', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: '40px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' }}>
+            <div className="mc-form-step" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: '40px', alignItems: 'start' }}>
+              <div style={{ minWidth: 0 }}>
                 <div style={{ marginBottom: '32px', borderBottom: '1px solid #f1f5f9', paddingBottom: '16px' }}>
                   <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: '#1e1b4b', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ color: '#f97316' }}>ⓘ</span> Match Information
+                    Match Information
                   </h3>
                   <p style={{ margin: '4px 0 0 28px', fontSize: '0.85rem', color: '#64748b' }}>Enter the basic tournament and matchup details.</p>
                 </div>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '24px', marginBottom: '24px' }}>
                   <div className="mc-input-group">
                     <label>LEAGUE NAME</label>
                     <select className="mc-nice-input" value={form.leagueId} onChange={e => {setForm(p => ({...p, leagueId: e.target.value}))}}>
@@ -316,7 +313,7 @@ export default function MatchCreatePage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '24px', marginBottom: '24px' }}>
                   <div className="mc-input-group">
                     <label>MATCH DATE & TIME</label>
                     <div style={{ borderRadius: "8px" }}>
@@ -351,8 +348,8 @@ export default function MatchCreatePage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                  <div className="mc-input-group">
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '24px' }}>
+                  <div className="mc-input-group" style={{ minWidth: 0 }}>
                     <label>HOME TEAM</label>
                     <Select
                       options={clubOptions}
@@ -363,8 +360,11 @@ export default function MatchCreatePage() {
                       placeholder="Select home team"
                       isClearable
                       isSearchable
+                      menuPortalTarget={document.body}
+                      menuPosition="fixed"
                       noOptionsMessage={() => form.leagueId ? 'No teams found' : 'Please select a league first'}
                       styles={{
+                        container: (base) => ({ ...base, width: '100%' }),
                         control: (base) => ({
                           ...base,
                           borderColor: '#e2e8f0',
@@ -372,11 +372,14 @@ export default function MatchCreatePage() {
                           minHeight: '44px',
                           boxShadow: 'none',
                           '&:hover': { borderColor: '#cbd5e1' }
-                        })
+                        }),
+                        valueContainer: (base) => ({ ...base, overflow: 'hidden', flexWrap: 'nowrap' }),
+                        singleValue: (base) => ({ ...base, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }),
+                        menuPortal: (base) => ({ ...base, zIndex: 9999 })
                       }}
                     />
                   </div>
-                  <div className="mc-input-group">
+                  <div className="mc-input-group" style={{ minWidth: 0 }}>
                     <label>AWAY TEAM</label>
                     <Select
                       options={clubOptions}
@@ -387,8 +390,11 @@ export default function MatchCreatePage() {
                       placeholder="Select away team"
                       isClearable
                       isSearchable
+                      menuPortalTarget={document.body}
+                      menuPosition="fixed"
                       noOptionsMessage={() => form.leagueId ? 'No teams found' : 'Please select a league first'}
                       styles={{
+                        container: (base) => ({ ...base, width: '100%' }),
                         control: (base) => ({
                           ...base,
                           borderColor: '#e2e8f0',
@@ -396,7 +402,10 @@ export default function MatchCreatePage() {
                           minHeight: '44px',
                           boxShadow: 'none',
                           '&:hover': { borderColor: '#cbd5e1' }
-                        })
+                        }),
+                        valueContainer: (base) => ({ ...base, overflow: 'hidden', flexWrap: 'nowrap' }),
+                        singleValue: (base) => ({ ...base, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }),
+                        menuPortal: (base) => ({ ...base, zIndex: 9999 })
                       }}
                     />
                   </div>
@@ -411,7 +420,7 @@ export default function MatchCreatePage() {
               <div>
                 <div style={{ marginBottom: '20px' }}>
                   <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#1e1b4b', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ color: '#f97316' }}>🖼️</span> Featured Banner
+                    Featured Banner
                   </h3>
                 </div>
                 
@@ -431,8 +440,8 @@ export default function MatchCreatePage() {
                       </button>
                     </div>
                   ) : (
-                    <div style={{ cursor: 'pointer', padding: '40px' }} onClick={() => document.getElementById('banner-upload').click()}>
-                      <div style={{ color: '#f97316', fontSize: '3rem', marginBottom: '12px' }}>📄</div>
+                    <div style={{ cursor: 'pointer', padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center' }} onClick={() => document.getElementById('banner-upload').click()}>
+                      <UploadCloud size={48} color="#cbd5e1" style={{ marginBottom: '12px' }} />
                       <div style={{ fontWeight: 800, color: '#475569', fontSize: '1rem' }}>Upload Banner</div>
                       <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '4px' }}>Recommended: 1280x720 (16:9)</div>
                     </div>
@@ -457,7 +466,7 @@ export default function MatchCreatePage() {
 
         {step === 2 && (
           <div className="mc-form-step">
-            <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            <div style={{ width: '100%', maxWidth: '1100px', margin: '0 auto' }}>
               <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: '40px', marginBottom: '30px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                 <div style={{ marginBottom: '32px', borderBottom: '1px solid #f1f5f9', paddingBottom: '20px' }}>
                   <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 900, color: '#1e1b4b' }}>Stadium Configuration</h2>
@@ -550,14 +559,14 @@ export default function MatchCreatePage() {
           <button className="mc-btn mc-btn-ghost" onClick={() => navigate(-1)}>Cancel</button>
           <div className="mc-footer-right">
             {step > 1 && <button className="mc-btn mc-btn-secondary" onClick={() => setStep(step - 1)}>Back</button>}
-            {step === 1 && <button className="mc-btn mc-btn-primary" onClick={() => {
+            {step === 1 && <button className="mc-btn mc-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => {
               if(validateStep(1)) {
                 setStep(2)
               }
-            }}>Configure Stadium ➔</button>}
-            {step === 2 && <button className="mc-btn mc-btn-primary" onClick={() => {
+            }}>Configure Stadium <ArrowRight size={18} /></button>}
+            {step === 2 && <button className="mc-btn mc-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => {
               if(validateStep(2)) setShowConfirmPopup(true)
-            }}>Review & Publish ✨</button>}
+            }}>Review & Publish <CheckCircle size={18} /></button>}
           </div>
         </div>
       </div>
@@ -566,7 +575,9 @@ export default function MatchCreatePage() {
         <div className="modal-overlay" onClick={() => setShowConfirmPopup(false)}>
           <div className="modal-content" style={{ maxWidth: '700px', padding: '40px' }} onClick={e => e.stopPropagation()}>
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <div style={{ width: '80px', height: '80px', background: '#f0fdf4', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto', fontSize: '2.5rem' }}>🚀</div>
+              <div style={{ width: '80px', height: '80px', background: '#f0fdf4', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto', boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)' }}>
+                <Rocket size={40} color="#10b981" />
+              </div>
               <h2 className="modal-title" style={{ fontSize: '1.75rem' }}>Final Confirmation</h2>
               <p style={{ color: '#64748b', marginTop: '8px' }}>Please review the seating ratio and pricing before submission.</p>
             </div>
@@ -615,8 +626,8 @@ export default function MatchCreatePage() {
 
             <div style={{ display: 'flex', gap: '16px' }}>
               <button className="mc-btn mc-btn-secondary" style={{ flex: 1, padding: '16px' }} onClick={() => setShowConfirmPopup(false)}>Go Back</button>
-              <button className="mc-btn mc-btn-primary" style={{ flex: 2, padding: '16px' }} onClick={handleCreate} disabled={isSubmitting}>
-                {isSubmitting ? 'Submitting...' : 'Confirm & Publish ✨'}
+              <button className="mc-btn mc-btn-primary" style={{ flex: 2, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={handleCreate} disabled={isSubmitting}>
+                {isSubmitting ? 'Submitting...' : <>Confirm & Publish <CheckCircle size={18} /></>}
               </button>
             </div>
           </div>

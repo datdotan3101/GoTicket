@@ -1,4 +1,4 @@
-import { query } from "../../config/db.js";
+import { query, withTransaction } from "../../config/db.js";
 import { getPagination, buildPaginatedResponse } from "../../utils/pagination.js";
 import { ROLES } from "../../constants/roles.js";
 import bcrypt from "bcryptjs";
@@ -197,5 +197,40 @@ export const usersService = {
       [email, fullName, role, effectiveClubId, id]
     );
     return result.rows[0] || null;
+  },
+
+  /**
+   * Delete a user (Admin only).
+   */
+  async remove(id) {
+    return await withTransaction(async (client) => {
+      // 1. Prevent deleting users who have purchased tickets
+      const orders = await client.query(`SELECT id FROM orders WHERE user_id = $1 LIMIT 1`, [id]);
+      if (orders.rows.length > 0) {
+        const err = new Error("Cannot delete user with existing ticket orders.");
+        err.status = 400;
+        throw err;
+      }
+      const tickets = await client.query(`SELECT id FROM tickets WHERE user_id = $1 LIMIT 1`, [id]);
+      if (tickets.rows.length > 0) {
+        const err = new Error("Cannot delete user with existing tickets.");
+        err.status = 400;
+        throw err;
+      }
+
+      // 2. Set NULL for references created by this user
+      await client.query(`UPDATE matches SET created_by = NULL WHERE created_by = $1`, [id]);
+      await client.query(`UPDATE approvals SET submitted_by = NULL WHERE submitted_by = $1`, [id]);
+      await client.query(`UPDATE approvals SET reviewed_by = NULL WHERE reviewed_by = $1`, [id]);
+      await client.query(`UPDATE news SET author_id = NULL WHERE author_id = $1`, [id]);
+      await client.query(`UPDATE sports SET created_by = NULL WHERE created_by = $1`, [id]);
+      
+      // 3. Clear cart
+      await client.query(`DELETE FROM carts WHERE user_id = $1`, [id]);
+      
+      // 4. Delete user
+      const result = await client.query(`DELETE FROM users WHERE id = $1 RETURNING id`, [id]);
+      return result.rows[0] || null;
+    });
   }
 };

@@ -37,6 +37,7 @@ export const APP_ROUTES = {
   ADMIN_SPORTS: '/admin/sports',
   ADMIN_LEAGUES: '/admin/leagues',
   ADMIN_CLUBS: '/admin/clubs',
+  ADMIN_STADIUMS: '/admin/stadiums',
   ADMIN_REVENUE_REPORT: '/admin/revenue-report',
   ADMIN_MATCHES: '/admin/matches',
 }

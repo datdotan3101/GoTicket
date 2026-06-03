@@ -10,7 +10,8 @@ import {
   Medal,
   PieChart,
   Shield,
-  UserCog
+  UserCog,
+  MapPin
 } from 'lucide-react'
 import DashboardLayout from './DashboardLayout'
 
@@ -52,6 +53,7 @@ export default function AdminLayout() {
       title: 'SPORT MANAGEMENT',
       items: [
         { name: 'Matches', path: APP_ROUTES.ADMIN_MATCHES, icon: <Trophy size={22} strokeWidth={1.25} />, badge: pendingCount },
+        { name: 'Stadiums', path: APP_ROUTES.ADMIN_STADIUMS, icon: <MapPin size={22} strokeWidth={1.25} /> },
         { name: 'Clubs', path: APP_ROUTES.ADMIN_CLUBS, icon: <Shield size={22} strokeWidth={1.25} /> },
         { name: 'Sports', path: APP_ROUTES.ADMIN_SPORTS, icon: <Activity size={22} strokeWidth={1.25} /> },
         { name: 'Leagues', path: APP_ROUTES.ADMIN_LEAGUES, icon: <Medal size={22} strokeWidth={1.25} /> }

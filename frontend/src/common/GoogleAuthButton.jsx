@@ -116,7 +116,7 @@ export default function GoogleAuthButton() {
             fontSize: '0.9rem',
           }}
         >
-          ⚠️ VITE_GOOGLE_CLIENT_ID is not configured in .env
+          VITE_GOOGLE_CLIENT_ID is not configured in .env
         </button>
       </div>
     )

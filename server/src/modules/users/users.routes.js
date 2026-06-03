@@ -208,8 +208,27 @@ router.put("/:id/active", auth, requireRoles(ROLES.ADMIN), toggleUserActive);
  *       409:
  *         description: "Email already exists"
  */
-import { updateUser } from "./users.controller.js";
+import { updateUser, deleteUser } from "./users.controller.js";
 import { updateUserRules } from "./users.validation.js";
 router.put("/:id", auth, requireRoles(ROLES.ADMIN), runValidation(updateUserRules), updateUser);
+
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   delete:
+ *     summary: "Delete user (admin)"
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: "Deleted successfully"
+ *       404:
+ *         description: "User not found"
+ */
+router.delete("/:id", auth, requireRoles(ROLES.ADMIN), deleteUser);
 
 export default router;

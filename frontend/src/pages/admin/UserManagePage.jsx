@@ -5,7 +5,7 @@ import { APP_ROUTES } from '../../constants/routes'
 import { toast } from 'react-toastify'
 import { 
   Search, UserPlus, Edit2, Lock, Unlock, 
-  X, TrendingUp, AlertCircle, Users
+  X, TrendingUp, AlertCircle, Users, Eye, EyeOff, Trash2
 } from 'lucide-react'
 import { ROLES } from '../../constants/roles'
 import { userService } from '../../services/userService'
@@ -40,10 +40,11 @@ export default function UserManagePage() {
   const [clubs, setClubs] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
-  const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null })
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null, type: 'toggle' })
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [addForm, setAddForm] = useState({ fullName: '', email: '', password: '', role: ROLES.MANAGER, clubId: '' })
+  const [showPassword, setShowPassword] = useState(false)
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editForm, setEditForm] = useState({ id: null, fullName: '', email: '', role: '', clubId: '' })
@@ -96,10 +97,24 @@ export default function UserManagePage() {
 
   const openConfirmModal = (user) => {
     if (user.is_active) {
-      setConfirmModal({ isOpen: true, user })
+      setConfirmModal({ isOpen: true, user, type: 'toggle' })
     } else {
       toggleActive(user)
     }
+  }
+
+  const handleDeleteUser = async (user) => {
+    try {
+      await userService.remove(user.id)
+      toast.success('Account deleted successfully.')
+      refreshUsers()
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Cannot delete account.')
+    }
+  }
+
+  const openDeleteConfirmModal = (user) => {
+    setConfirmModal({ isOpen: true, user, type: 'delete' })
   }
 
   const handleApproveMatch = async (id) => {
@@ -128,7 +143,7 @@ export default function UserManagePage() {
     const schema = {
       fullName: { required: 'Full Name is required', maxLength: { value: 255, message: 'Full Name exceeds 255 characters' } },
       email: { required: 'Email is required', regex: { pattern: /\S+@\S+\.\S+/, message: 'Invalid email format' } },
-      password: { required: 'Password is required', minLength: { value: 6, message: 'Password must be at least 6 characters' }, maxLength: { value: 100, message: 'Password exceeds 100 characters' } },
+      password: { required: 'Password is required', minLength: { value: 6, message: 'Password must be at least 6 characters' }, maxLength: { value: 100, message: 'Password exceeds 100 characters' }, regex: { pattern: /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_]).*$/, message: 'Password must contain an uppercase letter, a number, and a special character' } },
       clubId: { custom: (val) => (addForm.role === ROLES.MANAGER && !val) ? 'Please assign a club for Manager role' : null }
     }
     return validateForm(addForm, schema)
@@ -142,8 +157,9 @@ export default function UserManagePage() {
       await userService.create(addForm)
       toast.success("User created successfully.")
       setIsAddModalOpen(false)
+      setShowPassword(false)
       setAddForm({ fullName: '', email: '', password: '', role: ROLES.MANAGER, clubId: '' })
-            refreshUsers()
+      refreshUsers()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to create user.')
     }
@@ -343,10 +359,13 @@ export default function UserManagePage() {
                         </button>
                         <button 
                           onClick={() => openConfirmModal(user)}
-                          style={{ background: 'none', border: 'none', color: user.is_active ? '#64748b' : '#ef4444', cursor: 'pointer', padding: '8px' }} 
+                          style={{ background: 'none', border: 'none', color: user.is_active ? '#64748b' : '#ef4444', cursor: 'pointer', padding: '8px', marginRight: '4px' }} 
                           title={user.is_active ? 'Lock Account' : 'Unlock Account'}
                         >
                           {user.is_active ? <Lock size={16} /> : <Unlock size={16} />}
+                        </button>
+                        <button onClick={() => openDeleteConfirmModal(user)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '8px' }} title="Delete">
+                          <Trash2 size={16} />
                         </button>
                       </td>
                     </tr>
@@ -372,19 +391,25 @@ export default function UserManagePage() {
 
       <ConfirmModal 
         isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal({ isOpen: false, user: null })}
+        onClose={() => setConfirmModal({ isOpen: false, user: null, type: 'toggle' })}
         onConfirm={() => {
-          toggleActive(confirmModal.user)
-          setConfirmModal({ isOpen: false, user: null })
+          if (confirmModal.type === 'delete') {
+            handleDeleteUser(confirmModal.user)
+          } else {
+            toggleActive(confirmModal.user)
+          }
+          setConfirmModal({ isOpen: false, user: null, type: 'toggle' })
         }}
-        title={`Confirm ${confirmModal.user?.is_active ? 'Lock' : 'Unlock'}`}
+        title={confirmModal.type === 'delete' ? 'Delete Account' : `Confirm ${confirmModal.user?.is_active ? 'Lock' : 'Unlock'}`}
         message={
-          <>
-            Are you sure you want to {confirmModal.user?.is_active ? 'lock' : 'unlock'} the account for <strong>{confirmModal.user?.full_name || confirmModal.user?.email}</strong>?
-          </>
+          confirmModal.type === 'delete' ? (
+            <>Are you sure you want to completely delete the account for <strong>{confirmModal.user?.full_name || confirmModal.user?.email}</strong>? This action cannot be undone.</>
+          ) : (
+            <>Are you sure you want to {confirmModal.user?.is_active ? 'lock' : 'unlock'} the account for <strong>{confirmModal.user?.full_name || confirmModal.user?.email}</strong>?</>
+          )
         }
-        confirmLabel={`Yes, ${confirmModal.user?.is_active ? 'Lock' : 'Unlock'} it`}
-        variant={confirmModal.user?.is_active ? 'danger' : 'success'}
+        confirmLabel={confirmModal.type === 'delete' ? 'Yes, Delete it' : `Yes, ${confirmModal.user?.is_active ? 'Lock' : 'Unlock'} it`}
+        variant={confirmModal.type === 'delete' ? 'danger' : (confirmModal.user?.is_active ? 'danger' : 'success')}
       />
 
       {/* Add User Modal */}
@@ -408,7 +433,12 @@ export default function UserManagePage() {
               </div>
               <div>
                 <label className="admin-label">Password *</label>
-                <input type="password" minLength={6} maxLength={100} value={addForm.password} onChange={e => {setAddForm({...addForm, password: e.target.value})}} className="admin-input" placeholder="Min 6 characters" />
+                <div style={{ position: 'relative' }}>
+                  <input type={showPassword ? "text" : "password"} minLength={6} maxLength={100} value={addForm.password} onChange={e => {setAddForm({...addForm, password: e.target.value})}} className="admin-input" placeholder="Min 6 characters" style={{ paddingRight: '40px' }} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', padding: 0 }}>
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="admin-label">Role</label>

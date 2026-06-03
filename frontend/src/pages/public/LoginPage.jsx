@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { Eye, EyeOff } from 'lucide-react'
 import { APP_ROUTES } from '../../constants/routes'
 import { authService } from '../../services/authService'
 import { useAuth } from '../../hooks/useAuth'
@@ -11,6 +12,7 @@ import { validateForm } from '../../utils/validator'
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const { login, isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -78,15 +80,35 @@ export default function LoginPage() {
           />
         </div>
 
-        <div className="field-group">
+        <div className="field-group" style={{ position: 'relative' }}>
           <input
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="Password"
             value={form.password}
             onChange={onChange}
-           
+            style={{ paddingRight: '40px' }}
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: 'absolute',
+              right: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#6b7280',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0
+            }}
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
         </div>
 
         <button

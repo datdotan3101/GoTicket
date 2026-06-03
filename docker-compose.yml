@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: goticket_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345678
+      POSTGRES_DB: goticket
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: goticket_backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      # Override DATABASE_URL to connect to the `db` service instead of localhost
+      - DATABASE_URL=postgresql://postgres:12345678@db:5432/goticket
+    # Load environment variables from the current .env file (Stripe, Gemini, Upstash, etc.)
+    env_file:
+      - ./server/.env
+    volumes:
+      # Map the uploads directory so uploaded images are not lost when the container restarts
+      - ./server/public/uploads:/app/public/uploads
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: goticket_frontend
+    restart: always
+    ports:
+      - "5173:80" # Map to port 5173 to match Google Cloud Console configuration
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

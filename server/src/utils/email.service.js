@@ -489,7 +489,7 @@ export const sendAccountDeletionEmail = async (user) => {
           <td style="padding:20px 32px 0;">
             <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:12px;padding:14px 18px;">
               <p style="margin:0;font-size:13px;color:#92400e;line-height:1.6;">
-                <strong>⚠️ Important:</strong> This action is irreversible. If you did not initiate this request,
+                <strong>Important:</strong> This action is irreversible. If you did not initiate this request,
                 please contact our support team immediately at
                 <a href="mailto:${supportEmail}" style="color:#92400e;font-weight:700;">${supportEmail}</a>.
               </p>

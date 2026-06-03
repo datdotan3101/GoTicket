@@ -7,6 +7,7 @@ import '../../common/AdminStyles.css'
 import FormModal from '../../components/ui/FormModal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import FileUploadField from '../../components/ui/FileUploadField'
+import KebabMenu from '../../components/ui/KebabMenu'
 
 export default function SportsManagePage() {
   const [sports, setSports] = useState([])
@@ -177,53 +178,23 @@ export default function SportsManagePage() {
       {/* Sport Cards */}
       <div className="cards-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
         {sports.map((sport) => (
-          <article className="card" key={sport.id} style={{ padding: '0', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', borderRadius: '20px', background: '#fff' }}>
-            {sport.banner_url ? (
-              <div style={{ width: '100%', height: '140px', background: `url(${sport.banner_url}) center/cover` }} />
-            ) : (
-              <div style={{ width: '100%', height: '140px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
-                No Banner
-              </div>
-            )}
+          <article className="card" key={sport.id} style={{ padding: '0', overflow: 'visible', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', borderRadius: '20px', background: '#fff' }}>
+            <div style={{ width: '100%', height: '140px', position: 'relative', borderRadius: '20px 20px 0 0', background: sport.banner_url ? `url(${sport.banner_url}) center/cover` : '#f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: '12px' }}>
+              {!sport.banner_url && (
+                <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                  No Banner
+                </div>
+              )}
+              <KebabMenu variant="glass" onEdit={() => editSport(sport)} onDelete={() => deleteSport(sport.id)} />
+            </div>
+            
             <div style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#111827' }}>{sport.name}</h3>
                   <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>Slug: {sport.slug}</p>
                 </div>
-                <button 
-                  onClick={() => editSport(sport)}
-                  style={{ 
-                    background: '#fef3c7', 
-                    border: '1px solid #f59e0b', 
-                    color: '#92400e',
-                    padding: '6px 12px', 
-                    borderRadius: '8px', 
-                    fontSize: '0.75rem', 
-                    fontWeight: 700, 
-                    cursor: 'pointer' 
-                  }}
-                >
-                  Edit
-                </button>
               </div>
-              <button 
-                type="button" 
-                onClick={() => deleteSport(sport.id)}
-                style={{ 
-                  width: '100%', 
-                  padding: '10px', 
-                  borderRadius: '10px', 
-                  background: 'transparent', 
-                  color: '#dc2626', 
-                  border: '1px solid #fca5a5',
-                  fontWeight: 700,
-                  fontSize: '0.8rem',
-                  cursor: 'pointer'
-                }}
-              >
-                Delete Category
-              </button>
             </div>
           </article>
         ))}

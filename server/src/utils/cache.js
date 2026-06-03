@@ -22,7 +22,7 @@ export const getOrSetCache = async (key, ttlSeconds, fetchFn) => {
       return typeof cachedData === "string" ? JSON.parse(cachedData) : cachedData;
     }
   } catch (error) {
-    console.error(`⚠️ Redis Cache Get Error (Key: ${key}):`, error.message);
+    console.error(`Redis Cache Get Error (Key: ${key}):`, error.message);
   }
 
   // Fetch fresh data
@@ -34,7 +34,7 @@ export const getOrSetCache = async (key, ttlSeconds, fetchFn) => {
       await redis.set(key, JSON.stringify(freshData), { ex: ttlSeconds });
     }
   } catch (error) {
-    console.error(`⚠️ Redis Cache Set Error (Key: ${key}):`, error.message);
+    console.error(`Redis Cache Set Error (Key: ${key}):`, error.message);
   }
 
   return freshData;

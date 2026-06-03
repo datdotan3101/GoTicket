@@ -126,8 +126,10 @@ export const dashboardService = {
         SELECT
           m.id AS match_id,
           m.home_team, m.away_team, m.match_date, m.status,
-          m.stadium_id, m.ticket_sale_open_at, m.description,
+          m.stadium_id, m.ticket_sale_open_at, m.description, m.thumbnail_url,
           s.name AS stadium_name, s.city AS stadium_city,
+          (SELECT c2.logo_url FROM clubs c2 WHERE LOWER(c2.name) = LOWER(m.home_team) LIMIT 1) AS home_team_logo,
+          (SELECT c3.logo_url FROM clubs c3 WHERE LOWER(c3.name) = LOWER(m.away_team) LIMIT 1) AS away_team_logo,
           COALESCE(SUM(p.amount), 0)::numeric AS revenue,
           COUNT(t.id)::int AS tickets_sold,
           COALESCE(total.total_seats, 0)::int AS total_seats
@@ -139,7 +141,7 @@ export const dashboardService = {
           SELECT match_id, COUNT(*)::int AS total_seats FROM seats GROUP BY match_id
         ) total ON total.match_id = m.id
         WHERE m.club_id = $1
-        GROUP BY m.id, m.home_team, m.away_team, m.match_date, m.status, m.stadium_id, m.ticket_sale_open_at, m.description, s.name, s.city, total.total_seats
+        GROUP BY m.id, m.home_team, m.away_team, m.match_date, m.status, m.stadium_id, m.ticket_sale_open_at, m.description, m.thumbnail_url, s.name, s.city, total.total_seats
         ORDER BY m.match_date DESC
       `, [clubId])
     ]);

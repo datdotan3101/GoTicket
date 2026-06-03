@@ -25,16 +25,24 @@ export default function FileUploadField({
   placeholder = 'Click to upload file'
 }) {
   const [uploading, setUploading] = useState(false)
+  const [lastFileName, setLastFileName] = useState('')
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
+
+    // Prevent re-uploading the exact same file in this session
+    if (file.name === lastFileName) {
+      e.target.value = '' // Reset input
+      return
+    }
 
     setUploading(true)
     try {
       const res = await uploadService.uploadFile(file)
       const { url } = unwrapData(res)
       onChange(url)
+      setLastFileName(file.name)
       toast.success('File uploaded successfully.')
     } catch {
       toast.error('Upload failed.')
@@ -120,13 +128,17 @@ export default function FileUploadField({
             alt="Banner Preview"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
-          <button 
-            type="button"
-            onClick={() => onChange('')}
+          <label 
             style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '0.7rem', fontWeight: 800, color: '#ef4444', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
           >
-            Change
-          </button>
+            {uploading ? '⏳...' : 'Change'}
+            <input
+              type="file"
+              accept={accept}
+              onChange={handleFileUpload}
+              style={{ display: 'none' }}
+            />
+          </label>
         </div>
       )}
     </div>

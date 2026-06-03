@@ -189,8 +189,8 @@ export default function StandConfigPage() {
     <section className="container manager-dashboard">
       <div className="dashboard-header">
         <div className="dashboard-header-left">
-          <Link to="/manager/matches" className="back-link">
-            <ArrowLeft size={16} />
+          <Link to="/manager/matches" className="back-link" style={{ display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none', color: '#64748b', fontWeight: 600, marginBottom: '16px' }}>
+            <ArrowLeft size={18} />
             Back to Matches
           </Link>
           <h1 className="dashboard-title">Stadium Configuration</h1>
@@ -198,7 +198,6 @@ export default function StandConfigPage() {
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <button className="mc-btn mc-btn-primary" onClick={() => setIsConfirmModalOpen(true)}>
-            <Save size={18} style={{ marginRight: '8px' }} />
             Save Configuration
           </button>
         </div>
@@ -254,38 +253,15 @@ export default function StandConfigPage() {
                                const isActive = columnConfigs[col.id]?.activeTiers.includes(tier)
                                return (
                                <div key={tier} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: `1px solid ${isActive ? '#4f46e5' : '#e2e8f0'}`, flexWrap: 'wrap' }}>
-                                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: '#475569', minWidth: '120px' }}>
+                                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: '#475569', minWidth: '120px', width: '100%' }}>
                                    <input 
                                      type="checkbox" 
                                      checked={isActive} 
                                      onChange={() => toggleTier(col.id, tier)} 
                                      style={{ width: '16px', height: '16px', accentColor: '#4f46e5' }}
                                    />
-                                   Level {tier.replace('T', '')}
+                                   Floor {tier.replace('T', '')}
                                  </label>
-                                 {isActive && (
-                                   <div style={{ position: 'relative', flex: 1, minWidth: '100px' }}>
-                                     <input 
-                                       type="number" 
-                                       className="mc-nice-input"
-                                       style={{ width: '100%', padding: '6px 8px 6px 45px', fontSize: '0.85rem' }}
-                                       value={columnConfigs[col.id]?.tierCapacities?.[tier] || ''}
-                                       onChange={(e) => {
-                                         const val = e.target.value;
-                                         setColumnConfigs(p => ({
-                                           ...p,
-                                           [col.id]: {
-                                             ...p[col.id],
-                                             tierCapacities: { ...p[col.id].tierCapacities, [tier]: val }
-                                           }
-                                         }))
-                                       }}
-                                       placeholder="Seats"
-                                       title="Seat Capacity for this block"
-                                     />
-                                     <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '0.75rem', fontWeight: 800 }}>CAP</span>
-                                   </div>
-                                 )}
                                </div>
                                )
                              })}

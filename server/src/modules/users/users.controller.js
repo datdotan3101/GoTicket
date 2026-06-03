@@ -70,3 +70,12 @@ export const updateUser = asyncHandler(async (req, res) => {
     return sendError(res, err.message, err.status || HTTP_STATUS.BAD_REQUEST);
   }
 });
+
+/**
+ * DELETE /api/users/:id — Admin directly deletes user
+ */
+export const deleteUser = asyncHandler(async (req, res) => {
+  const data = await usersService.remove(Number(req.params.id));
+  if (!data) return sendError(res, "User not found.", HTTP_STATUS.NOT_FOUND);
+  return sendSuccess(res, { message: "User deleted successfully." });
+});

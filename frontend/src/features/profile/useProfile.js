@@ -73,11 +73,11 @@ export function useProfile() {
       oldPassword: { required: 'Current password is required' },
       newPassword: {
         required: 'New password is required',
-        minLength: { value: 8, message: 'Password must be at least 8 characters' },
-        maxLength: { value: 15, message: 'Password exceeds 15 characters' },
+        minLength: { value: 6, message: 'Password must be at least 6 characters' },
+        maxLength: { value: 100, message: 'Password exceeds 100 characters' },
         regex: {
-          pattern: /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_]).*$/,
-          message: 'Password must contain a letter, a number, and a special character',
+          pattern: /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_]).*$/,
+          message: 'Password must contain an uppercase letter, a number, and a special character',
         },
       },
     }

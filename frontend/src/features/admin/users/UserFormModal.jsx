@@ -2,13 +2,15 @@
  * UserFormModal — Reusable Add/Edit user modal form.
  * Same fields for both modes; differences driven by props.
  */
-import { X } from 'lucide-react'
+import { X, Eye, EyeOff } from 'lucide-react'
+import { useState } from 'react'
 import { ROLES } from '../../../constants/roles'
 import { modalBackdrop, modalBox } from '../../../styles/common'
 import '../../../common/AdminStyles.css'
 
 export default function UserFormModal({ mode = 'add', form, setForm, clubs, onSubmit, onClose }) {
   const isEdit = mode === 'edit'
+  const [showPassword, setShowPassword] = useState(false)
 
   return (
     <div style={modalBackdrop}>
@@ -55,15 +57,29 @@ export default function UserFormModal({ mode = 'add', form, setForm, clubs, onSu
           {!isEdit && (
             <div>
               <label className="admin-label">Password *</label>
-              <input
-                type="password"
-                minLength={6}
-                maxLength={100}
-                value={form.password ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                className="admin-input"
-                placeholder="Min 6 characters"
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  minLength={6}
+                  maxLength={100}
+                  value={form.password ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                  className="admin-input"
+                  placeholder="Min 6 characters"
+                  style={{ paddingRight: '40px' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', color: '#64748b',
+                    display: 'flex', alignItems: 'center', padding: 0
+                  }}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
           )}
 

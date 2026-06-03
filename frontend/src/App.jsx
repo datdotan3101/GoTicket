@@ -49,6 +49,7 @@ const LeagueManagePage = lazy(() => import('./pages/admin/LeagueManagePage'))
 const RevenueReportPage = lazy(() => import('./pages/admin/RevenueReportPage'))
 const MatchManagePage = lazy(() => import('./pages/admin/MatchManagePage'))
 const ClubManagePage = lazy(() => import('./pages/admin/ClubManagePage'))
+const StadiumManagePage = lazy(() => import('./pages/admin/StadiumManagePage'))
 
 export default function App() {
   return (
@@ -115,6 +116,7 @@ export default function App() {
                 <Route path={APP_ROUTES.ADMIN_LEAGUES} element={<LeagueManagePage />} />
                 <Route path={APP_ROUTES.ADMIN_MATCHES} element={<MatchManagePage />} />
                 <Route path={APP_ROUTES.ADMIN_CLUBS} element={<ClubManagePage />} />
+                <Route path={APP_ROUTES.ADMIN_STADIUMS} element={<StadiumManagePage />} />
                 <Route path={APP_ROUTES.ADMIN_REVENUE_REPORT} element={<RevenueReportPage />} />
               </Route>
             </Route>

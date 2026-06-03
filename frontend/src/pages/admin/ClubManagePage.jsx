@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { MoreVertical, Edit2, Trash2 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { clubService } from '../../services/clubService'
 import { sportService } from '../../services/sportService'
@@ -8,6 +9,7 @@ import '../../common/AdminStyles.css'
 import FormModal from '../../components/ui/FormModal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import FileUploadField from '../../components/ui/FileUploadField'
+import KebabMenu from '../../components/ui/KebabMenu'
 
 export default function ClubManagePage() {
   const [clubs, setClubs] = useState([])
@@ -274,22 +276,23 @@ export default function ClubManagePage() {
         {filteredClubs.map((club) => {
           const sportName = getSportName(club.sport_id)
           return (
-            <article className="card" key={club.id} style={{ padding: '0', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', borderRadius: '20px', background: '#fff' }}>
+            <article className="card" key={club.id} style={{ padding: '0', overflow: 'visible', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', borderRadius: '20px', background: '#fff' }}>
               {/* Card Header */}
-              <div style={{ background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)', padding: '28px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                {club.logo_url ? (
-                  <img
-                    src={club.logo_url}
-                    alt={club.name}
-                    style={{ width: '64px', height: '64px', objectFit: 'contain', borderRadius: '12px', background: '#fff', padding: '6px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
-                    onError={(e) => { e.target.style.display = 'none' }}
-                  />
-                ) : (
-                  <div style={{ width: '64px', height: '64px', borderRadius: '12px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 900, color: '#3b82f6', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+              <div style={{ background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)', padding: '28px 24px', display: 'flex', alignItems: 'center', gap: '16px', borderRadius: 'inherit' }}>
+                <div style={{ position: 'relative', width: '64px', height: '64px', flexShrink: 0, borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', background: '#fff', overflow: 'hidden' }}>
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 900, color: '#3b82f6' }}>
                     {club.name?.[0]?.toUpperCase() || '?'}
                   </div>
-                )}
-                <div>
+                  {club.logo_url && (
+                    <img
+                      src={club.logo_url}
+                      alt={club.name}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain', background: '#fff', padding: '6px' }}
+                      onError={(e) => { e.target.style.display = 'none' }}
+                    />
+                  )}
+                </div>
+                <div style={{ flex: 1 }}>
                   <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#111827', lineHeight: 1.2 }}>{club.name}</h3>
                   {sportName && (
                     <span style={{ display: 'inline-block', marginTop: '6px', marginRight: '6px', background: '#dbeafe', color: '#1e40af', padding: '3px 10px', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700 }}>
@@ -302,42 +305,11 @@ export default function ClubManagePage() {
                     </span>
                   )}
                 </div>
-              </div>
 
-              {/* Card Actions */}
-              <div style={{ padding: '16px 24px', display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={() => editClub(club)}
-                  style={{
-                    flex: 1,
-                    background: '#fef3c7',
-                    border: '1px solid #f59e0b',
-                    color: '#92400e',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteClub(club.id)}
-                  style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    background: 'transparent',
-                    color: '#dc2626',
-                    border: '1px solid #fca5a5',
-                    fontWeight: 700,
-                    fontSize: '0.8rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Delete
-                </button>
+                <KebabMenu 
+                  onEdit={() => editClub(club)} 
+                  onDelete={() => deleteClub(club.id)} 
+                />
               </div>
             </article>
           )
