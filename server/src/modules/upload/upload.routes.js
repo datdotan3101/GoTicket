@@ -2,6 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import path from "node:path";
 import fs from "node:fs";
+import crypto from "node:crypto";
 import { sendSuccess, sendError } from "../../utils/response.js";
 
 const router = Router();
@@ -12,15 +13,8 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Use memory storage so we can hash the file buffer before saving
+const storage = multer.memoryStorage();
 
 const upload = multer({ 
   storage,
@@ -41,12 +35,26 @@ router.post("/", upload.single("file"), (req, res) => {
     return sendError(res, "No file uploaded.");
   }
   
+  // Calculate MD5 hash of the file content
+  const fileBuffer = req.file.buffer;
+  const hash = crypto.createHash('md5').update(fileBuffer).digest('hex');
+  const ext = path.extname(req.file.originalname).toLowerCase();
+  
+  // Create a unique filename based purely on file content
+  const filename = `${hash}${ext}`;
+  const filePath = path.join(uploadDir, filename);
+
+  // Only save the file if it doesn't already exist on the server (Deduplication)
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, fileBuffer);
+  }
+  
   // Return the path that can be served statically
-  const fileUrl = `${process.env.API_URL || "http://localhost:5000"}/uploads/${req.file.filename}`;
+  const fileUrl = `${process.env.API_URL || "http://localhost:5000"}/uploads/${filename}`;
   
   return sendSuccess(res, { 
     url: fileUrl,
-    filename: req.file.filename
+    filename: filename
   });
 });
 

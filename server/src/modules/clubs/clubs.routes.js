@@ -2,7 +2,7 @@ import { Router } from "express";
 import { ROLES } from "../../constants/roles.js";
 import { auth } from "../../middlewares/auth.js";
 import { requireRoles } from "../../middlewares/roles.js";
-import { createClub, deleteClub, getClubById, getClubs, updateClub } from "./clubs.controller.js";
+import { create, remove, getById, getAll, update } from "./clubs.controller.js";
 
 const router = Router();
 
@@ -29,7 +29,7 @@ const router = Router();
  *       200:
  *         description: "Success"
  */
-router.get("/", getClubs);
+router.get("/", getAll);
 
 /**
  * @swagger
@@ -49,7 +49,7 @@ router.get("/", getClubs);
  *       404:
  *         description: "Not found"
  */
-router.get("/:id", getClubById);
+router.get("/:id", getById);
 
 /**
  * @swagger
@@ -72,7 +72,7 @@ router.get("/:id", getClubById);
  *       201:
  *         description: "Created successfully"
  */
-router.post("/", auth, requireRoles(ROLES.ADMIN), createClub);
+router.post("/", auth, requireRoles(ROLES.ADMIN), create);
 
 /**
  * @swagger
@@ -98,7 +98,7 @@ router.post("/", auth, requireRoles(ROLES.ADMIN), createClub);
  *       200:
  *         description: "Updated successfully"
  */
-router.put("/:id", auth, requireRoles(ROLES.ADMIN), updateClub);
+router.put("/:id", auth, requireRoles(ROLES.ADMIN), update);
 
 /**
  * @swagger
@@ -117,6 +117,6 @@ router.put("/:id", auth, requireRoles(ROLES.ADMIN), updateClub);
  *       404:
  *         description: "Not found"
  */
-router.delete("/:id", auth, requireRoles(ROLES.ADMIN), deleteClub);
+router.delete("/:id", auth, requireRoles(ROLES.ADMIN), remove);
 
 export default router;

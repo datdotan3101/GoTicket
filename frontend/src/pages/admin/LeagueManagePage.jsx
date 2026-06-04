@@ -110,6 +110,16 @@ export default function LeagueManagePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    const errors = []
+    if (!form.name.trim()) errors.push('League Name')
+    if (!form.sportId) errors.push('Sport')
+    
+    if (errors.length > 0) {
+      toast.error(`Please select or enter: ${errors.join(', ')}`)
+      return
+    }
+
     try {
       const payload = { 
         ...form, 
@@ -250,7 +260,6 @@ export default function LeagueManagePage() {
             placeholder="e.g. Premier League" 
             value={form.name} 
             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} 
-            required 
             className="admin-input"
           />
         </div>
@@ -261,7 +270,6 @@ export default function LeagueManagePage() {
             <select 
               value={form.sportId} 
               onChange={(e) => setForm((p) => ({ ...p, sportId: e.target.value }))} 
-              required
               className="admin-input"
             >
               <option value="">Select sport</option>
@@ -286,7 +294,6 @@ export default function LeagueManagePage() {
           value={form.logoUrl}
           onChange={(url) => setForm((p) => ({ ...p, logoUrl: url }))}
           previewType="banner"
-          icon="🖼️"
           placeholder="Click or drag & drop banner image"
         />
 

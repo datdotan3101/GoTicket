@@ -41,6 +41,16 @@ export default function SportsManagePage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    
+    const errors = []
+    if (!form.name.trim()) errors.push('Sport Name')
+    if (!form.slug.trim()) errors.push('Slug')
+    
+    if (errors.length > 0) {
+      toast.error(`Please enter: ${errors.join(', ')}`)
+      return
+    }
+
     if (editingId) {
       setConfirmModal({ show: true, type: 'update', target: null })
     } else {
@@ -149,7 +159,6 @@ export default function SportsManagePage() {
                   .replace(/^-+|-+$/g, '');
                 setForm((p) => ({ ...p, name, slug }));
               }} 
-              required 
               className="admin-input"
             />
           </div>
@@ -159,7 +168,6 @@ export default function SportsManagePage() {
               placeholder="e.g. football" 
               value={form.slug} 
               onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))} 
-              required 
               className="admin-input"
             />
           </div>
@@ -170,7 +178,6 @@ export default function SportsManagePage() {
           value={form.bannerUrl}
           onChange={(url) => setForm((p) => ({ ...p, bannerUrl: url }))}
           previewType="banner"
-          icon="🖼️"
           placeholder="Click or drag & drop banner image"
         />
       </FormModal>

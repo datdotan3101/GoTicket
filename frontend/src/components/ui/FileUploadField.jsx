@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { toast } from 'react-toastify'
+import { UploadCloud } from 'lucide-react'
 import { uploadService } from '../../services/uploadService'
 import { unwrapData } from '../../utils/apiData'
 
@@ -12,7 +13,7 @@ import { unwrapData } from '../../utils/apiData'
  *  - onChange: (url: string) => void — called with the uploaded URL
  *  - accept: string — file accept types (default: "image/*")
  *  - previewType: 'logo' | 'banner' — controls preview layout
- *  - icon: string — emoji icon (default: "📁")
+ *  - icon: ReactNode — custom icon (defaults to UploadCloud)
  *  - placeholder: string — upload hint text
  */
 export default function FileUploadField({
@@ -21,7 +22,7 @@ export default function FileUploadField({
   onChange,
   accept = 'image/*',
   previewType = 'logo',
-  icon = '📁',
+  icon = <UploadCloud size={32} strokeWidth={1.5} color="#94a3b8" />,
   placeholder = 'Click to upload file'
 }) {
   const [uploading, setUploading] = useState(false)
@@ -40,10 +41,16 @@ export default function FileUploadField({
     setUploading(true)
     try {
       const res = await uploadService.uploadFile(file)
-      const { url } = unwrapData(res)
-      onChange(url)
-      setLastFileName(file.name)
-      toast.success('File uploaded successfully.')
+      const data = unwrapData(res)
+      const newUrl = data.url || data
+
+      if (newUrl === value) {
+        toast.info('This is the exact same image. No changes made.')
+      } else {
+        onChange(newUrl)
+        setLastFileName(file.name)
+        toast.success('File uploaded successfully.')
+      }
     } catch {
       toast.error('Upload failed.')
     } finally {
@@ -74,7 +81,9 @@ export default function FileUploadField({
             style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
           />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '1.5rem' }}>{uploading ? '⏳' : icon}</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {uploading ? '⏳' : icon}
+            </div>
             <span style={{ fontSize: '0.9rem', color: '#475569', fontWeight: 700 }}>
               {uploading ? 'Uploading...' : placeholder}
             </span>

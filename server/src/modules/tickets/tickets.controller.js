@@ -1,11 +1,12 @@
 import { HTTP_STATUS } from "../../constants/httpStatus.js";
 import { asyncHandler } from "../../middlewares/asyncHandler.js";
-import { sendSuccess } from "../../utils/response.js";
+import { sendError, sendSuccess } from "../../utils/response.js";
 import QRCode from "qrcode";
 import jwt from "jsonwebtoken";
 import { query } from "../../config/db.js";
 import { ticketsService } from "./tickets.service.js";
 
+/** POST /api/tickets/book — Book seats for a match (auth) */
 export const bookTickets = asyncHandler(async (req, res) => {
   const data = await ticketsService.bookTickets({
     matchId: Number(req.body.matchId),
@@ -17,35 +18,38 @@ export const bookTickets = asyncHandler(async (req, res) => {
   return sendSuccess(res, data, HTTP_STATUS.CREATED);
 });
 
+/** GET /api/tickets/my — My booked tickets (auth) */
 export const myTickets = asyncHandler(async (req, res) => {
   const data = await ticketsService.getMyTickets(req.user.id);
   return sendSuccess(res, data);
 });
 
+/** DELETE /api/tickets/cancel — Cancel tickets by IDs (auth) */
 export const cancelTickets = asyncHandler(async (req, res) => {
   const ticketIds = req.body.ticketIds;
   if (!Array.isArray(ticketIds) || ticketIds.length === 0) {
-    return res.status(400).json({ success: false, message: "Invalid ticket IDs." });
+    return sendError(res, "Invalid ticket IDs.", HTTP_STATUS.BAD_REQUEST);
   }
   const data = await ticketsService.cancelTickets({ ticketIds, userId: req.user.id });
   return sendSuccess(res, data);
 });
 
+/** POST /api/tickets/:ticketCode/gift — Gift a ticket to another user by email (auth) */
 export const giftTicket = asyncHandler(async (req, res) => {
   const { ticketCode } = req.params;
   const { email } = req.body;
   if (!email) {
-    return res.status(400).json({ success: false, message: "Please enter an email." });
+    return sendError(res, "Please enter an email.", HTTP_STATUS.BAD_REQUEST);
   }
-  
   const data = await ticketsService.giftTicket({ userId: req.user.id, ticketCode, email });
   return sendSuccess(res, data);
 });
 
+/** GET /api/tickets/qr/:token — Generate QR code image from token (public) */
 export const generateQrImage = asyncHandler(async (req, res) => {
   const { token } = req.params;
-  if (!token) return res.status(400).send("Token required");
-  
+  if (!token) return sendError(res, "Token required.", HTTP_STATUS.BAD_REQUEST);
+
   let qrData = token;
   let ticketCode = null;
 
@@ -56,7 +60,7 @@ export const generateQrImage = asyncHandler(async (req, res) => {
       const payload = jwt.decode(token);
       if (payload) ticketCode = payload.ticketCode;
     } catch (e) {
-      // Ignore decoding errors
+      // Ignore decoding errors — raw token will be used as QR data
     }
   }
 
@@ -90,7 +94,7 @@ export const generateQrImage = asyncHandler(async (req, res) => {
     type: "png",
     color: { dark: "#1e293b", light: "#ffffff" }
   });
-  
+
   res.setHeader("Content-Type", "image/png");
   res.send(buffer);
 });

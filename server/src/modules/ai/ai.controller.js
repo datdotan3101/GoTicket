@@ -1,5 +1,6 @@
 import { asyncHandler } from "../../middlewares/asyncHandler.js";
-import { sendSuccess } from "../../utils/response.js";
+import { HTTP_STATUS } from "../../constants/httpStatus.js";
+import { sendError, sendSuccess } from "../../utils/response.js";
 import { aiService } from "./ai.service.js";
 
 /**
@@ -10,7 +11,7 @@ import { aiService } from "./ai.service.js";
 export const chat = asyncHandler(async (req, res) => {
   const { messages } = req.body;
   if (!Array.isArray(messages) || messages.length === 0) {
-    return res.status(400).json({ success: false, message: "messages is required and must be an array." });
+    return sendError(res, "messages is required and must be an array.", HTTP_STATUS.BAD_REQUEST);
   }
   const result = await aiService.chat(req.user.id, messages);
   return sendSuccess(res, {

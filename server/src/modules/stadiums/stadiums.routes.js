@@ -2,7 +2,7 @@ import { Router } from "express";
 import { ROLES } from "../../constants/roles.js";
 import { auth } from "../../middlewares/auth.js";
 import { requireRoles } from "../../middlewares/roles.js";
-import { createStadium, deleteStadium, getStadiumById, getStadiums, updateStadium } from "./stadiums.controller.js";
+import { create, remove, getById, getAll, update } from "./stadiums.controller.js";
 
 const router = Router();
 
@@ -29,7 +29,7 @@ const router = Router();
  *       200:
  *         description: "Success"
  */
-router.get("/", getStadiums);
+router.get("/", getAll);
 
 /**
  * @swagger
@@ -49,7 +49,7 @@ router.get("/", getStadiums);
  *       404:
  *         description: "Not found"
  */
-router.get("/:id", getStadiumById);
+router.get("/:id", getById);
 
 /**
  * @swagger
@@ -73,7 +73,7 @@ router.get("/:id", getStadiumById);
  *       201:
  *         description: "Created successfully"
  */
-router.post("/", auth, requireRoles(ROLES.ADMIN), createStadium);
+router.post("/", auth, requireRoles(ROLES.ADMIN), create);
 
 /**
  * @swagger
@@ -100,7 +100,7 @@ router.post("/", auth, requireRoles(ROLES.ADMIN), createStadium);
  *       200:
  *         description: "Updated successfully"
  */
-router.put("/:id", auth, requireRoles(ROLES.ADMIN), updateStadium);
+router.put("/:id", auth, requireRoles(ROLES.ADMIN), update);
 
 /**
  * @swagger
@@ -119,6 +119,6 @@ router.put("/:id", auth, requireRoles(ROLES.ADMIN), updateStadium);
  *       404:
  *         description: "Not found"
  */
-router.delete("/:id", auth, requireRoles(ROLES.ADMIN), deleteStadium);
+router.delete("/:id", auth, requireRoles(ROLES.ADMIN), remove);
 
 export default router;

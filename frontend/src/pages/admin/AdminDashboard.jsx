@@ -11,41 +11,22 @@ import { formatDateTime, formatVND } from '../../utils/formatters'
 
 const COLORS = ['#1d4ed8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
-const MOCK_DATA = {
+const EMPTY_DATA = {
   summary: {
-    total_revenue: 1250000000,
-    total_tickets: 15420,
-    total_open_matches: 12,
-    total_system_seats: 50000,
-    total_buyers: 8400
+    total_revenue: 0,
+    total_tickets: 0,
+    total_open_matches: 0,
+    total_system_seats: 0,
+    total_buyers: 0
   },
   growth: {
-    today_revenue: 45000000,
-    yesterday_revenue: 38000000
+    today_revenue: 0,
+    yesterday_revenue: 0
   },
-  topClubs: [
-    { id: 1, name: 'Manchester City', revenue: 450000000, tickets_sold: 5000, matches_count: 3, fill_rate: 85.5, manager_name: 'Pep Guardiola' },
-    { id: 2, name: 'Liverpool FC', revenue: 380000000, tickets_sold: 4200, matches_count: 2, fill_rate: 78.2, manager_name: 'Jurgen Klopp' },
-    { id: 3, name: 'Arsenal FC', revenue: 210000000, tickets_sold: 2800, matches_count: 2, fill_rate: 65.0, manager_name: 'Mikel Arteta' },
-    { id: 4, name: 'Chelsea FC', revenue: 150000000, tickets_sold: 1900, matches_count: 2, fill_rate: 45.4, manager_name: 'Mauricio Pochettino' },
-    { id: 5, name: 'Man United', revenue: 60000000, tickets_sold: 800, matches_count: 1, fill_rate: 25.1, manager_name: 'Erik ten Hag' },
-  ],
-  revenueTrend: Array.from({ length: 30 }, (_, i) => ({
-    day: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    revenue: Math.floor(Math.random() * 50000000) + 10000000
-  })),
-  bySport: [
-    { sport_name: 'Football', revenue: 850000000 },
-    { sport_name: 'Basketball', revenue: 250000000 },
-    { sport_name: 'Tennis', revenue: 100000000 },
-    { sport_name: 'Volleyball', revenue: 50000000 }
-  ],
-  operations: [
-    { id: 101, home_team: 'Man City', away_team: 'Real Madrid', match_date: '2026-04-25T20:00:00Z', status: 'published', sold: 45000, total_seats: 50000 },
-    { id: 102, home_team: 'Liverpool', away_team: 'AC Milan', match_date: '2026-04-26T19:00:00Z', status: 'published', sold: 38000, total_seats: 45000 },
-    { id: 103, home_team: 'Chelsea', away_team: 'FC Porto', match_date: '2026-04-28T21:00:00Z', status: 'published', sold: 5000, total_seats: 40000 },
-    { id: 104, home_team: 'Barca', away_team: 'Bayern', match_date: '2026-04-22T21:00:00Z', status: 'canceled', sold: 0, total_seats: 60000 },
-  ]
+  topClubs: [],
+  revenueTrend: [],
+  bySport: [],
+  operations: []
 }
 
 export default function AdminDashboard() {
@@ -57,16 +38,9 @@ export default function AdminDashboard() {
         const response = await dashboardService.getAdminRevenue()
         const payload = unwrapData(response)
         
-        // For demonstration: Always show mock data if real data is empty or near zero
-        // This ensures the user sees the "wow" charts
-        if (!payload || !payload.topClubs || payload.topClubs.length === 0 || Number(payload.summary?.total_revenue) === 0) {
-          console.log('Using Mock Data for demo')
-          setData(MOCK_DATA)
-        } else {
-          setData(payload)
-        }
+        setData(payload || EMPTY_DATA)
       } catch {
-        setData(MOCK_DATA)
+        setData(EMPTY_DATA)
       }
     }
     fetchData()

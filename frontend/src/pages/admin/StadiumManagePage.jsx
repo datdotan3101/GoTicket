@@ -188,7 +188,6 @@ export default function StadiumManagePage() {
           value={form.imageUrl}
           onChange={(url) => setForm((p) => ({ ...p, imageUrl: url }))}
           previewType="banner"
-          icon="🏟️"
           placeholder="Click or drag & drop stadium image"
         />
       </FormModal>

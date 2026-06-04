@@ -2,6 +2,7 @@ import { query, withTransaction } from "../../config/db.js";
 import { getPagination, buildPaginatedResponse } from "../../utils/pagination.js";
 import { ROLES } from "../../constants/roles.js";
 import bcrypt from "bcryptjs";
+import { AppError } from "../../utils/AppError.js";
 
 const ALLOWED_ROLES = Object.values(ROLES);
 
@@ -82,12 +83,12 @@ export const usersService = {
    */
   async updateRole(id, role, clubId) {
     if (!ALLOWED_ROLES.includes(role)) {
-      throw new Error(`Invalid role. Allowed values: ${ALLOWED_ROLES.join(", ")}`);
+      throw new AppError(`Invalid role. Allowed values: ${ALLOWED_ROLES.join(", ")}`, 400);
     }
 
     // Manager role requires a club_id
     if (role === ROLES.MANAGER && !clubId) {
-      throw new Error("Manager must be assigned to a club.");
+      throw new AppError("Manager must be assigned to a club.", 400);
     }
 
     // Non-manager roles should have no club_id
@@ -138,19 +139,17 @@ export const usersService = {
    */
   async createDirect({ email, password, fullName, role, clubId }) {
     if (!ALLOWED_ROLES.includes(role)) {
-      throw new Error(`Invalid role. Allowed values: ${ALLOWED_ROLES.join(", ")}`);
+      throw new AppError(`Invalid role. Allowed values: ${ALLOWED_ROLES.join(", ")}`, 400);
     }
 
     if (role === ROLES.MANAGER && !clubId) {
-      throw new Error("Manager must be assigned to a club.");
+      throw new AppError("Manager must be assigned to a club.", 400);
     }
 
     // Check email exists
     const exist = await query(`SELECT id FROM users WHERE email = $1`, [email]);
     if (exist.rows.length > 0) {
-      const err = new Error("Email already exists.");
-      err.status = 409;
-      throw err;
+      throw new AppError("Email already exists.", 409);
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -172,19 +171,17 @@ export const usersService = {
    */
   async updateUser(id, { email, fullName, role, clubId }) {
     if (!ALLOWED_ROLES.includes(role)) {
-      throw new Error(`Invalid role. Allowed values: ${ALLOWED_ROLES.join(", ")}`);
+      throw new AppError(`Invalid role. Allowed values: ${ALLOWED_ROLES.join(", ")}`, 400);
     }
 
     if (role === ROLES.MANAGER && !clubId) {
-      throw new Error("Manager must be assigned to a club.");
+      throw new AppError("Manager must be assigned to a club.", 400);
     }
 
     // Check if the new email belongs to another user
     const exist = await query(`SELECT id FROM users WHERE email = $1 AND id != $2`, [email, id]);
     if (exist.rows.length > 0) {
-      const err = new Error("Email already exists for another user.");
-      err.status = 409;
-      throw err;
+      throw new AppError("Email already exists for another user.", 409);
     }
 
     const effectiveClubId = role === ROLES.MANAGER ? (clubId || null) : null;
@@ -207,15 +204,11 @@ export const usersService = {
       // 1. Prevent deleting users who have purchased tickets
       const orders = await client.query(`SELECT id FROM orders WHERE user_id = $1 LIMIT 1`, [id]);
       if (orders.rows.length > 0) {
-        const err = new Error("Cannot delete user with existing ticket orders.");
-        err.status = 400;
-        throw err;
+        throw new AppError("Cannot delete user with existing ticket orders.", 400);
       }
       const tickets = await client.query(`SELECT id FROM tickets WHERE user_id = $1 LIMIT 1`, [id]);
       if (tickets.rows.length > 0) {
-        const err = new Error("Cannot delete user with existing tickets.");
-        err.status = 400;
-        throw err;
+        throw new AppError("Cannot delete user with existing tickets.", 400);
       }
 
       // 2. Set NULL for references created by this user

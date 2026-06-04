@@ -1,5 +1,6 @@
 import { asyncHandler } from "../../middlewares/asyncHandler.js";
-import { sendSuccess } from "../../utils/response.js";
+import { HTTP_STATUS } from "../../constants/httpStatus.js";
+import { sendError, sendSuccess } from "../../utils/response.js";
 import { checkinService } from "./checkin.service.js";
 
 export const scanCheckin = asyncHandler(async (req, res) => {
@@ -10,7 +11,7 @@ export const scanCheckin = asyncHandler(async (req, res) => {
     // JWT errors for QR token must return 400, NOT 401.
     // A 401 from the global interceptor would trigger logout on the client.
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
-      return res.status(400).json({ success: false, message: 'QR code is invalid or has expired.' });
+      return sendError(res, 'QR code is invalid or has expired.', HTTP_STATUS.BAD_REQUEST);
     }
     throw err; // let global errorHandler handle other errors
   }

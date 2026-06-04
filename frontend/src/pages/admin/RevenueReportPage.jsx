@@ -8,17 +8,9 @@ import { dashboardService } from '../../services/dashboardService'
 import { unwrapData } from '../../utils/apiData'
 import { formatVND } from '../../utils/formatters'
 
-const MOCK_DATA = {
-  bySport: [
-    { sport_id: 1, sport_name: 'Soccer', revenue: 4950000000, tickets: 15420 },
-    { sport_id: 2, sport_name: 'Basketball', revenue: 1250000000, tickets: 3200 },
-    { sport_id: 3, sport_name: 'Tennis', revenue: 850000000, tickets: 1800 },
-  ],
-  topMatches: [
-    { id: 101, home_team: 'Manchester City', away_team: 'Real Madrid', revenue: 850000000, tickets_sold: 45000 },
-    { id: 102, home_team: 'Viet Nam', away_team: 'Thai Lan', revenue: 750000000, tickets_sold: 38000 },
-    { id: 103, home_team: 'Cong An Nhan Dan', away_team: 'Dong A Thanh Hoa', revenue: 650000000, tickets_sold: 32000 },
-  ]
+const EMPTY_DATA = {
+  bySport: [],
+  topMatches: []
 }
 
 const COLORS = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6']
@@ -33,13 +25,9 @@ export default function RevenueReportPage() {
         const response = await dashboardService.getAdminRevenue()
         const payload = unwrapData(response)
         
-        if (!payload || !payload.bySport || payload.bySport.length === 0) {
-          setData(MOCK_DATA)
-        } else {
-          setData(payload)
-        }
+        setData(payload || EMPTY_DATA)
       } catch {
-        setData(MOCK_DATA)
+        setData(EMPTY_DATA)
       } finally {
         setLoading(false)
       }

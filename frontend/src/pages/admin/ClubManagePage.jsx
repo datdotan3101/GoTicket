@@ -227,8 +227,7 @@ export default function ClubManagePage() {
           value={form.logoUrl}
           onChange={(url) => setForm((p) => ({ ...p, logoUrl: url }))}
           previewType="logo"
-          icon="📁"
-          placeholder="Click to upload club logo"
+          placeholder="Click or drag to upload club logo"
         />
       </FormModal>
 
