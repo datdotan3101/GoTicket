@@ -32,53 +32,11 @@ import {
 
 const MOCK_DATA = {
   summary: {
-    total_revenue: 2850000000,
-    total_tickets: 42500,
-    total_matches: 8
+    total_revenue: 0,
+    total_tickets: 0,
+    total_matches: 0
   },
-  byMatch: [
-    {
-      match_id: 101,
-      home_team: 'Manchester City',
-      away_team: 'Real Madrid',
-      match_date: '2026-04-30T20:00:00Z',
-      status: 'published',
-      stadium_name: 'Etihad Stadium',
-      stadium_city: 'Manchester',
-      revenue: 850000000,
-      tickets_sold: 45000,
-      total_seats: 55000,
-      stadium_id: 1,
-      ticket_sale_open_at: '2026-04-01T10:00:00Z',
-      description: 'UEFA Champions League Semi-final first leg.'
-    },
-    {
-      match_id: 102,
-      home_team: 'Manchester City',
-      away_team: 'Liverpool FC',
-      match_date: '2026-04-20T15:00:00Z',
-      status: 'published',
-      stadium_name: 'Etihad Stadium',
-      stadium_city: 'Manchester',
-      revenue: 720000000,
-      tickets_sold: 48000,
-      total_seats: 55000,
-      stadium_id: 1
-    },
-    {
-      match_id: 103,
-      home_team: 'Manchester City',
-      away_team: 'Arsenal FC',
-      match_date: '2026-03-15T19:30:00Z',
-      status: 'published',
-      stadium_name: 'Etihad Stadium',
-      stadium_city: 'Manchester',
-      revenue: 950000000,
-      tickets_sold: 52000,
-      total_seats: 55000,
-      stadium_id: 1
-    }
-  ]
+  byMatch: []
 }
 
 export default function ManagerDashboard() {
@@ -106,11 +64,10 @@ export default function ManagerDashboard() {
     try {
       const response = await dashboardService.getManagerRevenue()
       const payload = unwrapData(response)
-      if (!payload || !payload.byMatch || payload.byMatch.length === 0 || Number(payload.summary?.total_revenue) === 0) {
-        setData(MOCK_DATA)
-      } else {
-        setData(payload)
-      }
+      setData({
+        summary: payload?.summary || MOCK_DATA.summary,
+        byMatch: payload?.byMatch || MOCK_DATA.byMatch
+      })
     } catch {
       setData(MOCK_DATA)
     } finally {
@@ -232,7 +189,7 @@ export default function ManagerDashboard() {
         </div>
       )}
 
-      {data?.byMatch && data.byMatch.length > 0 && (
+      {data?.byMatch && (
         <div style={{ 
           marginTop: '40px', 
           background: '#fff', 

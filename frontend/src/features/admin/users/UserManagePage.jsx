@@ -38,10 +38,12 @@ export default function UserManagePage() {
         title={u.isManagerMode ? 'Staff & Account Management' : 'User Management'}
         subtitle="Professional stadium operations system"
         action={
-          <button onClick={() => u.setIsAddOpen(true)} style={btnAddNew}>
-            <UserPlus size={18} />
-            Add New
-          </button>
+          u.isManagerMode ? (
+            <button onClick={() => u.setIsAddOpen(true)} style={btnAddNew}>
+              <UserPlus size={18} />
+              Add New
+            </button>
+          ) : null
         }
       />
 
