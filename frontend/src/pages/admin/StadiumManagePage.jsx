@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { MoreVertical, Edit2, Trash2, MapPin } from 'lucide-react'
+import { MoreVertical, Edit2, Trash2, MapPin, Users } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { stadiumService } from '../../services/stadiumService'
 import { unwrapData } from '../../utils/apiData'
@@ -8,10 +8,12 @@ import FormModal from '../../components/ui/FormModal'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import FileUploadField from '../../components/ui/FileUploadField'
 import KebabMenu from '../../components/ui/KebabMenu'
+import CityAutocomplete from '../../components/ui/CityAutocomplete'
+import { VIETNAM_PROVINCES } from '../../constants/cities'
 
 export default function StadiumManagePage() {
   const [stadiums, setStadiums] = useState([])
-  const [form, setForm] = useState({ name: '', city: '', address: '', imageUrl: '' })
+  const [form, setForm] = useState({ name: '', city: '', address: '', imageUrl: '', capacity: '' })
   const [initialForm, setInitialForm] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [confirmModal, setConfirmModal] = useState({ show: false, type: null, target: null })
@@ -38,6 +40,9 @@ export default function StadiumManagePage() {
     const errors = []
     if (!form.name.trim()) errors.push('Name')
     if (!form.city.trim()) errors.push('City')
+    if (!form.address.trim()) errors.push('Address')
+    if (!form.capacity || Number(form.capacity) <= 0) errors.push('Capacity')
+    if (!form.imageUrl) errors.push('Image')
 
     if (errors.length > 0) {
       toast.error(`Please enter: ${errors.join(', ')}`)
@@ -57,7 +62,8 @@ export default function StadiumManagePage() {
         name: form.name.trim(),
         city: form.city.trim(),
         address: form.address.trim(),
-        imageUrl: form.imageUrl || undefined
+        imageUrl: form.imageUrl || undefined,
+        capacity: Number(form.capacity) || 0
       }
       
       if (editingId) {
@@ -80,7 +86,8 @@ export default function StadiumManagePage() {
       name: stadium.name,
       city: stadium.city || '',
       address: stadium.address || '',
-      imageUrl: stadium.image_url || ''
+      imageUrl: stadium.image_url || '',
+      capacity: stadium.capacity || ''
     }
     setEditingId(stadium.id)
     setForm(data)
@@ -91,7 +98,7 @@ export default function StadiumManagePage() {
   const clearForm = () => {
     setEditingId(null)
     setInitialForm(null)
-    setForm({ name: '', city: '', address: '', imageUrl: '' })
+    setForm({ name: '', city: '', address: '', imageUrl: '', capacity: '' })
     setIsFormModalOpen(false)
   }
 
@@ -101,7 +108,8 @@ export default function StadiumManagePage() {
       form.name !== initialForm.name ||
       form.city !== initialForm.city ||
       form.address !== initialForm.address ||
-      form.imageUrl !== initialForm.imageUrl
+      form.imageUrl !== initialForm.imageUrl ||
+      form.capacity !== initialForm.capacity
     )
   }
 
@@ -162,18 +170,33 @@ export default function StadiumManagePage() {
           />
         </div>
 
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label className="admin-label">Capacity *</label>
+          <input
+            type="text"
+            placeholder="e.g. 40.000"
+            value={form.capacity ? Number(form.capacity).toLocaleString('vi-VN') : ''}
+            onChange={(e) => {
+              const rawValue = e.target.value.replace(/\D/g, '');
+              setForm((p) => ({ ...p, capacity: rawValue }));
+            }}
+            className="admin-input"
+          />
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label className="admin-label">City *</label>
-            <input
-              placeholder="e.g. Hanoi"
+            <CityAutocomplete
+              placeholder="e.g. Ha Noi"
               value={form.city}
-              onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
-              className="admin-input"
+              onChange={(value) => setForm((p) => ({ ...p, city: value }))}
+              cities={VIETNAM_PROVINCES}
+              inputClassName="admin-input"
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label className="admin-label">Address</label>
+            <label className="admin-label">Address *</label>
             <input
               placeholder="e.g. Le Duc Tho, My Dinh, Nam Tu Liem"
               value={form.address}
@@ -184,7 +207,7 @@ export default function StadiumManagePage() {
         </div>
 
         <FileUploadField
-          label="Stadium Image"
+          label="Stadium Image *"
           value={form.imageUrl}
           onChange={(url) => setForm((p) => ({ ...p, imageUrl: url }))}
           previewType="banner"
@@ -240,9 +263,13 @@ export default function StadiumManagePage() {
             {/* Card Body */}
             <div style={{ padding: '20px 24px' }}>
               <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#111827', lineHeight: 1.2 }}>{stadium.name}</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '12px', color: '#64748b', fontSize: '0.9rem' }}>
-                <MapPin size={16} />
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginTop: '12px', color: '#64748b', fontSize: '0.9rem' }}>
+                <MapPin size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
                 <span>{stadium.address ? `${stadium.address}, ${stadium.city}` : stadium.city}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', color: '#64748b', fontSize: '0.9rem' }}>
+                <Users size={16} style={{ flexShrink: 0 }} />
+                <span>Capacity: {stadium.capacity ? stadium.capacity.toLocaleString('vi-VN') : 0} seats</span>
               </div>
             </div>
           </article>

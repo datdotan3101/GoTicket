@@ -85,7 +85,16 @@ export default function StandConfigPage() {
     const fetchExistingConfig = async () => {
       setFetching(true)
       try {
-        const res = await matchService.getAvailability(matchId)
+        const [res, matchRes] = await Promise.all([
+          matchService.getAvailability(matchId),
+          matchService.getById(matchId)
+        ])
+        
+        const matchData = unwrapData(matchRes)
+        if (matchData && matchData.stadium_capacity) {
+          setGlobalCapacity(String(matchData.stadium_capacity))
+        }
+
         const existingStands = unwrapData(res) || []
         
         if (existingStands.length > 0) {
@@ -294,26 +303,23 @@ export default function StandConfigPage() {
                   <input 
                     type="number"
                     value={globalCapacity}
-                    onChange={e => {
-                      setGlobalCapacity(e.target.value);
-                      // Auto-apply or let them click? Better to have an Apply button nearby or just use the tool above.
-                      // Let's keep it simple: this input updates globalCapacity, and we add an Apply link.
-                    }}
+                    readOnly
                     style={{ 
                       width: '120px', 
                       background: 'transparent', 
                       border: 'none', 
-                      borderBottom: '2px solid #4f46e5',
+                      borderBottom: '2px dashed #94a3b8',
                       textAlign: 'right',
                       fontSize: '1.25rem',
                       fontWeight: 800,
-                      color: '#4f46e5',
+                      color: '#475569',
                       padding: '0 4px',
                       outline: 'none',
-                      marginRight: '8px'
+                      marginRight: '8px',
+                      cursor: 'not-allowed'
                     }}
                   />
-                  <span className="summary-seats" style={{ fontSize: '1.25rem' }}>Seats</span>
+                  <span className="summary-seats" style={{ fontSize: '1.25rem', color: '#475569' }}>Seats</span>
                 </div>
               </div>
               {globalCapacity !== String(Object.values(blockConfigs).filter(b => b.active).reduce((sum, b) => sum + (Number(b.capacity) || 0), 0)) && (
@@ -332,12 +338,12 @@ export default function StandConfigPage() {
                     cursor: 'pointer'
                   }}
                 >
-                  Apply New Total
+                  Apply Stadium Capacity
                 </button>
               )}
             </div>
             <p className="summary-note">
-              * Edit the total above to redistribute seats automatically.
+              * Click "Apply Stadium Capacity" to redistribute seats automatically based on the stadium's total capacity.
             </p>
           </div>
         </div>

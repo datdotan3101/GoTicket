@@ -282,24 +282,26 @@ export default function UserManagePage() {
                 />
               </div>
               {isManagerMode && (
-                <select 
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                  style={{ padding: '10px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '0.9rem', background: '#fff', cursor: 'pointer', color: '#475569', fontWeight: 600 }}
-                >
-                  <option value="all">All Roles</option>
-                  <option value={ROLES.ADMIN}>Admins</option>
-                  <option value={ROLES.MANAGER}>Managers</option>
-                  <option value={ROLES.EDITOR}>Editors</option>
-                  <option value={ROLES.CHECKER}>Checkers</option>
-                </select>
+                <>
+                  <select 
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    style={{ padding: '10px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '0.9rem', background: '#fff', cursor: 'pointer', color: '#475569', fontWeight: 600 }}
+                  >
+                    <option value="all">All Roles</option>
+                    <option value={ROLES.ADMIN}>Admins</option>
+                    <option value={ROLES.MANAGER}>Managers</option>
+                    <option value={ROLES.EDITOR}>Editors</option>
+                    <option value={ROLES.CHECKER}>Checkers</option>
+                  </select>
+                  <button 
+                    onClick={() => { setIsAddModalOpen(true); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#0f172a', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}>
+                    <UserPlus size={18} />
+                    Add New
+                  </button>
+                </>
               )}
-              <button 
-                onClick={() => { setIsAddModalOpen(true); }}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#0f172a', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}>
-                <UserPlus size={18} />
-                Add New
-              </button>
             </div>
           </div>
           

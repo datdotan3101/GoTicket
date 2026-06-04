@@ -58,7 +58,7 @@ export const matchesService = {
       );
       values.push(limit, offset);
       const result = await query(
-        `SELECT m.*, s.name AS stadium_name, s.address AS stadium_address, l.name AS league_name,
+        `SELECT m.*, s.name AS stadium_name, s.address AS stadium_address, s.capacity AS stadium_capacity, l.name AS league_name,
                 hc.logo_url AS home_team_logo, ac.logo_url AS away_team_logo,
                 (SELECT MIN(price) FROM stands st WHERE st.match_id = m.id) AS min_price,
                 (SELECT MAX(price) FROM stands st WHERE st.match_id = m.id) AS max_price,
@@ -83,7 +83,7 @@ export const matchesService = {
     const cacheKey = `matches:detail:${id}`;
     return getOrSetCache(cacheKey, 60, async () => {
       const result = await query(
-        `SELECT m.*, s.name AS stadium_name, s.address AS stadium_address, l.name AS league_name,
+        `SELECT m.*, s.name AS stadium_name, s.address AS stadium_address, s.capacity AS stadium_capacity, l.name AS league_name,
                 hc.logo_url AS home_team_logo, ac.logo_url AS away_team_logo,
                 (SELECT COUNT(*)::int FROM tickets t WHERE t.match_id = m.id AND t.status IN ('paid', 'checked_in')) AS sold_count,
                 (SELECT COALESCE(SUM(total_seats), 0)::int FROM stands st WHERE st.match_id = m.id) AS total_seats

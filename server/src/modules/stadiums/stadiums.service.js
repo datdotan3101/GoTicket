@@ -43,10 +43,10 @@ export const stadiumsService = {
    */
   async create(payload) {
     const result = await query(
-      `INSERT INTO stadiums (name, city, address, image_url)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO stadiums (name, city, address, image_url, capacity)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [payload.name, payload.city || null, payload.address || null, payload.imageUrl || null]
+      [payload.name, payload.city || null, payload.address || null, payload.imageUrl || null, payload.capacity || 0]
     );
     return result.rows[0];
   },
@@ -60,10 +60,11 @@ export const stadiumsService = {
        SET name      = COALESCE($2, name),
            city      = COALESCE($3, city),
            address   = COALESCE($4, address),
-           image_url = COALESCE($5, image_url)
+           image_url = COALESCE($5, image_url),
+           capacity  = COALESCE($6, capacity)
        WHERE id = $1
        RETURNING *`,
-      [id, payload.name || null, payload.city || null, payload.address || null, payload.imageUrl || null]
+      [id, payload.name || null, payload.city || null, payload.address || null, payload.imageUrl || null, payload.capacity !== undefined ? payload.capacity : null]
     );
     return result.rows[0] || null;
   },

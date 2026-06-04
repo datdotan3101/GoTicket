@@ -20,7 +20,7 @@ export default function ClubManagePage() {
   const [editingId, setEditingId] = useState(null)
   const [confirmModal, setConfirmModal] = useState({ show: false, type: null, target: null })
   const [searchTerm, setSearchTerm] = useState('')
-  const [activeLeagueTab, setActiveLeagueTab] = useState('V.League 1')
+  const [activeLeagueTab, setActiveLeagueTab] = useState('Vleague 1')
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
 
   useEffect(() => {
