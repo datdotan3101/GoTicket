@@ -15,7 +15,7 @@
     "seed:demo": "node database/seeds/seed_demo_match.js",
     "db:create": "node database/create-db.js",
     "db:migrate": "node database/migrate-db.js",
-    "seed": "npm run db:create && npm run db:migrate && npm run seed:admin && npm run seed:sports && npm run seed:demo",
+    "seed": "npm run db:create && npm run db:migrate && npm run seed:admin && npm run seed:sports",
     "lint": "node -e \"console.log('No linter configured yet')\""
   },
   "engines": {

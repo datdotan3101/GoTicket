@@ -11,11 +11,11 @@ const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || "Admin@123456";
 const ADMIN_NAME = "GoTicket Admin";
 
 const seedAdmin = async () => {
-  console.log("🌱 Seeding admin user...");
+  console.log("Seeding admin user...");
 
   const existing = await db.query("SELECT id FROM users WHERE email = $1", [ADMIN_EMAIL]);
   if (existing.rowCount > 0) {
-    console.log(`⚠️  Admin user already exists: ${ADMIN_EMAIL} (id=${existing.rows[0].id})`);
+    console.log(`Admin user already exists: ${ADMIN_EMAIL} (id=${existing.rows[0].id})`);
     return;
   }
 
@@ -29,15 +29,15 @@ const seedAdmin = async () => {
   );
 
   const admin = result.rows[0];
-  console.log(`✅ Admin user created: ${admin.email} (id=${admin.id}, role=${admin.role})`);
+  console.log(`Admin user created: ${admin.email} (id=${admin.id}, role=${admin.role})`);
   console.log(`   Password: ${ADMIN_PASSWORD}`);
-  console.log(`   \n⚠️  Hãy đổi mật khẩu ngay sau khi deploy!`);
+  console.log(`   \nHãy đổi mật khẩu ngay sau khi deploy!`);
 };
 
 seedAdmin()
   .then(() => db.end())
   .catch((err) => {
-    console.error("❌ Seed failed:", err.message);
+    console.error("Seed failed:", err.message);
     db.end();
     process.exit(1);
   });

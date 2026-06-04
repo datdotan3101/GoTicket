@@ -10,7 +10,7 @@ import bcrypt from "bcryptjs";
  * Requires: seed_admin.js và seed_sports.js đã chạy trước.
  */
 const seedDemoMatch = async () => {
-  console.log("🌱 Seeding demo match data...");
+  console.log("Seeding demo match data...");
 
   // Lấy sport bóng đá
   const sportResult = await db.query("SELECT id FROM sports WHERE slug = 'bong-da' LIMIT 1");
@@ -38,7 +38,7 @@ const seedDemoMatch = async () => {
     : (await db.query("SELECT id FROM stadiums WHERE name = 'Sân vận động Mỹ Đình' LIMIT 1")).rows[0]?.id;
 
   if (!stadiumId) throw new Error("Không thể tạo stadium.");
-  console.log(`✅ Stadium: Sân vận động Mỹ Đình (id=${stadiumId})`);
+  console.log(`Stadium: Sân vận động Mỹ Đình (id=${stadiumId})`);
 
   // 2. Tạo Club
   const clubResult = await db.query(
@@ -53,7 +53,7 @@ const seedDemoMatch = async () => {
     : (await db.query("SELECT id FROM clubs WHERE name = 'Câu lạc bộ Hà Nội FC' LIMIT 1")).rows[0]?.id;
 
   if (!clubId) throw new Error("Không thể tạo club.");
-  console.log(`✅ Club: Hà Nội FC (id=${clubId})`);
+  console.log(`Club: Hà Nội FC (id=${clubId})`);
 
   // 3. Tạo League
   const leagueResult = await db.query(
@@ -68,7 +68,7 @@ const seedDemoMatch = async () => {
     : (await db.query("SELECT id FROM leagues WHERE name = 'V.League 1' LIMIT 1")).rows[0]?.id;
 
   if (!leagueId) throw new Error("Không thể tạo league.");
-  console.log(`✅ League: V.League 1 (id=${leagueId})`);
+  console.log(`League: V.League 1 (id=${leagueId})`);
 
   // 4. Tạo Manager user
   const managerEmail = "manager@goticket.vn";
@@ -83,10 +83,10 @@ const seedDemoMatch = async () => {
       [managerEmail, hash, clubId]
     );
     managerId = mgr.rows[0].id;
-    console.log(`✅ Manager: ${managerEmail} (id=${managerId}) / password: Manager@123456`);
+    console.log(`Manager: ${managerEmail} (id=${managerId}) / password: Manager@123456`);
   } else {
     managerId = managerExist.rows[0].id;
-    console.log(`⚠️  Manager already exists: ${managerEmail} (id=${managerId})`);
+    console.log(`Manager already exists: ${managerEmail} (id=${managerId})`);
   }
 
   // 5. Tạo Match (status=published, ngày trong tương lai 7 ngày)
@@ -151,10 +151,10 @@ const seedDemoMatch = async () => {
        ON CONFLICT DO NOTHING`,
       seatValues
     );
-    console.log(`✅ Stand ${stand.name}: ${total} seats created`);
+    console.log(`Stand ${stand.name}: ${total} seats created`);
   }
 
-  console.log("\n🎉 Demo data seeded successfully!");
+  console.log("\n Demo data seeded successfully!");
   console.log(`   Match ID: ${matchId}`);
   console.log(`   Truy cập: GET /api/matches/${matchId}`);
 };
@@ -162,7 +162,7 @@ const seedDemoMatch = async () => {
 seedDemoMatch()
   .then(() => db.end())
   .catch((err) => {
-    console.error("❌ Seed failed:", err.message);
+    console.error("Seed failed:", err.message);
     db.end();
     process.exit(1);
   });
