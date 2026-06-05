@@ -30,10 +30,6 @@ const MyTicketsPage = lazy(() => import('./pages/audience/MyTicketsPage'))
 const TicketDetailPage = lazy(() => import('./pages/audience/TicketDetailPage'))
 const CheckerDashboard = lazy(() => import('./pages/checker/CheckerDashboard'))
 const QRScanPage = lazy(() => import('./pages/checker/QRScanPage'))
-const EditorDashboard = lazy(() => import('./pages/editor/EditorDashboard'))
-const NewsCreatePage = lazy(() => import('./pages/editor/NewsCreatePage'))
-const NewsEditPage = lazy(() => import('./pages/editor/NewsEditPage'))
-const EditorNotificationsPage = lazy(() => import('./pages/editor/EditorNotificationsPage'))
 const ManagerDashboard = lazy(() => import('./pages/manager/ManagerDashboard'))
 const MatchCreatePage = lazy(() => import('./pages/manager/MatchCreatePage'))
 const MatchEditPage = lazy(() => import('./pages/manager/MatchEditPage'))
@@ -50,6 +46,7 @@ const RevenueReportPage = lazy(() => import('./pages/admin/RevenueReportPage'))
 const MatchManagePage = lazy(() => import('./pages/admin/MatchManagePage'))
 const ClubManagePage = lazy(() => import('./pages/admin/ClubManagePage'))
 const StadiumManagePage = lazy(() => import('./pages/admin/StadiumManagePage'))
+const MailboxPage = lazy(() => import('./pages/common/MailboxPage'))
 
 export default function App() {
   return (
@@ -87,13 +84,6 @@ export default function App() {
               <Route path={APP_ROUTES.CHECKER_SCAN} element={<QRScanPage />} />
             </Route>
 
-            <Route element={<ProtectedRoute allowedRoles={[ROLES.EDITOR]} />}>
-              <Route path={APP_ROUTES.EDITOR_DASHBOARD} element={<EditorDashboard />} />
-              <Route path={APP_ROUTES.EDITOR_NEWS_CREATE} element={<NewsCreatePage />} />
-              <Route path={APP_ROUTES.EDITOR_NEWS_EDIT} element={<NewsEditPage />} />
-              <Route path={APP_ROUTES.EDITOR_NOTIFICATIONS} element={<EditorNotificationsPage />} />
-            </Route>
-
             <Route element={<ProtectedRoute allowedRoles={[ROLES.MANAGER]} />}>
               <Route element={<ManagerLayout />}>
                 <Route path={APP_ROUTES.MANAGER_DASHBOARD} element={<ManagerDashboard />} />
@@ -103,6 +93,7 @@ export default function App() {
                 <Route path={APP_ROUTES.MANAGER_STAND_CONFIG} element={<StandConfigPage />} />
                 <Route path={APP_ROUTES.MANAGER_ANALYTICS} element={<MatchAnalyticsPage />} />
                 <Route path={APP_ROUTES.MANAGER_NOTIFICATIONS} element={<ManagerNotificationsPage />} />
+                <Route path={APP_ROUTES.MANAGER_MAILBOX} element={<MailboxPage />} />
               </Route>
             </Route>
 
@@ -118,6 +109,7 @@ export default function App() {
                 <Route path={APP_ROUTES.ADMIN_CLUBS} element={<ClubManagePage />} />
                 <Route path={APP_ROUTES.ADMIN_STADIUMS} element={<StadiumManagePage />} />
                 <Route path={APP_ROUTES.ADMIN_REVENUE_REPORT} element={<RevenueReportPage />} />
+                <Route path={APP_ROUTES.ADMIN_MAILBOX} element={<MailboxPage />} />
               </Route>
             </Route>
 

@@ -44,16 +44,6 @@ export default function Navbar() {
             </>
           )}
 
-
-
-          {user?.role === ROLES.EDITOR && (
-            <>
-              <NavLink to={APP_ROUTES.EDITOR_DASHBOARD} className={linkClassName} end>Dashboard</NavLink>
-              <NavLink to={APP_ROUTES.EDITOR_NEWS_CREATE} className={linkClassName}>Create News</NavLink>
-              <NavLink to={APP_ROUTES.EDITOR_NOTIFICATIONS} className={linkClassName}>Inbox</NavLink>
-            </>
-          )}
-
           {user?.role === ROLES.CHECKER && (
             <>
               <NavLink to={APP_ROUTES.CHECKER_DASHBOARD} className={linkClassName} end>Dashboard</NavLink>
@@ -82,7 +72,6 @@ export default function Navbar() {
                     <span className="user-dropdown-role">{user?.role} Account</span>
                   </div>
                   {user?.role === ROLES.CHECKER && <Link to={APP_ROUTES.CHECKER_DASHBOARD}>Checker Portal</Link>}
-                  {user?.role === ROLES.EDITOR && <Link to={APP_ROUTES.EDITOR_DASHBOARD}>Editor Portal</Link>}
                   {user?.role === ROLES.MANAGER && <Link to={APP_ROUTES.MANAGER_DASHBOARD}>Manager Portal</Link>}
                   {user?.role === ROLES.ADMIN && <Link to={APP_ROUTES.ADMIN_DASHBOARD}>Admin Portal</Link>}
                   <Link to={APP_ROUTES.PROFILE}>My Profile</Link>

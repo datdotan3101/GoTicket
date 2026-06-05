@@ -9,6 +9,7 @@ import { approvalsService } from '../../../services/approvalsService'
 import { clubService } from '../../../services/clubService'
 import { unwrapData } from '../../../utils/apiData'
 import { validateForm } from '../../../utils/validator'
+import { useAuth } from '../../../hooks/useAuth'
 
 const EMPTY_ADD_FORM = { fullName: '', email: '', password: '', role: ROLES.MANAGER, clubId: '' }
 const EMPTY_EDIT_FORM = { id: null, fullName: '', email: '', role: '', clubId: '' }
@@ -16,6 +17,7 @@ const EMPTY_EDIT_FORM = { id: null, fullName: '', email: '', role: '', clubId: '
 export function useUsers() {
   const location = useLocation()
   const isManagerMode = location.pathname === APP_ROUTES.ADMIN_MANAGERS
+  const { user: currentUser } = useAuth()
 
   const [users, setUsers] = useState([])
   const [clubs, setClubs] = useState([])
@@ -168,7 +170,7 @@ export function useUsers() {
     const userRole = u.role?.toLowerCase()
     const matchesRoleFilter = roleFilter === 'all' || userRole === roleFilter.toLowerCase()
     if (isManagerMode) {
-      return matchesRoleFilter && [ROLES.MANAGER, ROLES.ADMIN, ROLES.EDITOR, ROLES.CHECKER].includes(userRole)
+      return matchesRoleFilter && [ROLES.MANAGER, ROLES.ADMIN, ROLES.CHECKER].includes(userRole)
     }
     return userRole === ROLES.AUDIENCE || !u.role
   })
@@ -179,6 +181,7 @@ export function useUsers() {
   )
 
   return {
+    currentUser,
     isManagerMode,
     users, clubs, pendingMatches,
     displayUsers, filteredUsers,

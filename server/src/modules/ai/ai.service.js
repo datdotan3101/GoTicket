@@ -187,8 +187,7 @@ const executeAction = async (action, userId) => {
             leagueName: m.league_name,
             availableSeats: m.total_seats - m.sold_count
           })),
-          contextForAI: `Action failed: The match ${match.home_team} vs ${match.away_team} is NOT on sale yet. Ticket sales will open at ${new Date(match.ticket_sale_open_at).toLocaleString("en-US")}.
-Tell the user that this match is coming soon and give them the exact opening time. Then, recommend the following currently active matches for them to consider:\n${lines.join("\n")}`
+          contextForAI: `Action failed: The match ${match.home_team} vs ${match.away_team} is NOT on sale yet. Ticket sales will open at ${new Date(match.ticket_sale_open_at).toLocaleString("en-US")}.`
         };
       }
 

@@ -26,7 +26,7 @@ const router = Router();
  *         name: role
  *         schema:
  *           type: string
- *           enum: [admin, manager, editor, audience, checker]
+ *           enum: [admin, manager, audience, checker]
  *         description: "Filter by role"
  *       - in: query
  *         name: isActive
@@ -69,7 +69,7 @@ router.get("/", auth, requireRoles(ROLES.ADMIN), getUsers);
  *               email: { type: string, format: email }
  *               password: { type: string, minLength: 6 }
  *               fullName: { type: string }
- *               role: { type: string, enum: [admin, manager, editor, audience, checker] }
+ *               role: { type: string, enum: [admin, manager, audience, checker] }
  *               clubId: { type: integer }
  *     responses:
  *       201:
@@ -196,7 +196,7 @@ router.put("/:id/active", auth, requireRoles(ROLES.ADMIN), toggleUserActive);
  *             properties:
  *               email: { type: string, format: email }
  *               fullName: { type: string }
- *               role: { type: string, enum: [admin, manager, editor, audience, checker] }
+ *               role: { type: string, enum: [admin, manager, audience, checker] }
  *               clubId: { type: integer }
  *     responses:
  *       200:

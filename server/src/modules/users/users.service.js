@@ -199,8 +199,19 @@ export const usersService = {
   /**
    * Delete a user (Admin only).
    */
-  async remove(id) {
+  async remove(id, currentUserId) {
+    if (id === currentUserId) {
+      throw new AppError("Admin cannot delete their own account.", 403);
+    }
+
     return await withTransaction(async (client) => {
+      // Check if user is audience
+      const targetUser = await client.query(`SELECT role FROM users WHERE id = $1`, [id]);
+      if (targetUser.rows.length === 0) return null;
+      if (targetUser.rows[0].role === ROLES.AUDIENCE) {
+        throw new AppError("Admin cannot delete audience accounts.", 403);
+      }
+
       // 1. Prevent deleting users who have purchased tickets
       const orders = await client.query(`SELECT id FROM orders WHERE user_id = $1 LIMIT 1`, [id]);
       if (orders.rows.length > 0) {

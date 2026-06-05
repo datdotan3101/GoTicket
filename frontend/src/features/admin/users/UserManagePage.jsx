@@ -93,7 +93,7 @@ export default function UserManagePage() {
                 style={{ padding: '10px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '0.9rem', background: '#fff', cursor: 'pointer', color: '#475569', fontWeight: 600 }}
               >
                 <option value="all">All Roles</option>
-                {[ROLES.ADMIN, ROLES.MANAGER, ROLES.EDITOR, ROLES.CHECKER].map((r) => (
+                {[ROLES.ADMIN, ROLES.MANAGER, ROLES.CHECKER].map((r) => (
                   <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}s</option>
                 ))}
               </select>
@@ -159,9 +159,11 @@ export default function UserManagePage() {
                       >
                         {user.is_active ? <Lock size={16} /> : <Unlock size={16} />}
                       </button>
-                      <button onClick={() => u.openDeleteConfirmModal(user)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '8px' }} title="Delete">
-                        <Trash2 size={16} />
-                      </button>
+                      {user.role && user.role !== ROLES.AUDIENCE && user.id !== u.currentUser?.id && (
+                        <button onClick={() => u.openDeleteConfirmModal(user)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '8px' }} title="Delete">
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 )

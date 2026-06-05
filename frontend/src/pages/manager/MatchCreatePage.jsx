@@ -66,6 +66,19 @@ export default function MatchCreatePage() {
 
   const navigate = useNavigate()
 
+  useEffect(() => {
+    if (form.stadiumId && stadiums.length > 0) {
+      const selected = stadiums.find(s => String(s.id) === String(form.stadiumId))
+      if (selected && selected.capacity) {
+        setTotalCapacity(selected.capacity.toString())
+      } else {
+        setTotalCapacity('0')
+      }
+    } else {
+      setTotalCapacity('0')
+    }
+  }, [form.stadiumId, stadiums])
+
 
   const clubOptions = useMemo(() => {
     return clubs
@@ -256,7 +269,7 @@ export default function MatchCreatePage() {
     }
   }
 
-  const selectedStadium = stadiums.find(s => s.id === Number(form.stadiumId))
+  const selectedStadium = stadiums.find(s => String(s.id) === String(form.stadiumId))
 
   return (
     <section className="manager-create-page" style={{ padding: '60px 20px' }}>
@@ -478,16 +491,9 @@ export default function MatchCreatePage() {
                   <input 
                     type="number" 
                     className="mc-nice-input" 
-                    style={{ fontSize: '1.5rem', fontWeight: 900, color: '#f97316' }}
+                    style={{ fontSize: '1.5rem', fontWeight: 900, color: '#f97316', background: '#f1f5f9', cursor: 'not-allowed' }}
                     value={totalCapacity} 
-                    min="0"
-                    onChange={e => {
-                      const val = e.target.value;
-                      setTotalCapacity(val);
-                      if (Number(val) < 0) {
-                        toast.error('Capacity cannot be negative');
-                      }
-                    }} 
+                    readOnly
                   />
                   <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '8px' }}>This total will be divided into Stands A, B, C, D automatically.</div>
                 </div>
@@ -498,7 +504,7 @@ export default function MatchCreatePage() {
                     if (columns.length === 0) return null
                     return (
                       <div key={standName} style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', gridColumn: '1 / -1' }}>
-                        <h4 style={{ margin: '0 0 16px 0', fontSize: '1.2rem', fontWeight: 800, color: '#1e293b' }}>Stand {standName} <span style={{ fontSize: '0.8rem', color: '#f97316' }}>({STAND_RATIOS[standName] * 100}% Ratio)</span></h4>
+                        <h4 style={{ margin: '0 0 16px 0', fontSize: '1.2rem', fontWeight: 800, color: '#1e293b' }}>Stand {standName}</h4>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
                           {columns.map(col => {
                             const isActive = col.tiers.some(t => columnConfigs[col.id]?.activeTiers.includes(t))
@@ -609,7 +615,6 @@ export default function MatchCreatePage() {
                     <div key={standName} style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                         <span style={{ fontWeight: 800, color: '#1e293b' }}>Stand {standName}</span>
-                        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>{STAND_RATIOS[standName]*100}% Ratio</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                         <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{Math.floor(Number(totalCapacity) * STAND_RATIOS[standName]).toLocaleString()} seats</span>

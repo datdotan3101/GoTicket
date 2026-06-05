@@ -28,7 +28,7 @@ const options = {
             email: { type: "string", format: "email" },
             full_name: { type: "string" },
             phone: { type: "string" },
-            role: { type: "string", enum: ["admin", "manager", "editor", "audience", "checker"] },
+            role: { type: "string", enum: ["admin", "manager", "audience", "checker"] },
             club_id: { type: "integer", nullable: true },
             is_active: { type: "boolean" },
             is_approved: { type: "boolean" },

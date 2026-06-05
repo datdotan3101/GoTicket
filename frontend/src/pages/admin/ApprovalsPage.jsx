@@ -13,6 +13,7 @@ const DUMMY_IMAGES = [
 
 export default function ApprovalsPage() {
   const [type, setType] = useState('')
+  const [status, setStatus] = useState('pending') // pending, approved, rejected
   const [items, setItems] = useState([])
   const [selectedMatch, setSelectedMatch] = useState(null)
   const [rejectingId, setRejectingId] = useState(null)
@@ -21,8 +22,12 @@ export default function ApprovalsPage() {
 
   useEffect(() => {
     const fetchPending = async () => {
+      setItems([])
       try {
-        const response = await approvalsService.getPending(type ? { type } : undefined)
+        const response = await approvalsService.getPending({ 
+          type: type || undefined,
+          status 
+        })
         setItems(unwrapData(response) || [])
       } catch {
         setItems([])
@@ -30,11 +35,14 @@ export default function ApprovalsPage() {
     }
 
     fetchPending()
-  }, [type])
+  }, [type, status])
 
   const refresh = async () => {
     try {
-      const response = await approvalsService.getPending(type ? { type } : undefined)
+      const response = await approvalsService.getPending({ 
+        type: type || undefined,
+        status 
+      })
       setItems(unwrapData(response) || [])
     } catch {
       setItems([])
@@ -78,16 +86,32 @@ export default function ApprovalsPage() {
   }
 
   return (
-    <section className="container page">
-      <h1>Approvals</h1>
-      <div className="form">
-        <select value={type} onChange={(event) => setType(event.target.value)}>
-          <option value="">All</option>
-          <option value="match">match</option>
-          <option value="news">news</option>
-          <option value="user_account">user_account</option>
-        </select>
+    <section className="container page" style={{ padding: '40px 20px', maxWidth: '1200px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 800, color: '#1e293b' }}>Approvals</h1>
       </div>
+
+      <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', borderBottom: '2px solid #e2e8f0', paddingBottom: '12px' }}>
+        {['pending', 'approved', 'rejected'].map(tab => (
+          <button 
+            key={tab}
+            onClick={() => setStatus(tab)}
+            style={{ 
+              padding: '8px 16px', 
+              background: status === tab ? '#3b82f6' : 'transparent', 
+              color: status === tab ? '#fff' : '#64748b', 
+              border: 'none', 
+              borderRadius: '8px', 
+              fontWeight: 600, 
+              cursor: 'pointer', 
+              textTransform: 'capitalize' 
+            }}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
       <div className="cards-grid">
         {items.map((item) => (
           <article className="card" key={item.id} style={{ position: 'relative', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
@@ -141,20 +165,48 @@ export default function ApprovalsPage() {
 
             <div style={{ padding: '16px 20px', background: '#f8fafc', fontSize: '0.8rem', color: '#475569' }}>
               <p style={{ margin: '0 0 8px 0' }}><strong>Submitted by:</strong> {item.submitted_by_name || item.submitted_by_email}</p>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                <button type="button" className="mc-btn mc-btn-primary" style={{ flex: 1, padding: '8px', fontSize: '0.8rem' }} onClick={() => onApprove(item.id)}>
-                  <Check size={16} />
-                </button>
-                <button type="button" className="mc-btn" style={{ flex: 1, padding: '8px', fontSize: '0.8rem', background: '#fee2e2', color: '#ef4444', borderColor: '#fee2e2' }} onClick={() => handleRejectClick(item.id)}>
-                  <XCircle size={16} />
-                </button>
-                {item.resource_type === 'match' && (
-                  <button type="button" className="mc-btn mc-btn-ghost" style={{ flex: 1, padding: '8px', fontSize: '0.8rem' }} onClick={() => setSelectedMatch(item)}>
-                    <Eye size={16} style={{ marginRight: '6px' }} />
-                    Details
+              
+              {status === 'pending' ? (
+                <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                  <button type="button" className="mc-btn mc-btn-primary" style={{ flex: 1, padding: '8px', fontSize: '0.8rem' }} onClick={() => onApprove(item.id)}>
+                    <Check size={16} />
                   </button>
-                )}
-              </div>
+                  <button type="button" className="mc-btn" style={{ flex: 1, padding: '8px', fontSize: '0.8rem', background: '#fee2e2', color: '#ef4444', borderColor: '#fee2e2' }} onClick={() => handleRejectClick(item.id)}>
+                    <XCircle size={16} />
+                  </button>
+                  {item.resource_type === 'match' && (
+                    <button type="button" className="mc-btn mc-btn-ghost" style={{ flex: 1, padding: '8px', fontSize: '0.8rem' }} onClick={() => setSelectedMatch(item)}>
+                      <Eye size={16} style={{ marginRight: '6px' }} />
+                      Details
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div style={{ marginTop: '16px' }}>
+                  <span style={{ 
+                    display: 'inline-block',
+                    padding: '4px 8px', 
+                    borderRadius: '4px', 
+                    fontSize: '0.75rem', 
+                    fontWeight: 700, 
+                    background: item.status === 'approved' ? '#dcfce7' : '#fee2e2', 
+                    color: item.status === 'approved' ? '#16a34a' : '#ef4444' 
+                  }}>
+                    {item.status ? item.status.toUpperCase() : status.toUpperCase()}
+                  </span>
+                  {item.status === 'rejected' && item.rejection_reason && (
+                    <div style={{ marginTop: '8px', fontSize: '0.75rem', color: '#ef4444', fontStyle: 'italic' }}>
+                      Reason: {item.rejection_reason}
+                    </div>
+                  )}
+                  {item.resource_type === 'match' && (
+                    <button type="button" className="mc-btn mc-btn-ghost" style={{ width: '100%', marginTop: '12px', padding: '8px', fontSize: '0.8rem' }} onClick={() => setSelectedMatch(item)}>
+                      <Eye size={16} style={{ marginRight: '6px' }} />
+                      Details
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </article>
         ))}
@@ -163,27 +215,27 @@ export default function ApprovalsPage() {
       {selectedMatch && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(4px)' }}>
           <div style={{ background: '#fff', borderRadius: '24px', width: '100%', maxWidth: '1000px', maxHeight: '90vh', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', display: 'flex', flexDirection: 'column' }}>
-            {/* Header Banner - Keeping it simple at top */}
-            <div style={{ position: 'relative', height: '120px', backgroundImage: `url(${selectedMatch.thumbnail_url || DUMMY_IMAGES[selectedMatch.id % DUMMY_IMAGES.length]})`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%)' }}></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 30px', borderBottom: '1px solid #e2e8f0' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 900, margin: 0, color: '#1e293b' }}>
+                {selectedMatch.home_team} vs {selectedMatch.away_team}
+              </h2>
               <button 
                 onClick={() => setSelectedMatch(null)}
-                style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}
+                style={{ background: '#f1f5f9', border: 'none', color: '#64748b', width: '32px', height: '32px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background 0.2s' }}
+                onMouseOver={(e) => e.currentTarget.style.background = '#e2e8f0'}
+                onMouseOut={(e) => e.currentTarget.style.background = '#f1f5f9'}
               >
                 <X size={18} />
               </button>
-              <div style={{ textAlign: 'center', color: '#fff', zIndex: 10 }}>
-                <h2 style={{ fontSize: '1.75rem', fontWeight: 900, margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
-                  {selectedMatch.home_team} vs {selectedMatch.away_team}
-                </h2>
-              </div>
             </div>
 
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
               {/* Left Column: Match Details */}
-              <div style={{ width: '40%', padding: '30px', borderRight: '1px solid #e2e8f0', background: '#f8fafc', overflowY: 'auto' }}>
-                <div style={{ marginBottom: '24px' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '1px' }}>Quick Info</div>
+              <div style={{ width: '40%', borderRight: '1px solid #e2e8f0', background: '#f8fafc', overflowY: 'auto' }}>
+                <div style={{ height: '200px', backgroundImage: `url(${selectedMatch.thumbnail_url || DUMMY_IMAGES[selectedMatch.id % DUMMY_IMAGES.length]})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+                <div style={{ padding: '30px' }}>
+                  <div style={{ marginBottom: '24px' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '1px' }}>Quick Info</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
@@ -240,8 +292,9 @@ export default function ApprovalsPage() {
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Right Column: Pricing List */}
+            {/* Right Column: Pricing List */}
               <div style={{ width: '60%', padding: '30px', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
                   <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>Ticket Pricing & Stands</div>
@@ -293,13 +346,15 @@ export default function ApprovalsPage() {
               <button type="button" className="mc-btn mc-btn-ghost" onClick={() => setSelectedMatch(null)}>
                 Close Preview
               </button>
-              <button type="button" className="mc-btn mc-btn-primary" style={{ padding: '10px 24px' }} onClick={() => {
-                onApprove(selectedMatch.id);
-                setSelectedMatch(null);
-              }}>
-                <Check size={18} style={{ marginRight: '8px' }} />
-                Approve This Match
-              </button>
+              {status === 'pending' && (
+                <button type="button" className="mc-btn mc-btn-primary" style={{ padding: '10px 24px' }} onClick={() => {
+                  onApprove(selectedMatch.id);
+                  setSelectedMatch(null);
+                }}>
+                  <Check size={18} style={{ marginRight: '8px' }} />
+                  Approve This Match
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -21,6 +21,7 @@ import newsRoutes from "./modules/news/news.routes.js";
 import aiRoutes from "./modules/ai/ai.routes.js";
 import uploadRoutes from "./modules/upload/upload.routes.js";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
+import messagesRoutes from "./modules/messages/messages.routes.js";
 import { globalLimiter, aiLimiter } from "./middlewares/rateLimiter.js";
 
 const app = express();
@@ -74,6 +75,7 @@ app.use("/api/approvals", approvalsRoutes);
 app.use("/api/ai", aiLimiter, aiRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/messages", messagesRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

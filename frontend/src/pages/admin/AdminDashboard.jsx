@@ -4,6 +4,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell, Legend
 } from 'recharts'
+import { Trophy, Medal } from 'lucide-react'
 import { APP_ROUTES } from '../../constants/routes'
 import { dashboardService } from '../../services/dashboardService'
 import { unwrapData } from '../../utils/apiData'
@@ -100,7 +101,7 @@ export default function AdminDashboard() {
 
       {/* LEVEL 2: Top Performers (Clubs) */}
       <div style={{ marginBottom: '40px' }}>
-        <h2 style={sectionTitleStyle}>🔥 Top 5 Clubs by Revenue</h2>
+        <h2 style={sectionTitleStyle}>Top 5 Clubs by Revenue</h2>
         <div className="card" style={{ padding: '0', overflow: 'hidden', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', borderRadius: '20px', background: '#fff' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead style={{ background: '#f8fafc' }}>
@@ -117,8 +118,10 @@ export default function AdminDashboard() {
               {topClubs.map((club, index) => (
                 <tr key={club.id} style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }} onClick={() => window.location.href=`/admin/clubs/${club.id}`}>
                   <td style={tdStyle}>
-                    <span style={{ marginRight: '8px' }}>{index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : ''}</span>
-                    <strong>{club.name}</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {index === 0 ? <Trophy size={18} color="#eab308" /> : index === 1 ? <Medal size={18} color="#94a3b8" /> : index === 2 ? <Medal size={18} color="#b45309" /> : <span style={{ width: '18px', display: 'inline-block', textAlign: 'center', color: '#94a3b8', fontSize: '0.9rem', fontWeight: 600 }}>{index + 1}</span>}
+                      <strong>{club.name}</strong>
+                    </div>
                   </td>
                   <td style={tdStyle}>{formatVND(club.revenue)}</td>
                   <td style={tdStyle}>{club.tickets_sold}</td>

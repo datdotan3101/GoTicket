@@ -8,6 +8,7 @@ import {
   X, TrendingUp, AlertCircle, Users, Eye, EyeOff, Trash2
 } from 'lucide-react'
 import { ROLES } from '../../constants/roles'
+import { useAuth } from '../../hooks/useAuth'
 import { userService } from '../../services/userService'
 import { approvalsService } from '../../services/approvalsService'
 import { clubService } from '../../services/clubService'
@@ -34,6 +35,7 @@ const getAvatarColor = (initials) => {
 export default function UserManagePage() {
   const location = useLocation()
   const isManagerMode = location.pathname === APP_ROUTES.ADMIN_MANAGERS
+  const { user: currentUser } = useAuth()
   
   const [users, setUsers] = useState([])
   const [pendingMatches, setPendingMatches] = useState([])
@@ -204,7 +206,7 @@ export default function UserManagePage() {
     const matchesRoleFilter = roleFilter === 'all' || userRole === roleFilter.toLowerCase()
     
     if (isManagerMode) {
-      const managerRoles = [ROLES.MANAGER, ROLES.ADMIN, ROLES.EDITOR, ROLES.CHECKER]
+      const managerRoles = [ROLES.MANAGER, ROLES.ADMIN, ROLES.CHECKER]
       return matchesRoleFilter && managerRoles.includes(userRole)
     } else {
       return userRole === ROLES.AUDIENCE || !u.role
@@ -291,7 +293,6 @@ export default function UserManagePage() {
                     <option value="all">All Roles</option>
                     <option value={ROLES.ADMIN}>Admins</option>
                     <option value={ROLES.MANAGER}>Managers</option>
-                    <option value={ROLES.EDITOR}>Editors</option>
                     <option value={ROLES.CHECKER}>Checkers</option>
                   </select>
                   <button 
@@ -366,9 +367,11 @@ export default function UserManagePage() {
                         >
                           {user.is_active ? <Lock size={16} /> : <Unlock size={16} />}
                         </button>
-                        <button onClick={() => openDeleteConfirmModal(user)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '8px' }} title="Delete">
-                          <Trash2 size={16} />
-                        </button>
+                        {user.role && user.role !== ROLES.AUDIENCE && user.id !== currentUser?.id && (
+                          <button onClick={() => openDeleteConfirmModal(user)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '8px' }} title="Delete">
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   )
@@ -447,7 +450,6 @@ export default function UserManagePage() {
                 <select value={addForm.role} onChange={e => {setAddForm({...addForm, role: e.target.value, clubId: ''})}} className="admin-input">
                   <option value={ROLES.MANAGER}>Manager</option>
                   <option value={ROLES.ADMIN}>Admin</option>
-                  <option value={ROLES.EDITOR}>Editor</option>
                   <option value={ROLES.CHECKER}>Checker</option>
                 </select>
               </div>
@@ -495,7 +497,6 @@ export default function UserManagePage() {
                 <select value={editForm.role} onChange={e => {setEditForm({...editForm, role: e.target.value, clubId: ''})}} className="admin-input">
                   <option value={ROLES.MANAGER}>Manager</option>
                   <option value={ROLES.ADMIN}>Admin</option>
-                  <option value={ROLES.EDITOR}>Editor</option>
                   <option value={ROLES.CHECKER}>Checker</option>
                   <option value={ROLES.AUDIENCE}>Audience</option>
                 </select>

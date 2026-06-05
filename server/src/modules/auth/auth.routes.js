@@ -79,7 +79,7 @@ router.post("/register", authLimiter, runValidation(registerRules), register);
  *                         id: { type: integer }
  *                         email: { type: string }
  *                         full_name: { type: string }
- *                         role: { type: string, enum: [admin, manager, editor, audience, checker] }
+ *                         role: { type: string, enum: ["admin", "manager", "audience", "checker"] }
  *       401:
  *         description: "Invalid email or password"
  *       403:

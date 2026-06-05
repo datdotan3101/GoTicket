@@ -93,7 +93,6 @@ export default function UserFormModal({ mode = 'add', form, setForm, clubs, onSu
             >
               <option value={ROLES.MANAGER}>Manager</option>
               <option value={ROLES.ADMIN}>Admin</option>
-              <option value={ROLES.EDITOR}>Editor</option>
               <option value={ROLES.CHECKER}>Checker</option>
               {isEdit && <option value={ROLES.AUDIENCE}>Audience</option>}
             </select>

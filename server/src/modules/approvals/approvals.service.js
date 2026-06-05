@@ -9,11 +9,11 @@ export const approvalsService = {
    * Can filter by resource_type: 'match' | 'news' | 'user_account'
    */
   async getPendingApprovals(queryParams = {}) {
-    const { type } = queryParams;
+    const { type, status = 'pending' } = queryParams;
 
-    const conditions = ["a.status = 'pending'"];
-    const values = [];
-    let idx = 1;
+    const conditions = ["a.status = $1"];
+    const values = [status];
+    let idx = 2;
 
     if (type) {
       conditions.push(`a.resource_type = $${idx++}`);

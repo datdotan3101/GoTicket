@@ -56,7 +56,7 @@ router.get("/", getNews);
  * @swagger
  * /api/news/my:
  *   get:
- *     summary: "Current editor's articles (all statuses)"
+ *     summary: "Current admin/manager's articles (all statuses)"
  *     tags: [News]
  *     parameters:
  *       - in: query
@@ -74,7 +74,7 @@ router.get("/", getNews);
  *       200:
  *         description: "Success"
  */
-router.get("/my", auth, requireRoles(ROLES.EDITOR), getMyNews);
+router.get("/my", auth, requireRoles(ROLES.ADMIN, ROLES.MANAGER), getMyNews);
 
 /**
  * @swagger
@@ -119,7 +119,7 @@ router.get("/:id", auth, requireRoles(ROLES.EDITOR, ROLES.ADMIN), getNewsById);
  * @swagger
  * /api/news:
  *   post:
- *     summary: "Create a new article (editor)"
+ *     summary: "Create a new article (admin/manager)"
  *     tags: [News]
  *     requestBody:
  *       required: true
@@ -138,13 +138,13 @@ router.get("/:id", auth, requireRoles(ROLES.EDITOR, ROLES.ADMIN), getNewsById);
  *       201:
  *         description: "Created successfully"
  */
-router.post("/", auth, requireRoles(ROLES.EDITOR), runValidation(createNewsRules), createNews);
+router.post("/", auth, requireRoles(ROLES.ADMIN, ROLES.MANAGER), runValidation(createNewsRules), createNews);
 
 /**
  * @swagger
  * /api/news/{id}:
  *   put:
- *     summary: "Update article (editor — own articles only, status draft/rejected)"
+ *     summary: "Update article (admin/manager — own articles only, status draft/rejected)"
  *     tags: [News]
  *     parameters:
  *       - in: path
@@ -168,13 +168,13 @@ router.post("/", auth, requireRoles(ROLES.EDITOR), runValidation(createNewsRules
  *       404:
  *         description: "Not found or unauthorized"
  */
-router.put("/:id", auth, requireRoles(ROLES.EDITOR), runValidation(updateNewsRules), updateNews);
+router.put("/:id", auth, requireRoles(ROLES.ADMIN, ROLES.MANAGER), runValidation(updateNewsRules), updateNews);
 
 /**
  * @swagger
  * /api/news/{id}:
  *   delete:
- *     summary: "Delete article (editor — own articles only, status draft/rejected)"
+ *     summary: "Delete article (admin/manager — own articles only, status draft/rejected)"
  *     tags: [News]
  *     parameters:
  *       - in: path
@@ -187,13 +187,13 @@ router.put("/:id", auth, requireRoles(ROLES.EDITOR), runValidation(updateNewsRul
  *       404:
  *         description: "Not found or unauthorized"
  */
-router.delete("/:id", auth, requireRoles(ROLES.EDITOR), deleteNews);
+router.delete("/:id", auth, requireRoles(ROLES.ADMIN, ROLES.MANAGER), deleteNews);
 
 /**
  * @swagger
  * /api/news/{id}/submit:
  *   post:
- *     summary: "Submit article for admin approval (editor)"
+ *     summary: "Submit article for admin approval (admin/manager)"
  *     tags: [News]
  *     parameters:
  *       - in: path
@@ -204,6 +204,6 @@ router.delete("/:id", auth, requireRoles(ROLES.EDITOR), deleteNews);
  *       200:
  *         description: "Submitted successfully, status changed to pending_review"
  */
-router.post("/:id/submit", auth, requireRoles(ROLES.EDITOR), submitNews);
+router.post("/:id/submit", auth, requireRoles(ROLES.ADMIN, ROLES.MANAGER), submitNews);
 
 export default router;
