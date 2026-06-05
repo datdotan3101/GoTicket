@@ -16,7 +16,7 @@ export const messagesService = {
       `SELECT m.*, u.full_name as sender_name, u.email as sender_email, u.avatar_url as sender_avatar
        FROM messages m
        JOIN users u ON m.sender_id = u.id
-       WHERE m.receiver_id = $1 AND m.is_draft = false
+       WHERE m.receiver_id = $1 AND m.is_draft = false AND m.deleted_by_receiver = false
        ORDER BY m.created_at DESC`,
       [userId]
     );
@@ -27,7 +27,7 @@ export const messagesService = {
     const result = await query(
       `SELECT COUNT(*) as count
        FROM messages
-       WHERE receiver_id = $1 AND is_read = false AND is_draft = false`,
+       WHERE receiver_id = $1 AND is_read = false AND is_draft = false AND deleted_by_receiver = false`,
       [userId]
     );
     return parseInt(result.rows[0].count, 10);
@@ -38,7 +38,7 @@ export const messagesService = {
       `SELECT m.*, u.full_name as receiver_name, u.email as receiver_email, u.avatar_url as receiver_avatar
        FROM messages m
        JOIN users u ON m.receiver_id = u.id
-       WHERE m.sender_id = $1 AND m.is_draft = false
+       WHERE m.sender_id = $1 AND m.is_draft = false AND m.deleted_by_sender = false
        ORDER BY m.created_at DESC`,
       [userId]
     );
@@ -83,7 +83,7 @@ export const messagesService = {
       `SELECT m.*, u.full_name as receiver_name, u.email as receiver_email, u.avatar_url as receiver_avatar
        FROM messages m
        JOIN users u ON m.receiver_id = u.id
-       WHERE m.sender_id = $1 AND m.is_draft = true
+       WHERE m.sender_id = $1 AND m.is_draft = true AND m.deleted_by_sender = false
        ORDER BY m.created_at DESC`,
       [userId]
     );
@@ -98,10 +98,23 @@ export const messagesService = {
        FROM messages m
        JOIN users s ON m.sender_id = s.id
        JOIN users r ON m.receiver_id = r.id
-       WHERE (m.receiver_id = $1 OR m.sender_id = $1) AND m.is_starred = true AND m.is_draft = false
+       WHERE ((m.receiver_id = $1 AND m.deleted_by_receiver = false) OR (m.sender_id = $1 AND m.deleted_by_sender = false)) 
+       AND m.is_starred = true AND m.is_draft = false
        ORDER BY m.created_at DESC`,
       [userId]
     );
     return result.rows;
+  },
+
+  async softDeleteMessage(id, userId) {
+    const result = await query(
+      `UPDATE messages 
+       SET deleted_by_sender = CASE WHEN sender_id = $2 THEN true ELSE deleted_by_sender END,
+           deleted_by_receiver = CASE WHEN receiver_id = $2 THEN true ELSE deleted_by_receiver END
+       WHERE id = $1 AND (sender_id = $2 OR receiver_id = $2)
+       RETURNING *`,
+      [id, userId]
+    );
+    return result.rows[0] || null;
   }
 };

@@ -9,9 +9,9 @@ async function resetDb() {
   try {
     console.log("Dropping and recreating public schema...");
     await pool.query("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
-    console.log("✅ Database cleared successfully!");
+    console.log("Database cleared successfully!");
   } catch (error) {
-    console.error("❌ Failed to clear database:", error);
+    console.error("Failed to clear database:", error);
   } finally {
     await pool.end();
   }

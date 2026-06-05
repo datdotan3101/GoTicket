@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
 import { matchService } from '../../services/matchService'
@@ -13,8 +13,10 @@ import 'react-datepicker/dist/react-datepicker.css'
 import { format } from 'date-fns'
 import { validateForm } from '../../utils/validator'
 import { redistributeStadiumSeats } from '../../utils/seatDistribution'
+import { downloadCSV, downloadExcel } from '../../utils/excelUtils'
+import * as XLSX from 'xlsx'
 import Select from 'react-select'
-import { Info, Image as ImageIcon, UploadCloud, Rocket, ArrowRight, CheckCircle } from 'lucide-react'
+import { Info, Image as ImageIcon, UploadCloud, Rocket, ArrowRight, CheckCircle, Download, Upload } from 'lucide-react'
 
 const STADIUM_COLUMNS = [
   { id: 'A1', stand: 'A', tiers: ['T1', 'T2'] },
@@ -63,6 +65,54 @@ export default function MatchCreatePage() {
   const [previewBannerUrl, setPreviewBannerUrl] = useState(null)
   const [selectedBannerFile, setSelectedBannerFile] = useState(null)
   const [showConfirmPopup, setShowConfirmPopup] = useState(false)
+  const fileInputRef = useRef(null)
+
+  const downloadTemplate = () => {
+    const data = STADIUM_COLUMNS.map(col => ({
+      "Block": col.id,
+      "Price (VND)": ""
+    }));
+    downloadExcel(data, "Template", "stand_pricing_template.xlsx");
+  }
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = new Uint8Array(event.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(worksheet);
+
+        const newConfigs = { ...columnConfigs };
+        let updatedCount = 0;
+
+        rows.forEach(row => {
+          const blockId = (row['Block'] || row['Block ID'])?.toString().trim();
+          const priceStr = row['Price (VND)']?.toString().trim();
+          
+          if (blockId && priceStr && !isNaN(priceStr)) {
+            if (newConfigs[blockId]) {
+              newConfigs[blockId].price = String(Math.floor(Number(priceStr)));
+              updatedCount++;
+            }
+          }
+        });
+
+        setColumnConfigs(newConfigs);
+        toast.success(`Successfully updated ${updatedCount} blocks`);
+      } catch (error) {
+        toast.error("Failed to parse Excel file");
+      }
+      // Reset input
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+    reader.readAsArrayBuffer(file);
+  }
 
   const navigate = useNavigate()
 
@@ -336,10 +386,10 @@ export default function MatchCreatePage() {
                         showTimeSelect
                         timeFormat="HH:mm"
                         timeIntervals={15}
-                        dateFormat="MM/dd/yyyy HH:mm"
+                        dateFormat="dd/MM/yyyy HH:mm"
                         className="mc-nice-input w-full"
                         wrapperClassName="w-full !block"
-                        placeholderText="mm/dd/yyyy --:--"
+                        placeholderText="dd/mm/yyyy --:--"
                       />
                     </div>
                   </div>
@@ -352,10 +402,10 @@ export default function MatchCreatePage() {
                         showTimeSelect
                         timeFormat="HH:mm"
                         timeIntervals={15}
-                        dateFormat="MM/dd/yyyy HH:mm"
+                        dateFormat="dd/MM/yyyy HH:mm"
                         className="mc-nice-input w-full"
                         wrapperClassName="w-full !block"
-                        placeholderText="mm/dd/yyyy --:--"
+                        placeholderText="dd/mm/yyyy --:--"
                       />
                     </div>
                   </div>
@@ -481,9 +531,27 @@ export default function MatchCreatePage() {
           <div className="mc-form-step">
             <div style={{ width: '100%', maxWidth: '1100px', margin: '0 auto' }}>
               <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: '40px', marginBottom: '30px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                <div style={{ marginBottom: '32px', borderBottom: '1px solid #f1f5f9', paddingBottom: '20px' }}>
-                  <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 900, color: '#1e1b4b' }}>Stadium Configuration</h2>
-                  <p style={{ margin: '8px 0 0 0', color: '#64748b' }}>Define total capacity and stand-specific pricing. Capacity is split 30/30/20/20 by ratio.</p>
+                <div style={{ marginBottom: '32px', borderBottom: '1px solid #f1f5f9', paddingBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 900, color: '#1e1b4b' }}>Stadium Configuration</h2>
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <input 
+                      type="file" 
+                      accept=".xlsx, .xls, .csv" 
+                      ref={fileInputRef} 
+                      style={{ display: 'none' }} 
+                      onChange={handleFileUpload} 
+                    />
+                    <button className="mc-btn mc-btn-ghost" onClick={() => downloadTemplate()} style={{ border: '1px solid #cbd5e1', padding: '0 12px' }}>
+                      <Download size={18} style={{ marginRight: '6px' }} />
+                      Template
+                    </button>
+                    <button className="mc-btn mc-btn-ghost" onClick={() => fileInputRef.current?.click()} style={{ border: '1px solid #cbd5e1', padding: '0 12px' }}>
+                      <Upload size={18} style={{ marginRight: '6px' }} />
+                      Import
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mc-input-group" style={{ maxWidth: '400px', marginBottom: '40px' }}>

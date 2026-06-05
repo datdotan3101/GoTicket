@@ -111,7 +111,7 @@ const seedDemoMatch = async () => {
     [matchDate, stadiumId, leagueId, clubId, managerId]
   );
   const matchId = matchResult.rows[0].id;
-  console.log(`✅ Match: Hà Nội FC vs HAGL (id=${matchId})`);
+  console.log(`Match: Hà Nội FC vs HAGL (id=${matchId})`);
 
   // 6. Tạo stands & seats (4 khán đài, 200 chỗ)
   const STANDS = [

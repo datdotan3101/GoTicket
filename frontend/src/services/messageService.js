@@ -10,5 +10,6 @@ export const messageService = {
   sendMessage: (data) => api.post('/messages', data),
   markAsRead: (id) => api.patch(`/messages/${id}/read`),
   markAllAsRead: () => api.patch('/messages/mark-all-read'),
-  toggleStar: (id) => api.patch(`/messages/${id}/star`)
+  toggleStar: (id) => api.patch(`/messages/${id}/star`),
+  deleteMessage: (id) => api.delete(`/messages/${id}`)
 }

@@ -8,15 +8,16 @@ import { Mail, Send, Clock, Star, Square, ArrowLeft, RefreshCw, MoreVertical, Ch
 
 export default function MailboxPage() {
   const { user } = useAuthStore()
-  const [activeTab, setActiveTab] = useState('inbox') // inbox, starred, drafts, sent, compose
+  const [activeTab, setActiveTab] = useState('inbox')
   const [messages, setMessages] = useState([])
   const [recipients, setRecipients] = useState([])
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({ receiverId: '', subject: '', body: '' })
-  const [selectedMsg, setSelectedMsg] = useState(null)
   
-  // Toolbar states
-  const [filter, setFilter] = useState('all') // all, read, unread, starred, unstarred
+  const [selectedThreadId, setSelectedThreadId] = useState(null)
+  const [replyBody, setReplyBody] = useState('')
+  
+  const [filter, setFilter] = useState('all')
   const [showKebab, setShowKebab] = useState(false)
   const [showFilterMenu, setShowFilterMenu] = useState(false)
   const [selectedIds, setSelectedIds] = useState([])
@@ -25,6 +26,7 @@ export default function MailboxPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  
   const toolbarRef = useRef(null)
   const recipientDropdownRef = useRef(null)
 
@@ -43,7 +45,8 @@ export default function MailboxPage() {
   }, [])
 
   useEffect(() => {
-    setSelectedMsg(null)
+    setSelectedThreadId(null)
+    setSelectedIds([])
     setFilter('all')
     fetchData()
   }, [activeTab])
@@ -51,25 +54,27 @@ export default function MailboxPage() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      if (activeTab === 'inbox') {
-        const res = await messageService.getInbox()
-        setMessages(unwrapData(res) || [])
-      } else if (activeTab === 'sent') {
-        const res = await messageService.getSent()
-        setMessages(unwrapData(res) || [])
+      if (['inbox', 'sent', 'starred'].includes(activeTab)) {
+        const [inboxRes, sentRes] = await Promise.all([
+          messageService.getInbox().catch(() => ({})),
+          messageService.getSent().catch(() => ({}))
+        ])
+        const inboxData = unwrapData(inboxRes) || []
+        const sentData = unwrapData(sentRes) || []
+        const allMsgs = [...inboxData, ...sentData]
+        
+        const uniqueMap = new Map()
+        allMsgs.forEach(m => uniqueMap.set(m.id, m))
+        setMessages(Array.from(uniqueMap.values()))
       } else if (activeTab === 'drafts') {
         const res = await messageService.getDrafts()
-        setMessages(unwrapData(res) || [])
-      } else if (activeTab === 'starred') {
-        const res = await messageService.getStarred()
         setMessages(unwrapData(res) || [])
       } else if (activeTab === 'compose') {
         const res = await messageService.getRecipients()
         setRecipients(unwrapData(res) || [])
       }
     } catch (err) {
-      console.error('fetchData error:', err)
-      toast.error('Failed to load data: ' + (err.response?.data?.message || err.message))
+      toast.error('Failed to load data')
     } finally {
       setLoading(false)
     }
@@ -81,7 +86,6 @@ export default function MailboxPage() {
       toast.error('Please fill in all fields')
       return
     }
-    
     try {
       await messageService.sendMessage({ ...form, is_draft: isDraft })
       toast.success(isDraft ? 'Draft saved!' : 'Message sent successfully!')
@@ -93,67 +97,146 @@ export default function MailboxPage() {
     }
   }
 
-  const handleMarkAsRead = async (e, id) => {
-    if (e) e.stopPropagation()
-    try {
-      await messageService.markAsRead(id)
-      setMessages(messages.map(m => m.id === id ? { ...m, is_read: true } : m))
-      window.dispatchEvent(new Event('message-read'))
-    } catch (err) {
-      toast.error('Failed to mark as read')
-    }
-  }
-
-  const handleMarkAllAsRead = async () => {
-    setShowKebab(false)
-    try {
-      await messageService.markAllAsRead()
-      setMessages(messages.map(m => ({ ...m, is_read: true })))
-      window.dispatchEvent(new Event('message-read'))
-      toast.success('All messages marked as read')
-    } catch (err) {
-      toast.error('Failed to mark all as read')
-    }
-  }
-
-  const handleToggleStar = async (e, id) => {
-    e.stopPropagation()
-    try {
-      await messageService.toggleStar(id)
-      if (activeTab === 'starred') {
-        setMessages(messages.filter(m => m.id !== id)) // remove from view if unstarred
-      } else {
-        setMessages(messages.map(m => m.id === id ? { ...m, is_starred: !m.is_starred } : m))
+  const threadsMap = new Map()
+  if (['inbox', 'sent', 'starred'].includes(activeTab)) {
+    messages.forEach(msg => {
+      const isSentByMe = msg.sender_id === user?.id
+      const otherId = isSentByMe ? msg.receiver_id : msg.sender_id
+      const otherName = isSentByMe ? msg.receiver_name : msg.sender_name
+      
+      const normalizedSubject = (msg.subject || '').replace(/^(Re:\s*)+/gi, '').trim()
+      const threadKey = `${normalizedSubject}_${otherId}`
+      
+      if (!threadsMap.has(threadKey)) {
+        threadsMap.set(threadKey, {
+          id: threadKey,
+          messages: [],
+          latestDate: 0,
+          subject: normalizedSubject || '(No subject)',
+          otherParticipantId: otherId,
+          otherParticipantName: otherName,
+          hasInbox: false,
+          hasSent: false,
+          is_starred: false,
+          is_read: true,
+          latestMsg: null
+        })
       }
-    } catch (err) {
-      toast.error('Failed to toggle star')
+      
+      const thread = threadsMap.get(threadKey)
+      thread.messages.push(msg)
+      
+      const msgTime = new Date(msg.created_at).getTime()
+      if (msgTime > thread.latestDate) {
+        thread.latestDate = msgTime
+        thread.latestMsg = msg
+      }
+      
+      if (msg.receiver_id === user?.id) {
+        thread.hasInbox = true
+        if (!msg.is_read) thread.is_read = false
+      }
+      if (msg.sender_id === user?.id) {
+        thread.hasSent = true
+      }
+      if (msg.is_starred) {
+        thread.is_starred = true
+      }
+    })
+    
+    threadsMap.forEach(t => t.messages.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()))
+  }
+
+  let listItems = []
+  if (activeTab === 'drafts') {
+    listItems = messages.filter(msg => {
+      if (filter === 'read' && !msg.is_read) return false
+      if (filter === 'unread' && msg.is_read) return false
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase()
+        const match = (msg.receiver_name && msg.receiver_name.toLowerCase().includes(q)) ||
+                      (msg.subject && msg.subject.toLowerCase().includes(q)) ||
+                      (msg.body && msg.body.toLowerCase().includes(q))
+        if (!match) return false
+      }
+      return true
+    })
+  } else {
+    const allThreads = Array.from(threadsMap.values()).sort((a, b) => b.latestDate - a.latestDate)
+    listItems = allThreads.filter(thread => {
+      if (activeTab === 'inbox' && !thread.hasInbox) return false
+      if (activeTab === 'sent' && !thread.hasSent) return false
+      if (activeTab === 'starred' && !thread.is_starred) return false
+      
+      if (filter === 'read' && !thread.is_read) return false
+      if (filter === 'unread' && thread.is_read) return false
+      if (filter === 'starred' && !thread.is_starred) return false
+      if (filter === 'unstarred' && thread.is_starred) return false
+
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase()
+        const match = thread.messages.some(msg => 
+          (msg.sender_name && msg.sender_name.toLowerCase().includes(q)) ||
+          (msg.receiver_name && msg.receiver_name.toLowerCase().includes(q)) ||
+          (msg.subject && msg.subject.toLowerCase().includes(q)) ||
+          (msg.body && msg.body.toLowerCase().includes(q))
+        )
+        if (!match) return false
+      }
+      
+      if (dateFrom || dateTo) {
+        if (dateFrom && thread.latestDate < new Date(dateFrom).getTime()) return false
+        if (dateTo) {
+          const toD = new Date(dateTo)
+          toD.setHours(23, 59, 59, 999)
+          if (thread.latestDate > toD.getTime()) return false
+        }
+      }
+      return true
+    })
+  }
+
+  const handleThreadClick = (thread) => {
+    setSelectedThreadId(thread.id)
+    setReplyBody('')
+    
+    const unreadMsgs = thread.messages.filter(m => !m.is_read && m.receiver_id === user?.id)
+    if (unreadMsgs.length > 0) {
+      Promise.all(unreadMsgs.map(m => messageService.markAsRead(m.id))).then(() => {
+        window.dispatchEvent(new Event('message-read'))
+        fetchData()
+      })
     }
   }
 
-  const handleReply = (msg) => {
+  const handleDraftClick = (msg) => {
     setForm({
-      receiverId: msg.sender_id,
-      subject: msg.subject.startsWith('Re:') ? msg.subject : `Re: ${msg.subject}`,
-      body: `\n\n--- Replying to ${msg.sender_name} ---\n${msg.body}`
+      receiverId: msg.receiver_id || '',
+      subject: msg.subject || '',
+      body: msg.body || ''
     })
     setActiveTab('compose')
   }
 
-  const handleMsgClick = (msg) => {
-    if (activeTab === 'drafts') {
-      setForm({
-        receiverId: msg.receiver_id || '',
-        subject: msg.subject || '',
-        body: msg.body || ''
-      })
-      setActiveTab('compose')
+  const handleInlineReply = async (thread) => {
+    if (!replyBody.trim()) {
+      toast.error('Reply cannot be empty')
       return
     }
-
-    setSelectedMsg(msg)
-    if (activeTab === 'inbox' && !msg.is_read) {
-       handleMarkAsRead(null, msg.id)
-       setSelectedMsg({ ...msg, is_read: true })
+    try {
+      const subject = thread.subject.startsWith('Re:') ? thread.subject : `Re: ${thread.subject}`
+      await messageService.sendMessage({
+        receiverId: thread.otherParticipantId,
+        subject: subject,
+        body: replyBody.trim(),
+        is_draft: false
+      })
+      toast.success('Reply sent!')
+      setReplyBody('')
+      window.dispatchEvent(new Event('message-sent'))
+      fetchData()
+    } catch (err) {
+      toast.error('Failed to send reply')
     }
   }
 
@@ -163,62 +246,94 @@ export default function MailboxPage() {
   }
 
   const handleSelectAll = () => {
-    if (selectedIds.length === filteredMessages.length && filteredMessages.length > 0) {
+    if (selectedIds.length === listItems.length && listItems.length > 0) {
       setSelectedIds([])
     } else {
-      setSelectedIds(filteredMessages.map(m => m.id))
+      setSelectedIds(listItems.map(item => item.id))
     }
   }
 
   const handleMarkSelectedAsRead = async () => {
     try {
-      await Promise.all(selectedIds.map(id => messageService.markAsRead(id)))
-      setMessages(messages.map(m => selectedIds.includes(m.id) ? { ...m, is_read: true } : m))
+      if (activeTab === 'drafts') {
+        await Promise.all(selectedIds.map(id => messageService.markAsRead(id)))
+      } else {
+        const unreadMsgs = []
+        selectedIds.forEach(tId => {
+          const t = threadsMap.get(tId)
+          if (t) {
+            t.messages.forEach(m => {
+              if (!m.is_read && m.receiver_id === user?.id) unreadMsgs.push(m.id)
+            })
+          }
+        })
+        await Promise.all(unreadMsgs.map(id => messageService.markAsRead(id)))
+      }
       setSelectedIds([])
       window.dispatchEvent(new Event('message-read'))
-      toast.success('Selected messages marked as read')
+      fetchData()
+      toast.success('Selected marked as read')
     } catch (err) {
-      toast.error('Failed to mark messages as read')
+      toast.error('Action failed')
     }
   }
 
-  const handleDeleteSelected = () => {
-    // For now, simply remove from local view since there isn't a delete API
-    setMessages(messages.filter(m => !selectedIds.includes(m.id)))
-    setSelectedIds([])
-    toast.success('Selected messages deleted')
+  const handleMarkAllAsRead = async () => {
+    setShowKebab(false)
+    try {
+      await messageService.markAllAsRead()
+      window.dispatchEvent(new Event('message-read'))
+      fetchData()
+      toast.success('All messages marked as read')
+    } catch (err) {
+      toast.error('Failed to mark all as read')
+    }
   }
 
-  const filteredMessages = messages.filter(msg => {
-    if (filter === 'read' && !msg.is_read) return false
-    if (filter === 'unread' && msg.is_read) return false
-    if (filter === 'starred' && !msg.is_starred) return false
-    if (filter === 'unstarred' && msg.is_starred) return false
-
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase()
-      const match = 
-        (msg.sender_name && msg.sender_name.toLowerCase().includes(q)) ||
-        (msg.sender_email && msg.sender_email.toLowerCase().includes(q)) ||
-        (msg.receiver_name && msg.receiver_name.toLowerCase().includes(q)) ||
-        (msg.receiver_email && msg.receiver_email.toLowerCase().includes(q)) ||
-        (msg.subject && msg.subject.toLowerCase().includes(q)) ||
-        (msg.body && msg.body.toLowerCase().includes(q))
-      if (!match) return false
-    }
-
-    if (dateFrom || dateTo) {
-      const msgDate = new Date(msg.created_at)
-      if (dateFrom && msgDate < new Date(dateFrom)) return false
-      if (dateTo) {
-        const toDate = new Date(dateTo)
-        toDate.setHours(23, 59, 59, 999)
-        if (msgDate > toDate) return false
+  const handleDeleteSelected = async () => {
+    try {
+      if (activeTab === 'drafts') {
+        await Promise.all(selectedIds.map(id => messageService.deleteMessage(id)))
+      } else {
+        const msgsToRemove = new Set()
+        selectedIds.forEach(tId => {
+          const t = threadsMap.get(tId)
+          if (t) t.messages.forEach(m => msgsToRemove.add(m.id))
+        })
+        await Promise.all(Array.from(msgsToRemove).map(id => messageService.deleteMessage(id)))
       }
+      setSelectedIds([])
+      fetchData()
+      toast.success('Mail has been deleted')
+    } catch (err) {
+      toast.error('Failed to delete items')
     }
+  }
 
-    return true
-  })
+  const handleToggleStar = async (e, id, isDraftTab) => {
+    e.stopPropagation()
+    try {
+      if (isDraftTab) {
+        await messageService.toggleStar(id)
+      } else {
+        const t = threadsMap.get(id)
+        if (t) {
+          if (t.is_starred) {
+            const starredMsgs = t.messages.filter(m => m.is_starred)
+            await Promise.all(starredMsgs.map(m => messageService.toggleStar(m.id)))
+          } else {
+            await messageService.toggleStar(t.latestMsg.id)
+          }
+        }
+      }
+      fetchData()
+    } catch (err) {
+      toast.error('Failed to toggle star')
+    }
+  }
+
+  const currentSelectedThread = activeTab !== 'drafts' && selectedThreadId ? threadsMap.get(selectedThreadId) : null;
+  const isDraftTab = activeTab === 'drafts'
 
   return (
     <section className="container page" style={{ padding: '40px 20px', maxWidth: '1000px' }}>
@@ -260,7 +375,7 @@ export default function MailboxPage() {
         </div>
       </div>
 
-      {activeTab !== 'compose' && !selectedMsg && (
+      {activeTab !== 'compose' && !currentSelectedThread && (
         <div ref={toolbarRef} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 16px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', marginBottom: '24px' }}>
           <div style={{ position: 'relative' }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -268,7 +383,7 @@ export default function MailboxPage() {
                 onClick={handleSelectAll} 
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: selectedIds.length > 0 ? '#f97316' : '#64748b', display: 'flex', padding: '0 4px 0 0' }}
               >
-                {selectedIds.length > 0 && selectedIds.length < filteredMessages.length ? <MinusSquare size={18} /> : selectedIds.length > 0 ? <CheckSquare size={18} /> : <Square size={18} />}
+                {selectedIds.length > 0 && selectedIds.length < listItems.length ? <MinusSquare size={18} /> : selectedIds.length > 0 ? <CheckSquare size={18} /> : <Square size={18} />}
               </button>
               <button 
                 onClick={() => { setShowFilterMenu(!showFilterMenu); setShowKebab(false); }} 
@@ -435,17 +550,15 @@ export default function MailboxPage() {
         </form>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {/* Action Toolbar moved up */}
-
-          {filteredMessages.length === 0 && !selectedMsg ? (
+          {listItems.length === 0 && !currentSelectedThread ? (
             <div style={{ padding: '60px', textAlign: 'center', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', color: '#94a3b8' }}>
               No messages found.
             </div>
-          ) : selectedMsg ? (
-            <div style={{ background: '#fff', padding: '32px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+          ) : currentSelectedThread ? (
+            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ padding: '24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <button 
-                  onClick={() => setSelectedMsg(null)}
+                  onClick={() => setSelectedThreadId(null)}
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#64748b', padding: '8px', borderRadius: '50%', transition: 'background 0.2s' }}
                   onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
                   onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
@@ -453,46 +566,59 @@ export default function MailboxPage() {
                 >
                   <ArrowLeft size={20} />
                 </button>
-                <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#1e293b' }}>{selectedMsg.subject}</h2>
+                <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#1e293b' }}>{currentSelectedThread.subject}</h2>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#f97316', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.2rem' }}>
-                    {(activeTab === 'inbox' ? selectedMsg.sender_name : selectedMsg.receiver_name)?.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 600, color: '#1e293b' }}>
-                      {activeTab === 'inbox' ? selectedMsg.sender_name : selectedMsg.receiver_name}
+              
+              <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px', overflowY: 'auto', maxHeight: '600px' }}>
+                {currentSelectedThread.messages.map((msg, idx) => {
+                  const isMe = msg.sender_id === user?.id
+                  return (
+                    <div key={msg.id} style={{ display: 'flex', gap: '16px', flexDirection: isMe ? 'row-reverse' : 'row' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: isMe ? '#3b82f6' : '#f97316', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>
+                        {(isMe ? user?.full_name || 'Me' : msg.sender_name)?.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ background: isMe ? '#eff6ff' : '#f8fafc', padding: '16px', borderRadius: '16px', border: `1px solid ${isMe ? '#bfdbfe' : '#e2e8f0'}`, maxWidth: '80%' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', gap: '16px' }}>
+                          <span style={{ fontWeight: 600, color: '#1e293b' }}>{isMe ? 'Me' : msg.sender_name}</span>
+                          <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{new Date(msg.created_at).toLocaleString()}</span>
+                        </div>
+                        <div style={{ color: '#334155', whiteSpace: 'pre-wrap', lineHeight: 1.6, fontSize: '0.95rem' }}>
+                          {msg.body}
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                      {activeTab === 'inbox' ? `from: ${selectedMsg.sender_email}` : `to: ${selectedMsg.receiver_email}`}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ color: '#64748b', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <span>{new Date(selectedMsg.created_at).toLocaleString()}</span>
-                  {activeTab === 'inbox' && (
-                    <button 
-                      onClick={() => handleReply(selectedMsg)}
-                      style={{ background: '#f8fafc', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', color: '#475569', fontWeight: 600 }}
-                    >
-                      <Send size={14} /> Reply
-                    </button>
-                  )}
-                </div>
+                  )
+                })}
               </div>
-              <div style={{ color: '#334155', lineHeight: 1.7, whiteSpace: 'pre-wrap', fontSize: '0.95rem' }}>
-                {selectedMsg.body}
+
+              <div style={{ padding: '24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc', borderRadius: '0 0 16px 16px' }}>
+                <textarea
+                  placeholder="Type your reply here..."
+                  value={replyBody}
+                  onChange={(e) => setReplyBody(e.target.value)}
+                  rows={4}
+                  style={{ width: '100%', padding: '16px', borderRadius: '12px', border: '1px solid #cbd5e1', outline: 'none', resize: 'vertical', marginBottom: '16px' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button 
+                    onClick={() => handleInlineReply(currentSelectedThread)}
+                    style={{ padding: '12px 24px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <Send size={16} /> Send Reply
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
             <div style={{ background: '#fff', borderRadius: '0 0 12px 12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-              {filteredMessages.map((msg) => {
-                const isRead = msg.is_read || activeTab === 'sent' || activeTab === 'drafts'
+              {listItems.map((item) => {
+                const isRead = isDraftTab ? item.is_read : item.is_read
+                const msgData = isDraftTab ? item : item.latestMsg
+
                 return (
                   <div 
-                    key={msg.id} 
-                    onClick={() => handleMsgClick(msg)}
+                    key={item.id} 
+                    onClick={() => isDraftTab ? handleDraftClick(item) : handleThreadClick(item)}
                     style={{ 
                       display: 'flex', 
                       alignItems: 'center', 
@@ -513,28 +639,28 @@ export default function MailboxPage() {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginRight: '16px', color: '#94a3b8' }}>
-                      {selectedIds.includes(msg.id) ? (
+                      {selectedIds.includes(item.id) ? (
                         <CheckSquare 
                           size={18} 
                           strokeWidth={1.5} 
                           color="#f97316"
-                          onClick={(e) => handleToggleSelect(e, msg.id)}
+                          onClick={(e) => handleToggleSelect(e, item.id)}
                           style={{ cursor: 'pointer' }}
                         />
                       ) : (
                         <Square 
                           size={18} 
                           strokeWidth={1.5} 
-                          onClick={(e) => handleToggleSelect(e, msg.id)}
+                          onClick={(e) => handleToggleSelect(e, item.id)}
                           style={{ cursor: 'pointer' }}
                         />
                       )}
                       <Star 
                         size={18} 
                         strokeWidth={1.5} 
-                        fill={msg.is_starred ? '#facc15' : 'transparent'} 
-                        color={msg.is_starred ? '#facc15' : '#94a3b8'}
-                        onClick={(e) => handleToggleStar(e, msg.id)}
+                        fill={item.is_starred ? '#facc15' : 'transparent'} 
+                        color={item.is_starred ? '#facc15' : '#94a3b8'}
+                        onClick={(e) => handleToggleStar(e, item.id, isDraftTab)}
                         style={{ cursor: 'pointer' }}
                       />
                     </div>
@@ -545,9 +671,21 @@ export default function MailboxPage() {
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
-                      color: isRead ? '#475569' : '#000000'
+                      color: isRead ? '#475569' : '#000000',
+                      display: 'flex',
+                      alignItems: 'center'
                     }}>
-                      {activeTab === 'inbox' ? msg.sender_name : msg.receiver_name || 'Draft'}
+                      {isDraftTab ? (item.receiver_name || 'Draft') : (
+                        <>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {activeTab === 'inbox' ? item.otherParticipantName : 
+                             activeTab === 'sent' ? `To: ${item.otherParticipantName}` : item.otherParticipantName}
+                          </span>
+                          {item.messages.length > 1 && (
+                            <span style={{ marginLeft: '6px', color: '#64748b', fontSize: '0.85rem' }}>{item.messages.length}</span>
+                          )}
+                        </>
+                      )}
                     </div>
                     <div style={{ 
                       flex: 1, 
@@ -557,9 +695,9 @@ export default function MailboxPage() {
                       display: 'flex',
                       gap: '8px'
                     }}>
-                      <span style={{ fontWeight: isRead ? 400 : 800, color: isRead ? '#475569' : '#000000' }}>{msg.subject || '(No subject)'}</span>
+                      <span style={{ fontWeight: isRead ? 400 : 800, color: isRead ? '#475569' : '#000000' }}>{msgData.subject || '(No subject)'}</span>
                       <span style={{ color: '#94a3b8' }}>-</span>
-                      <span style={{ color: '#64748b' }}>{msg.body.replace(/\n/g, ' ')}</span>
+                      <span style={{ color: '#64748b' }}>{msgData.body.replace(/\n/g, ' ')}</span>
                     </div>
                     <div style={{ 
                       width: '100px', 
@@ -568,7 +706,7 @@ export default function MailboxPage() {
                       fontWeight: isRead ? 400 : 700,
                       color: isRead ? '#64748b' : '#0f172a'
                     }}>
-                      {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(msgData.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
                 )

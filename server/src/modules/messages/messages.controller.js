@@ -116,5 +116,20 @@ export const messagesController = {
     } catch (err) {
       next(err);
     }
+  },
+
+  async deleteMessage(req, res, next) {
+    try {
+      const { id } = req.params;
+      const message = await messagesService.softDeleteMessage(id, req.user.id);
+      
+      if (!message) {
+        throw new AppError("Message not found", 404);
+      }
+
+      res.status(200).json({ status: "success", data: message });
+    } catch (err) {
+      next(err);
+    }
   }
 };

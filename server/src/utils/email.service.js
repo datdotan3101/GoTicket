@@ -345,7 +345,7 @@ export const sendTicketConfirmationEmail = async (userId, ticketIds, qrToken) =>
   const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
   const html = buildEmailHTML({ user, rows, qrUrl, clientUrl });
-  const subject = `✅ Booking successful — ${first.home_team} vs ${first.away_team} | GoTicket`;
+  const subject = `Booking successful — ${first.home_team} vs ${first.away_team} | GoTicket`;
 
   await mailer.sendMail({
     from: `"GoTicket" <${process.env.GMAIL_USER}>`,

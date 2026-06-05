@@ -25,9 +25,9 @@ const { notificationsService } = await import("../../../src/modules/notification
 const { approvalsService } = await import("../../../src/modules/approvals/approvals.service.js");
 
 const APPROVAL_RESOURCE_MAP = {
-  match: { table: "matches", approvedStatus: "approved", rejectedStatus: "rejected", approvedTitle: "✅", rejectedTitle: "❌" },
-  news: { table: "news", approvedStatus: "approved", rejectedStatus: "rejected", approvedTitle: "✅", rejectedTitle: "❌" },
-  user_account: { table: "users", approvedStatus: true, rejectedStatus: false, approvedTitle: "✅", rejectedTitle: "❌" }
+  match: { table: "matches", approvedStatus: "approved", rejectedStatus: "rejected", approvedTitle: "Approved", rejectedTitle: "Rejected" },
+  news: { table: "news", approvedStatus: "approved", rejectedStatus: "rejected", approvedTitle: "Approved", rejectedTitle: "Rejected" },
+  user_account: { table: "users", approvedStatus: true, rejectedStatus: false, approvedTitle: "Approved", rejectedTitle: "Rejected" }
 };
 
 const makeApproval = (overrides = {}) => ({

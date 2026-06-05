@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { APP_ROUTES } from '../constants/routes'
 import { messageService } from '../services/messageService'
+import { approvalsService } from '../services/approvalsService'
 import { unwrapData } from '../utils/apiData'
 import { 
   LayoutDashboard, 
@@ -17,30 +18,42 @@ import DashboardLayout from './DashboardLayout'
 
 export default function AdminLayout() {
   const [unreadCount, setUnreadCount] = useState(0)
+  const [pendingMatchesCount, setPendingMatchesCount] = useState(0)
 
   useEffect(() => {
-    const fetchUnread = async () => {
+    const fetchCounts = async () => {
       try {
-        const response = await messageService.getUnreadCount()
-        const data = unwrapData(response)
-        if (data?.count !== undefined) setUnreadCount(data.count)
+        const [msgRes, matchRes] = await Promise.all([
+          messageService.getUnreadCount().catch(() => ({})),
+          approvalsService.getPending({ type: 'match' }).catch(() => ({}))
+        ])
+
+        const msgData = unwrapData(msgRes)
+        if (msgData?.count !== undefined) setUnreadCount(msgData.count)
+
+        const matchData = unwrapData(matchRes)
+        if (Array.isArray(matchData)) {
+          setPendingMatchesCount(matchData.length)
+        }
       } catch {
         // Ignore error
       }
     }
 
-    fetchUnread()
+    fetchCounts()
     
-    window.addEventListener('message-read', fetchUnread)
-    window.addEventListener('message-sent', fetchUnread)
+    window.addEventListener('message-read', fetchCounts)
+    window.addEventListener('message-sent', fetchCounts)
+    window.addEventListener('approval-updated', fetchCounts)
     
     const interval = setInterval(() => {
-      fetchUnread()
+      fetchCounts()
     }, 30000)
     return () => {
       clearInterval(interval)
-      window.removeEventListener('message-read', fetchUnread)
-      window.removeEventListener('message-sent', fetchUnread)
+      window.removeEventListener('message-read', fetchCounts)
+      window.removeEventListener('message-sent', fetchCounts)
+      window.removeEventListener('approval-updated', fetchCounts)
     }
   }, [])
 
@@ -55,7 +68,7 @@ export default function AdminLayout() {
     {
       title: 'SPORT MANAGEMENT',
       items: [
-        { name: 'Matches', path: APP_ROUTES.ADMIN_MATCHES, icon: <Trophy size={22} strokeWidth={1.25} /> },
+        { name: 'Matches', path: APP_ROUTES.ADMIN_MATCHES, icon: <Trophy size={22} strokeWidth={1.25} />, badge: pendingMatchesCount },
         { name: 'Stadiums', path: APP_ROUTES.ADMIN_STADIUMS, icon: <MapPin size={22} strokeWidth={1.25} /> },
         { name: 'Clubs', path: APP_ROUTES.ADMIN_CLUBS, icon: <Shield size={22} strokeWidth={1.25} /> },
         { name: 'Sports', path: APP_ROUTES.ADMIN_SPORTS, icon: <Activity size={22} strokeWidth={1.25} /> },

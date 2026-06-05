@@ -16,5 +16,6 @@ router.get("/recipients", messagesController.getRecipients);
 router.patch("/mark-all-read", messagesController.markAllAsRead);
 router.patch("/:id/read", messagesController.markAsRead);
 router.patch("/:id/star", messagesController.toggleStar);
+router.delete("/:id", messagesController.deleteMessage);
 
 export default router;

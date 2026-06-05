@@ -10,7 +10,8 @@ import StadiumMap from '../../components/seat/StadiumMap'
 import { unwrapData } from '../../utils/apiData'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { redistributeStadiumSeats } from '../../utils/seatDistribution'
-import { downloadCSV } from '../../utils/excelUtils'
+import { downloadCSV, downloadExcel } from '../../utils/excelUtils'
+import * as XLSX from 'xlsx'
 
 const STADIUM_COLUMNS = [
   { id: 'A1', stand: 'A', tiers: ['T1', 'T2'] },
@@ -51,11 +52,11 @@ export default function StandConfigPage() {
   const fileInputRef = useRef(null)
 
   const downloadTemplate = () => {
-    let csvContent = "Block ID,Price (VND)\n";
-    STADIUM_COLUMNS.forEach(col => {
-      csvContent += `${col.id},${columnConfigs[col.id]?.price || 200000}\n`;
-    });
-    downloadCSV(csvContent, "stand_pricing_template.csv");
+    const data = STADIUM_COLUMNS.map(col => ({
+      "Block": col.id,
+      "Price (VND)": ""
+    }));
+    downloadExcel(data, "Template", "stand_pricing_template.xlsx");
   }
 
   const handleFileUpload = (e) => {
@@ -65,37 +66,36 @@ export default function StandConfigPage() {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const csvData = event.target.result;
-        const lines = csvData.split('\n');
+        const data = new Uint8Array(event.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(worksheet);
+
         const newConfigs = { ...columnConfigs };
         let updatedCount = 0;
 
-        // Skip header
-        for (let i = 1; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (!line) continue;
+        rows.forEach(row => {
+          const blockId = (row['Block'] || row['Block ID'])?.toString().trim();
+          const priceStr = row['Price (VND)']?.toString().trim();
           
-          const [blockId, priceStr] = line.split(',');
-          const cleanBlockId = blockId?.trim();
-          const cleanPriceStr = priceStr?.trim();
-          
-          if (cleanBlockId && cleanPriceStr && !isNaN(cleanPriceStr)) {
-            if (newConfigs[cleanBlockId]) {
-              newConfigs[cleanBlockId].price = String(Math.floor(Number(cleanPriceStr)));
+          if (blockId && priceStr && !isNaN(priceStr)) {
+            if (newConfigs[blockId]) {
+              newConfigs[blockId].price = String(Math.floor(Number(priceStr)));
               updatedCount++;
             }
           }
-        }
+        });
 
         setColumnConfigs(newConfigs);
         toast.success(`Successfully updated ${updatedCount} blocks`);
       } catch (error) {
-        toast.error("Failed to parse CSV file");
+        toast.error("Failed to parse Excel file");
       }
       // Reset input
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
   }
 
   const handleRedistribute = () => {
@@ -258,7 +258,7 @@ export default function StandConfigPage() {
         <div style={{ display: 'flex', gap: '12px' }}>
           <input 
             type="file" 
-            accept=".csv" 
+            accept=".xlsx, .xls, .csv" 
             ref={fileInputRef} 
             style={{ display: 'none' }} 
             onChange={handleFileUpload} 
