@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Save, Eye, ShieldCheck, Loader2 } from 'lucide-react'
+import { ArrowLeft, Save, Eye, ShieldCheck, Loader2, Download, Upload } from 'lucide-react'
 import { STAND_NAMES } from '../../constants/standRatios'
 import { matchService } from '../../services/matchService'
 import { generateStandsPreview } from '../../utils/standGenerator'
@@ -10,6 +10,7 @@ import StadiumMap from '../../components/seat/StadiumMap'
 import { unwrapData } from '../../utils/apiData'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { redistributeStadiumSeats } from '../../utils/seatDistribution'
+import { downloadCSV } from '../../utils/excelUtils'
 
 const STADIUM_COLUMNS = [
   { id: 'A1', stand: 'A', tiers: ['T1', 'T2'] },
@@ -47,6 +48,55 @@ export default function StandConfigPage() {
   const [globalCapacity, setGlobalCapacity] = useState('10000')
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const fileInputRef = useRef(null)
+
+  const downloadTemplate = () => {
+    let csvContent = "Block ID,Price (VND)\n";
+    STADIUM_COLUMNS.forEach(col => {
+      csvContent += `${col.id},${columnConfigs[col.id]?.price || 200000}\n`;
+    });
+    downloadCSV(csvContent, "stand_pricing_template.csv");
+  }
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const csvData = event.target.result;
+        const lines = csvData.split('\n');
+        const newConfigs = { ...columnConfigs };
+        let updatedCount = 0;
+
+        // Skip header
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
+          const [blockId, priceStr] = line.split(',');
+          const cleanBlockId = blockId?.trim();
+          const cleanPriceStr = priceStr?.trim();
+          
+          if (cleanBlockId && cleanPriceStr && !isNaN(cleanPriceStr)) {
+            if (newConfigs[cleanBlockId]) {
+              newConfigs[cleanBlockId].price = String(Math.floor(Number(cleanPriceStr)));
+              updatedCount++;
+            }
+          }
+        }
+
+        setColumnConfigs(newConfigs);
+        toast.success(`Successfully updated ${updatedCount} blocks`);
+      } catch (error) {
+        toast.error("Failed to parse CSV file");
+      }
+      // Reset input
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+    reader.readAsText(file);
+  }
 
   const handleRedistribute = () => {
     const total = Number(globalCapacity) || 0
@@ -206,6 +256,21 @@ export default function StandConfigPage() {
           <p className="dashboard-subtitle">Define seat capacity, VIP zones, and dynamic pricing</p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
+          <input 
+            type="file" 
+            accept=".csv" 
+            ref={fileInputRef} 
+            style={{ display: 'none' }} 
+            onChange={handleFileUpload} 
+          />
+          <button className="mc-btn mc-btn-ghost" onClick={() => downloadTemplate()} style={{ border: '1px solid #cbd5e1', padding: '0 12px' }}>
+            <Download size={18} style={{ marginRight: '6px' }} />
+            Template
+          </button>
+          <button className="mc-btn mc-btn-ghost" onClick={() => fileInputRef.current?.click()} style={{ border: '1px solid #cbd5e1', padding: '0 12px' }}>
+            <Upload size={18} style={{ marginRight: '6px' }} />
+            Import
+          </button>
           <button className="mc-btn mc-btn-primary" onClick={() => setIsConfirmModalOpen(true)}>
             Save Configuration
           </button>

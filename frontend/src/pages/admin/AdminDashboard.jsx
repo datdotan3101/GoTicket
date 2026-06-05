@@ -4,11 +4,12 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell, Legend
 } from 'recharts'
-import { Trophy, Medal } from 'lucide-react'
+import { Trophy, Medal, Download } from 'lucide-react'
 import { APP_ROUTES } from '../../constants/routes'
 import { dashboardService } from '../../services/dashboardService'
 import { unwrapData } from '../../utils/apiData'
 import { formatDateTime, formatVND } from '../../utils/formatters'
+import { downloadCSV } from '../../utils/excelUtils'
 
 const COLORS = ['#1d4ed8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -59,16 +60,43 @@ export default function AdminDashboard() {
     ? (((growth.today_revenue - growth.yesterday_revenue) / growth.yesterday_revenue) * 100).toFixed(1)
     : 0
 
+  const exportToExcel = () => {
+    if (!data) return;
+    
+    let csvContent = "CLUB,REVENUE (VND),TICKETS,FILL RATE (%),MATCHES,MANAGER\n";
+    
+    topClubs.forEach(club => {
+      csvContent += `"${club.name}",${club.revenue},${club.tickets_sold},${Number(club.fill_rate).toFixed(1)},${club.matches_count},"${club.manager_name || '--'}"\n`;
+    });
+    
+    csvContent += "\nSYSTEM SUMMARY\n";
+    csvContent += `Total Revenue,${summary.total_revenue}\n`;
+    csvContent += `Tickets Sold,${summary.total_tickets}\n`;
+    csvContent += `Active Matches,${summary.total_open_matches}\n`;
+    csvContent += `System Fill Rate,${fillRate}%\n`;
+    
+    downloadCSV(csvContent, `system_overview_${new Date().toISOString().slice(0,10)}.csv`);
+  };
+
   return (
     <section className="container page" style={{ border: 'none', background: 'transparent', paddingBottom: '60px' }}>
       {/* LEVEL 0: Header */}
-      <div className="section-head" style={{ marginBottom: '40px' }}>
+      <div className="section-head" style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px' }}>
         <div>
           <h1 style={{ fontSize: '3.5rem', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '-3px', color: '#111827', lineHeight: 0.9, margin: 0 }}>System Overview</h1>
           <p className="section-subtitle" style={{ fontSize: '1.1rem', color: '#6b7280', marginTop: '16px', fontWeight: 500 }}>
             Real-time performance metrics and operational analytics.
           </p>
         </div>
+        <button 
+          onClick={exportToExcel}
+          style={{ background: '#10b981', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)', transition: 'transform 0.2s' }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'none'}
+        >
+          <Download size={18} strokeWidth={2.5} />
+          Export to Excel
+        </button>
       </div>
 
       {/* LEVEL 1: Overview KPI */}

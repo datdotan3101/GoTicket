@@ -39,8 +39,8 @@ export default function Navbar() {
           {user?.role === ROLES.MANAGER && (
             <>
               <NavLink to={APP_ROUTES.MANAGER_DASHBOARD} className={linkClassName} end>Dashboard</NavLink>
-              <NavLink to={APP_ROUTES.MANAGER_MATCH_CREATE} className={linkClassName}>Create Match</NavLink>
-              <NavLink to={APP_ROUTES.MANAGER_NOTIFICATIONS} className={linkClassName}>Inbox</NavLink>
+              <NavLink to={APP_ROUTES.MANAGER_MATCHES} className={linkClassName}>My Matches</NavLink>
+              <NavLink to={APP_ROUTES.MANAGER_MAILBOX} className={linkClassName}>Mailbox</NavLink>
             </>
           )}
 

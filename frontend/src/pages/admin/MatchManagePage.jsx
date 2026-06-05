@@ -24,7 +24,7 @@ const getFallbackImage = (id) => {
 }
 
 export default function MatchManagePage() {
-  const [activeTab, setActiveTab] = useState('pending') // pending, approved
+  const [activeTab, setActiveTab] = useState('pending') // pending, approved, rejected
   const [matches, setMatches] = useState([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -52,6 +52,11 @@ export default function MatchManagePage() {
         const response = await matchService.getAll({ status: 'published,approved', limit: 100 })
         const payload = unwrapData(response)
         const dataList = payload?.data ?? payload ?? []
+        dataList.sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime())
+        setMatches(dataList)
+      } else if (activeTab === 'rejected') {
+        const response = await approvalsService.getPending({ type: 'match', status: 'rejected' })
+        const dataList = unwrapData(response) || []
         dataList.sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime())
         setMatches(dataList)
       }
@@ -111,7 +116,7 @@ export default function MatchManagePage() {
       borderRadius: '12px',
       width: 'fit-content'
     }}>
-      {['pending', 'approved'].map((tab) => (
+      {['pending', 'approved', 'rejected'].map((tab) => (
         <button
           key={tab}
           onClick={() => setActiveTab(tab)}
@@ -146,7 +151,7 @@ export default function MatchManagePage() {
             <article className="card" key={match.id} style={{ position: 'relative', overflow: 'hidden', border: '1px solid #cbd5e1', borderRadius: '16px', display: 'flex', flexDirection: 'column', height: '100%' }}>
               <div style={{ height: '160px', backgroundImage: `url(${match.thumbnail_url || getFallbackImage(match.id)})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', backgroundColor: '#e2e8f0', flexShrink: 0 }}>
               <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
-                <span className={`badge ${activeTab === 'pending' ? 'warning' : 'success'}`} style={{ textTransform: 'uppercase', fontSize: '0.7rem', background: activeTab === 'pending' ? '#f59e0b' : '#10b981', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '6px' }}>
+                <span className={`badge ${activeTab === 'pending' ? 'warning' : activeTab === 'rejected' ? 'danger' : 'success'}`} style={{ textTransform: 'uppercase', fontSize: '0.7rem', background: activeTab === 'pending' ? '#f59e0b' : activeTab === 'rejected' ? '#ef4444' : '#10b981', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '6px' }}>
                   {activeTab}
                 </span>
               </div>
@@ -168,6 +173,13 @@ export default function MatchManagePage() {
                 </div>
               </div>
             </div>
+
+            {activeTab === 'rejected' && match.rejection_reason && (
+              <div style={{ padding: '16px 20px', background: '#fee2e2', borderTop: '1px solid #fca5a5', fontSize: '0.85rem', color: '#b91c1c' }}>
+                <strong>Reason for Rejection:</strong>
+                <p style={{ margin: '4px 0 0 0' }}>{match.rejection_reason}</p>
+              </div>
+            )}
 
             {activeTab === 'pending' && (
               <div style={{ padding: '16px 20px', background: '#f8fafc', fontSize: '0.8rem', color: '#475569' }}>

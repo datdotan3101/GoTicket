@@ -1,6 +1,6 @@
 import { APPROVAL_RESOURCE_MAP } from "../../constants/approvalConfig.js";
 import { query, withTransaction } from "../../config/db.js";
-import { notificationsService } from "../notifications/notifications.service.js";
+import { messagesService } from "../messages/messages.service.js";
 import { invalidateCache } from "../../utils/cache.js";
 
 export const approvalsService = {
@@ -135,18 +135,12 @@ export const approvalsService = {
       resourceStatus = config.rejectedStatus;
     }
 
-    const notificationPayload = {
-      userId: approval.submitted_by,
-      type: "approval",
-      title: isApprove ? config.approvedTitle : config.rejectedTitle,
-      body: isApprove
-        ? (approval.scheduled_publish_at
-            ? `Your request has been approved. It will be published automatically at ${new Date(approval.scheduled_publish_at).toLocaleString("en-US")}.`
-            : "Your request has been approved and published.")
-        : (reason || "Your request was rejected."),
-      relatedId: approval.resource_id,
-      relatedType: approval.resource_type
-    };
+    const messageSubject = isApprove ? config.approvedTitle : config.rejectedTitle;
+    const messageBody = isApprove
+      ? (approval.scheduled_publish_at
+          ? `Your request has been approved. It will be published automatically at ${new Date(approval.scheduled_publish_at).toLocaleString("en-US")}.`
+          : "Your request has been approved and published.")
+      : (reason || "Your request was rejected.");
 
     await withTransaction(async (tx) => {
       const run = (text, params) => tx.query(text, params);
@@ -183,8 +177,8 @@ export const approvalsService = {
       );
     });
 
-    // Send notification after transaction commits
-    await notificationsService.createNotification(notificationPayload);
+    // Send message after transaction commits
+    await messagesService.sendMessage(adminId, approval.submitted_by, messageSubject, messageBody);
 
     // Bust cache so homepage reflects the updated match status immediately
     if (approval.resource_type === "match") {

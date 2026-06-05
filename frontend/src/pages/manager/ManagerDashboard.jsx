@@ -5,18 +5,20 @@ import { toast } from 'react-toastify'
 import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import { 
-  Bell, 
+  Mail, 
   DollarSign, 
   Ticket, 
   Calendar, 
   TrendingUp,
+  Download
 } from 'lucide-react'
 import { APP_ROUTES } from '../../constants/routes'
 import { dashboardService } from '../../services/dashboardService'
-import { notificationService } from '../../services/notificationService'
+import { messageService } from '../../services/messageService'
 import { unwrapData } from '../../utils/apiData'
 import { formatVND } from '../../utils/formatters'
 import { formatDateTime } from '../../utils/formatters'
+import { downloadCSV } from '../../utils/excelUtils'
 import {
   BarChart,
   Bar,
@@ -51,9 +53,9 @@ export default function ManagerDashboard() {
 
   const fetchNotifications = async () => {
     try {
-      const res = await notificationService.getAll()
-      const notifs = unwrapData(res) || []
-      setUnreadCount(notifs.filter(n => !n.is_read).length)
+      const response = await messageService.getUnreadCount()
+      const data = unwrapData(response)
+      if (data?.count !== undefined) setUnreadCount(data.count)
     } catch (err) {
       console.error(err)
     }
@@ -77,6 +79,23 @@ export default function ManagerDashboard() {
 
 
 
+  const exportToExcel = () => {
+    if (!data) return;
+    
+    let csvContent = "MATCH,REVENUE (VND),TICKETS SOLD,MATCH DATE,STATUS\n";
+    
+    (data.byMatch || []).forEach(m => {
+      csvContent += `"${m.home_team} vs ${m.away_team}",${m.revenue},${m.tickets_sold},"${m.match_date ? formatDateTime(m.match_date).replace(/"/g, '""') : '--'}","${m.status || '--'}"\n`;
+    });
+    
+    csvContent += "\nSUMMARY\n";
+    csvContent += `Total Revenue,${data.summary.total_revenue}\n`;
+    csvContent += `Tickets Sold,${data.summary.total_tickets}\n`;
+    csvContent += `Total Matches,${data.summary.total_matches}\n`;
+    
+    downloadCSV(csvContent, `manager_overview_${new Date().toISOString().slice(0,10)}.csv`);
+  };
+
   if (loading) {
     return (
       <div className="container" style={{ padding: '100px 0', textAlign: 'center' }}>
@@ -92,10 +111,18 @@ export default function ManagerDashboard() {
           <h1 className="dashboard-title">Manager Portal</h1>
           <p className="dashboard-subtitle">Track your matches performance and manage ticket sales</p>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <Link className="mc-btn mc-btn-ghost" to={APP_ROUTES.MANAGER_NOTIFICATIONS} style={{ position: 'relative', border: '1px solid #cbd5e1' }}>
-            <Bell size={18} style={{ marginRight: '8px' }} />
-            Notifications
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <button 
+            onClick={exportToExcel}
+            className="mc-btn mc-btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px' }}
+          >
+            <Download size={18} />
+            Export Data
+          </button>
+          <Link className="mc-btn mc-btn-ghost" to={APP_ROUTES.MANAGER_MAILBOX} style={{ position: 'relative', border: '1px solid #cbd5e1' }}>
+            <Mail size={18} style={{ marginRight: '8px' }} />
+            Mailbox
             {unreadCount > 0 && (
               <span style={{
                 position: 'absolute',
