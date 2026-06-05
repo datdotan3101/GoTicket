@@ -1,13 +1,13 @@
 export const SEAT_COLORS = {
-  available: '#6b7280',
-  booked: '#ef4444',
-  checked_in: '#22c55e',
-  mine: '#f59e0b',
+  available: 'var(--color-slate-500)',
+  booked: 'var(--color-danger)',
+  checked_in: 'var(--color-success-alt)',
+  mine: 'var(--color-warning)',
 }
 
 export const STAND_COLORS = {
-  A: '#f59e0b',
-  B: '#3b82f6',
-  C: '#6b7280',
-  D: '#6b7280',
+  A: 'var(--color-warning)',
+  B: 'var(--color-primary)',
+  C: 'var(--color-slate-500)',
+  D: 'var(--color-slate-500)',
 }

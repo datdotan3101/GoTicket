@@ -27,11 +27,11 @@ export default function ConfirmModal({
   if (!isOpen) return null
 
   const variantColors = {
-    danger: { bg: '#fee2e2', icon: '#ef4444', btn: '#ef4444' },
-    warning: { bg: '#fef3c7', icon: '#f59e0b', btn: '#f59e0b' },
-    primary: { bg: '#e0e7ff', icon: '#4f46e5', btn: '#4f46e5' },
-    success: { bg: '#dcfce7', icon: '#22c55e', btn: '#22c55e' },
-    default: { bg: '#f1f5f9', icon: '#64748b', btn: '#0f172a' }
+    danger: { bg: 'var(--color-danger-light)', icon: 'var(--color-danger)', btn: 'var(--color-danger)' },
+    warning: { bg: '#fef3c7', icon: 'var(--color-warning)', btn: 'var(--color-warning)' },
+    primary: { bg: 'var(--color-primary-100)', icon: 'var(--color-primary-600)', btn: 'var(--color-primary-600)' },
+    success: { bg: '#dcfce7', icon: 'var(--color-success-alt)', btn: 'var(--color-success-alt)' },
+    default: { bg: 'var(--color-slate-100)', icon: 'var(--color-slate-500)', btn: 'var(--color-slate-900)' }
   }
 
   const colors = variantColors[variant] || variantColors.danger
@@ -48,7 +48,7 @@ export default function ConfirmModal({
       zIndex: 1000
     }}>
       <div style={{
-        background: '#fff',
+        background: 'var(--color-white)',
         padding: '32px',
         borderRadius: '24px',
         maxWidth: '400px',
@@ -72,10 +72,10 @@ export default function ConfirmModal({
           </div>
         )}
 
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '12px', color: '#0f172a' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '12px', color: 'var(--color-slate-900)' }}>
           {title}
         </h2>
-        <div style={{ color: '#64748b', lineHeight: 1.5, marginBottom: '28px', fontSize: '0.95rem' }}>
+        <div style={{ color: 'var(--color-slate-500)', lineHeight: 1.5, marginBottom: '28px', fontSize: '0.95rem' }}>
           {message}
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
@@ -86,8 +86,8 @@ export default function ConfirmModal({
               flex: 1,
               padding: '12px',
               borderRadius: '12px',
-              background: '#f1f5f9',
-              color: '#475569',
+              background: 'var(--color-slate-100)',
+              color: 'var(--color-slate-600)',
               fontWeight: 700,
               border: 'none',
               cursor: isLoading ? 'not-allowed' : 'pointer',
@@ -104,7 +104,7 @@ export default function ConfirmModal({
               padding: '12px',
               borderRadius: '12px',
               background: colors.btn,
-              color: '#fff',
+              color: 'var(--color-white)',
               fontWeight: 700,
               border: 'none',
               cursor: isLoading ? 'not-allowed' : 'pointer',

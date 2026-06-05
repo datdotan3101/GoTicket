@@ -60,7 +60,7 @@ export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelec
   }
 
   return (
-    <div style={{ width: '100%', position: 'relative', background: '#fff', borderRadius: '16px' }}>
+    <div style={{ width: '100%', position: 'relative', background: 'var(--color-white)', borderRadius: '16px' }}>
       <svg viewBox="0 0 800 600" style={{ width: '100%', height: 'auto' }}>
         <defs>
           <pattern id="stripe-h" width="10" height="6" patternUnits="userSpaceOnUse">
@@ -78,19 +78,19 @@ export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelec
         </defs>
 
         {/* Pitch and Track */}
-        <rect x="180" y="180" width="440" height="240" rx="120" fill="none" stroke="#1e293b" strokeWidth="2" />
-        <rect x="190" y="190" width="420" height="220" rx="110" fill="none" stroke="#1e293b" strokeWidth="1" />
-        <rect x="270" y="220" width="260" height="160" fill="#529c48" stroke="#fff" strokeWidth="1" />
-        <line x1="400" y1="220" x2="400" y2="380" stroke="#fff" strokeWidth="1" />
-        <circle cx="400" cy="300" r="25" fill="none" stroke="#fff" strokeWidth="1" />
+        <rect x="180" y="180" width="440" height="240" rx="120" fill="none" stroke="var(--color-slate-800)" strokeWidth="2" />
+        <rect x="190" y="190" width="420" height="220" rx="110" fill="none" stroke="var(--color-slate-800)" strokeWidth="1" />
+        <rect x="270" y="220" width="260" height="160" fill="#529c48" stroke="var(--color-white)" strokeWidth="1" />
+        <line x1="400" y1="220" x2="400" y2="380" stroke="var(--color-white)" strokeWidth="1" />
+        <circle cx="400" cy="300" r="25" fill="none" stroke="var(--color-white)" strokeWidth="1" />
         {/* Left penalty box */}
-        <rect x="270" y="250" width="40" height="100" fill="none" stroke="#fff" strokeWidth="1" />
-        <rect x="270" y="275" width="15" height="50" fill="none" stroke="#fff" strokeWidth="1" />
-        <path d="M 310 275 A 20 20 0 0 1 310 325" fill="none" stroke="#fff" strokeWidth="1" />
+        <rect x="270" y="250" width="40" height="100" fill="none" stroke="var(--color-white)" strokeWidth="1" />
+        <rect x="270" y="275" width="15" height="50" fill="none" stroke="var(--color-white)" strokeWidth="1" />
+        <path d="M 310 275 A 20 20 0 0 1 310 325" fill="none" stroke="var(--color-white)" strokeWidth="1" />
         {/* Right penalty box */}
-        <rect x="490" y="250" width="40" height="100" fill="none" stroke="#fff" strokeWidth="1" />
-        <rect x="515" y="275" width="15" height="50" fill="none" stroke="#fff" strokeWidth="1" />
-        <path d="M 490 275 A 20 20 0 0 0 490 325" fill="none" stroke="#fff" strokeWidth="1" />
+        <rect x="490" y="250" width="40" height="100" fill="none" stroke="var(--color-white)" strokeWidth="1" />
+        <rect x="515" y="275" width="15" height="50" fill="none" stroke="var(--color-white)" strokeWidth="1" />
+        <path d="M 490 275 A 20 20 0 0 0 490 325" fill="none" stroke="var(--color-white)" strokeWidth="1" />
 
         {/* Render Blocks */}
         {MAP_BLOCKS.map((block) => {
@@ -104,11 +104,11 @@ export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelec
           
           // Active + available → original color, Sold out → muted red, Inactive → grey
           const fill = selected 
-            ? '#4f46e5' 
+            ? 'var(--color-primary-600)' 
             : soldOut 
               ? '#9b1c1c' 
               : !isActive 
-                ? '#cbd5e1' 
+                ? 'var(--color-slate-300)' 
                 : block.color
 
           // Compute center of block path for SOLD OUT label
@@ -154,7 +154,7 @@ export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelec
                 <path 
                   d={block.d} 
                   fill="none" 
-                  stroke="#4f46e5" 
+                  stroke="var(--color-primary-600)" 
                   strokeWidth="3" 
                   pointerEvents="none" 
                 />
@@ -163,7 +163,7 @@ export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelec
                 x={block.labelX} 
                 y={block.labelY} 
                 textAnchor="middle" 
-                fill={soldOut ? '#fff' : '#000'} 
+                fill={soldOut ? 'var(--color-white)' : 'var(--color-black)'} 
                 style={{ fontSize: '12px', fontWeight: 900, pointerEvents: 'none', opacity: soldOut ? 0.7 : !isActive ? 0.4 : 1 }}
               >
                 {block.labelName || block.id}
@@ -174,7 +174,7 @@ export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelec
                   x={cx}
                   y={cy}
                   textAnchor="middle"
-                  fill="#fff"
+                  fill="var(--color-white)"
                   style={{ fontSize: '8px', fontWeight: 900, pointerEvents: 'none', letterSpacing: '1px', opacity: 0.9 }}
                 >
                   SOLD OUT
@@ -192,8 +192,8 @@ export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelec
             position: 'fixed',
             left: hoverInfo.x + 15,
             top: hoverInfo.y + 15,
-            background: '#1e293b',
-            color: '#fff',
+            background: 'var(--color-slate-800)',
+            color: 'var(--color-white)',
             padding: '12px 16px',
             borderRadius: '8px',
             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
@@ -203,19 +203,19 @@ export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelec
             animation: 'fadeIn 0.15s ease-out'
           }}
         >
-          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>
+          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-slate-400)', textTransform: 'uppercase', marginBottom: '4px' }}>
             Stand {hoverInfo.standName} • {hoverInfo.tierName}
           </div>
-          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#fff', marginBottom: '8px' }}>
+          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--color-white)', marginBottom: '8px' }}>
             Section {hoverInfo.blockId}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem', marginBottom: '4px' }}>
-            <span style={{ color: '#cbd5e1' }}>Price:</span>
+            <span style={{ color: 'var(--color-slate-300)' }}>Price:</span>
             <span style={{ fontWeight: 800, color: '#fbbf24' }}>{hoverInfo.price ? Number(hoverInfo.price).toLocaleString() + ' VND' : '---'}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
-            <span style={{ color: '#cbd5e1' }}>Status:</span>
-            <span style={{ fontWeight: 800, color: hoverInfo.soldOut ? '#ef4444' : '#22c55e' }}>
+            <span style={{ color: 'var(--color-slate-300)' }}>Status:</span>
+            <span style={{ fontWeight: 800, color: hoverInfo.soldOut ? 'var(--color-danger)' : 'var(--color-success-alt)' }}>
               {!hoverInfo.active ? 'Not for Sale' : hoverInfo.soldOut ? 'Sold Out' : `${hoverInfo.available} seats`}
             </span>
           </div>

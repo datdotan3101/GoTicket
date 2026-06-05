@@ -139,13 +139,13 @@ export default function StadiumManagePage() {
       <div className="section-head" style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1 className="admin-header">Stadiums</h1>
-          <p className="section-subtitle" style={{ fontSize: '1rem', color: '#6b7280', marginTop: '8px' }}>
+          <p className="section-subtitle" style={{ fontSize: '1rem', color: 'var(--color-slate-500)', marginTop: '8px' }}>
             Manage venues where matches will take place.
           </p>
         </div>
         <button 
           onClick={() => { clearForm(); setIsFormModalOpen(true); }}
-          style={{ padding: '14px 28px', borderRadius: '12px', background: '#111827', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer', fontSize: '0.9rem', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
+          style={{ padding: '14px 28px', borderRadius: '12px', background: 'var(--color-slate-900)', color: 'var(--color-white)', border: 'none', fontWeight: 800, cursor: 'pointer', fontSize: '0.9rem', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
         >
           + Add New Stadium
         </button>
@@ -223,9 +223,9 @@ export default function StadiumManagePage() {
             placeholder="Search stadiums by name or city..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.9rem', width: '320px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
+            style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--color-slate-300)', outline: 'none', fontSize: '0.9rem', width: '320px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
           />
-          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+          <span style={{ color: 'var(--color-slate-400)', fontSize: '0.85rem' }}>
             {filteredStadiums.length} stadium{filteredStadiums.length !== 1 ? 's' : ''} found
           </span>
         </div>
@@ -234,12 +234,12 @@ export default function StadiumManagePage() {
       {/* Cards Grid */}
       <div className="cards-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
         {filteredStadiums.map((stadium) => (
-          <article className="card" key={stadium.id} style={{ padding: '0', overflow: 'visible', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', borderRadius: '20px', background: '#fff' }}>
+          <article className="card" key={stadium.id} style={{ padding: '0', overflow: 'visible', border: '1px solid var(--color-slate-200)', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', borderRadius: '20px', background: 'var(--color-white)' }}>
             {/* Card Header Banner */}
             <div 
               style={{ 
                 height: '140px', 
-                background: stadium.image_url ? `url(${stadium.image_url}) center/cover` : '#f1f5f9', 
+                background: stadium.image_url ? `url(${stadium.image_url}) center/cover` : 'var(--color-slate-100)', 
                 borderRadius: '20px 20px 0 0',
                 display: 'flex',
                 alignItems: 'flex-start',
@@ -248,7 +248,7 @@ export default function StadiumManagePage() {
               }}
             >
               {!stadium.image_url && (
-                <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-slate-400)' }}>
                   No Image
                 </div>
               )}
@@ -262,12 +262,12 @@ export default function StadiumManagePage() {
             
             {/* Card Body */}
             <div style={{ padding: '20px 24px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#111827', lineHeight: 1.2 }}>{stadium.name}</h3>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginTop: '12px', color: '#64748b', fontSize: '0.9rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--color-slate-900)', lineHeight: 1.2 }}>{stadium.name}</h3>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginTop: '12px', color: 'var(--color-slate-500)', fontSize: '0.9rem' }}>
                 <MapPin size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
                 <span>{stadium.address ? `${stadium.address}, ${stadium.city}` : stadium.city}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', color: '#64748b', fontSize: '0.9rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', color: 'var(--color-slate-500)', fontSize: '0.9rem' }}>
                 <Users size={16} style={{ flexShrink: 0 }} />
                 <span>Capacity: {stadium.capacity ? stadium.capacity.toLocaleString('vi-VN') : 0} seats</span>
               </div>
@@ -276,7 +276,7 @@ export default function StadiumManagePage() {
         ))}
 
         {filteredStadiums.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px', color: '#94a3b8', background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0' }}>
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px', color: 'var(--color-slate-400)', background: 'var(--color-white)', borderRadius: '20px', border: '1px solid var(--color-slate-200)' }}>
             No stadiums found.
           </div>
         )}

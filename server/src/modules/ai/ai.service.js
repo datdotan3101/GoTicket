@@ -4,7 +4,7 @@ import { ticketsService } from "../tickets/tickets.service.js";
 import { paymentsService } from "../payments/payments.service.js";
 import { matchesService } from "../matches/matches.service.js";
 
-const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_MODEL = "gemini-2.5-flash";
 const MAX_TOKENS = 1024;
 
 /**
@@ -13,20 +13,18 @@ const MAX_TOKENS = 1024;
 const SYSTEM_PROMPT = `You are an AI sports ticket advisor for GoTicket — an online ticketing platform.
 Role: Be a proactive, professional, and enthusiastic advisor. Your job is not just to provide information, but also to SUGGEST and ANALYZE to help users make the best decisions.
 
-IMPORTANT LANGUAGE RULE:
-- Detect the language the user is writing in and ALWAYS respond in the SAME language.
-- If the user writes in Vietnamese, respond entirely in Vietnamese.
-- If the user writes in English, respond in English.
-- Be natural and friendly regardless of language.
-
 Other important rules:
 - NEVER display raw IDs (such as match IDs, Stand IDs) to the user.
-- When listing matches or stands, use a numbered list or clear bullet points.
-- Keep responses concise — the match cards will be shown automatically by the UI, so you don't need to list them in text.
+- Do NOT use Markdown formatting (no **, *, _, etc.). Provide plain text only.
+- Do NOT use emojis or icons in your responses.
+- Keep responses concise — the match cards will be shown automatically by the UI, so you do NOT need to list matches in your text response.
 
 Standard CONSULTATION process:
-1. SHOW MATCHES: When the user asks about matches (in any language: "có trận đấu nào", "show matches", "lịch thi đấu", etc.), immediately trigger the search_matches action. The UI will display interactive match cards automatically. Just write a short, friendly intro (e.g., "Đây là các trận đấu sắp diễn ra! 🏟️" or "Here are the upcoming matches!").
-2. ADVISE ON STANDS: Once the user has chosen a match, use get_availability action. Then advise on stand choices — VIP for best view, budget-friendly, or mid-range.
+1. SHOW MATCHES: When the user asks about matches (e.g. "show matches", "upcoming schedules", etc.), immediately trigger the search_matches action. The UI will display interactive match cards automatically. Just write a short, friendly intro (e.g., "Here are the upcoming matches!").
+2. ADVISE ON STANDS: 
+   - If the user explicitly specifies the exact match they want (e.g., mentioning both teams like "team A vs team B"), or if there is exactly ONE match on sale for the team they mentioned, immediately use the get_availability action using that match's ID. Do NOT use search_matches if the specific match is already identified.
+   - ONLY use search_matches if the user is vague and there are multiple matches to choose from.
+   - Once availability is shown, advise on stand choices — VIP for best view, budget-friendly, or mid-range.
 3. CONFIRM QUANTITY AND BOOK: After the user chooses a stand, ask how many tickets they need (if not stated). Then create the booking.
 4. PAYMENT: After a successful booking, congratulate them and remind them to click the Pay Now button.
 
@@ -70,7 +68,9 @@ const getActiveMatchesContext = async (keyword) => {
      WHERE m.status IN ('published', 'upcoming', 'approved')
        AND m.match_date > NOW()
        ${whereExtra}
-     ORDER BY m.match_date ASC
+     ORDER BY 
+       CASE WHEN m.ticket_sale_open_at IS NULL OR m.ticket_sale_open_at <= NOW() THEN 0 ELSE 1 END ASC,
+       m.match_date ASC
      LIMIT 10`,
     values
   );
@@ -113,6 +113,8 @@ const stripInternalMarkers = (text) =>
     .replace(/\[INTERNAL_STAND_MAP[\s\S]*?\n\n/g, "")
     .replace(/\[Internal analysis[\s\S]*?\n\n/g, "")
     .replace(/###ACTION###[\s\S]*?###END_ACTION###/g, "")
+    .replace(/\*\*/g, "") // Strip bold asterisks
+    .replace(/\n\*\s/g, "\n- ") // Convert bullet points
     .trim();
 
 /**
@@ -137,7 +139,7 @@ const executeAction = async (action, userId) => {
       const lines = matches.map((m) => {
         const isOpen = !m.ticket_sale_open_at || new Date(m.ticket_sale_open_at) <= new Date();
         const available = m.total_seats - m.sold_count;
-        const isHot = isOpen && ((m.total_seats > 0 && available < m.total_seats * 0.2) || available < 100) ? " [🔥 HOT - Almost sold out]" : "";
+        const isHot = isOpen && ((m.total_seats > 0 && available < m.total_seats * 0.2) || available < 100) ? " [HOT - Almost sold out]" : "";
         const statusText = isOpen ? `Available: ${available} tickets${isHot}` : `COMING SOON (Sale opens at ${new Date(m.ticket_sale_open_at).toLocaleString("en-US")})`;
         return `- [ID:${m.id}] ${m.home_team} vs ${m.away_team} | ${new Date(m.match_date).toLocaleString("en-US")} | Stadium: ${m.stadium_name || "N/A"} | ${statusText}`;
       });
@@ -153,7 +155,10 @@ const executeAction = async (action, userId) => {
           leagueName: m.league_name,
           availableSeats: m.total_seats - m.sold_count
         })),
-        contextForAI: `Search results:\n${lines.join("\n")}\n\nList the matches for the user. Emphasize HOT matches. For COMING SOON matches, mention when the sale opens and say they cannot book yet. Then ask: "Which match are you interested in?"`
+        contextForAI: `Search results:\n${lines.join("\n")}`,
+        userMessage: matches.length > 0 
+          ? `Found ${matches.length} match(es)! Which one are you interested in?` 
+          : "No matches found matching your criteria."
       };
     }
 
@@ -163,7 +168,8 @@ const executeAction = async (action, userId) => {
         return {
           actionType: "none",
           actionData: null,
-          contextForAI: "Match not found with this ID."
+          contextForAI: "Match not found with this ID.",
+          userMessage: "Sorry, I couldn't find information for this match."
         };
       }
 
@@ -187,7 +193,8 @@ const executeAction = async (action, userId) => {
             leagueName: m.league_name,
             availableSeats: m.total_seats - m.sold_count
           })),
-          contextForAI: `Action failed: The match ${match.home_team} vs ${match.away_team} is NOT on sale yet. Ticket sales will open at ${new Date(match.ticket_sale_open_at).toLocaleString("en-US")}.`
+          contextForAI: `Action failed: The match ${match.home_team} vs ${match.away_team} is NOT on sale yet. Ticket sales will open at ${new Date(match.ticket_sale_open_at).toLocaleString("en-US")}.`,
+          userMessage: `The match ${match.home_team} vs ${match.away_team} is not on sale yet. Ticket sales will open on ${new Date(match.ticket_sale_open_at).toLocaleString("en-US")}. Here are other matches currently on sale:`
         };
       }
 
@@ -198,7 +205,7 @@ const executeAction = async (action, userId) => {
 
       // Internal ID mapping for AI to use in create_booking (stripped before sending to user)
       const idMap = stands.map(
-        (s) => `  ${s.name} → [StandID:${s.id}]`
+        (s) => `  Stand Name: "${s.name}" => EXACT stand_id to use: ${s.id}`
       ).join("\n");
 
       let priceAnalysis = "";
@@ -233,18 +240,22 @@ const executeAction = async (action, userId) => {
             totalSeats: s.total_seats
           }))
         },
-        contextForAI: `Stand information for ${match.home_team} vs ${match.away_team}:\n${lines.join("\n")}\n${priceAnalysis}\n\n[INTERNAL_STAND_MAP - use these IDs for create_booking, DO NOT show to user]:\n${idMap}\n\nList the stands for the user. Then ASK: "Do you prefer the best view stand, the most budget-friendly, or a mid-range option?" and ask how many tickets they need.`
+        contextForAI: `Stand information for ${match.home_team} vs ${match.away_team}:\n${lines.join("\n")}\n${priceAnalysis}\n\n[INTERNAL_STAND_MAP - use these IDs for create_booking, DO NOT show to user]:\n${idMap}\n\nAdvise the user on their stand options based on the price analysis. Briefly recommend the cheapest stand for budget, the most expensive for the best view, and the mid-range options. Then ask which one they prefer and how many tickets they need.`,
+        userMessage: `Here is the stand information for ${match.home_team} vs ${match.away_team}. Which stand would you like, and how many tickets?`
       };
     }
 
     case "create_booking": {
       const { match_id, stand_id, quantity } = action.params || {};
       const numQuantity = Number(quantity);
-      if (!match_id || !stand_id || !numQuantity || numQuantity <= 0) {
+      const numStandId = Number(stand_id);
+      
+      if (!match_id || !numStandId || !numQuantity || numQuantity <= 0) {
         return {
           actionType: "none",
           actionData: null,
-          contextForAI: "Missing booking information. Ask the user for: match_id, stand_id, quantity."
+          contextForAI: "Missing or invalid booking information. Ask the user to select a valid stand from the list and specify the number of tickets.",
+          userMessage: "I need more information to book tickets. Please select a match, a stand, and the number of tickets."
         };
       }
 
@@ -286,13 +297,15 @@ const executeAction = async (action, userId) => {
             quantity: numQuantity,
             totalAmount: standPrice * numQuantity
           },
-          contextForAI: `Booking SUCCESSFUL! ${numQuantity} ticket(s) for stand ${bookedStand?.name || "N/A"} for the match ${match?.home_team} vs ${match?.away_team}. Total: ${(standPrice * numQuantity).toLocaleString("en-US")} VND. Remind the user to click the "Pay Now" button to complete.`
+          contextForAI: `Booking SUCCESSFUL! ${numQuantity} ticket(s) for stand ${bookedStand?.name || "N/A"} for the match ${match?.home_team} vs ${match?.away_team}. Total: ${(standPrice * numQuantity).toLocaleString("en-US")} VND. Remind the user to click the "Pay Now" button to complete.`,
+          userMessage: `Booking successful! You reserved ${numQuantity} ticket(s) in stand ${bookedStand?.name || "N/A"} for ${match?.home_team} vs ${match?.away_team}. Total: ${(standPrice * numQuantity).toLocaleString("en-US")} VND. Please click "Pay Now" to complete your purchase.`
         };
       } catch (err) {
         return {
           actionType: "booking_failed",
           actionData: null,
-          contextForAI: `Booking FAILED: ${err.message}. Inform the user of the error and suggest trying again.`
+          contextForAI: `Booking FAILED: ${err.message}. Inform the user of the error and suggest trying again.`,
+          userMessage: `Sorry, booking failed: ${err.message}. Please try again.`
         };
       }
     }
@@ -301,7 +314,8 @@ const executeAction = async (action, userId) => {
       return {
         actionType: "none",
         actionData: null,
-        contextForAI: "Invalid action."
+        contextForAI: "Invalid action.",
+        userMessage: "Invalid action."
       };
   }
 };
@@ -405,7 +419,7 @@ export const aiService = {
 
         // Offline provider: return action result directly
         return {
-          message: stripInternalMarkers(actionResult.contextForAI),
+          message: actionResult.userMessage || aiResponse.message,
           action: actionResult.actionType,
           data: actionResult.actionData,
           provider: "offline"
@@ -430,75 +444,79 @@ export const aiService = {
     const lastMsg = messages[messages.length - 1]?.content || "";
     const lowerMsg = lastMsg.toLowerCase();
 
-    // 1. Handle booking logic (when user clicks "Select" stand button)
-    // Pattern: "Book me 1 ticket for stand A in match Team A vs Team B"
-    if ((lowerMsg.includes("book") || lowerMsg.includes("buy")) && lowerMsg.includes("stand")) {
-      const matches = await getActiveMatchesContext();
-      const match = matches.find(m => lowerMsg.includes(m.home_team.toLowerCase()) || lowerMsg.includes(m.away_team.toLowerCase()));
-      
-      if (match) {
-        const { stands } = await getMatchAvailability(match.id);
+    // Pre-fetch active matches to help with intent recognition
+    const matches = await getActiveMatchesContext();
+    const mentionedMatch = matches.find(m => 
+      lowerMsg.includes(m.home_team.toLowerCase()) || 
+      lowerMsg.includes(m.away_team.toLowerCase())
+    );
+
+    // 1. Handle booking logic (when user clicks "Select" stand button or specifies a stand)
+    if ((lowerMsg.includes("book") || lowerMsg.includes("buy") || lowerMsg.includes("ticket")) && lowerMsg.includes("stand")) {
+      if (mentionedMatch) {
+        const { stands } = await getMatchAvailability(mentionedMatch.id);
         const stand = stands.find(s => lowerMsg.includes(s.name.toLowerCase()));
         
         if (stand) {
+          const qtyMatch = lowerMsg.match(/(\d+)\s*ticket/);
+          const quantity = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
+          
           return {
             message: `Processing your booking...`,
             action: "create_booking",
-            data: { params: { match_id: match.id, stand_id: stand.id, quantity: 1 } },
+            data: { params: { match_id: mentionedMatch.id, stand_id: stand.id, quantity } },
             provider: "offline"
           };
         }
       }
     }
 
-    // 2. Handle stand info / pricing (when user clicks "Select this match" button)
-    if (lowerMsg.includes("stand") || lowerMsg.includes("ticket price") || lowerMsg.includes("pricing")) {
-      const matches = await getActiveMatchesContext();
-      const match = matches.find(m => lowerMsg.includes(m.home_team.toLowerCase()) || lowerMsg.includes(m.away_team.toLowerCase()));
-      
-      if (match) {
-        return {
-          message: `Here is the stand information for ${match.home_team} vs ${match.away_team}. Do you prefer the best view stand, the most budget-friendly, or a mid-range option?`,
-          action: "get_availability",
-          data: { params: { match_id: match.id } },
-          provider: "offline"
-        };
-      }
+    // 2. Handle stand info / pricing (if user mentions a team and wants to buy or see prices)
+    if (mentionedMatch && (lowerMsg.includes("stand") || lowerMsg.includes("ticket") || lowerMsg.includes("price") || lowerMsg.includes("pricing") || lowerMsg.includes("buy") || lowerMsg.includes("book") || lowerMsg.includes("want"))) {
+      return {
+        message: `Here is the stand information for ${mentionedMatch.home_team} vs ${mentionedMatch.away_team}. Which stand would you like, and how many tickets?`,
+        action: "get_availability",
+        data: { params: { match_id: mentionedMatch.id } },
+        provider: "offline"
+      };
     }
 
-    // 3. Handle match search (supports both Vietnamese and English)
-    const matchKeywordsVi = ["trận", "thi đấu", "lịch", "xem", "trận đấu", "có trận", "bóng đá", "giải", "sắp diễn ra"];
-    const matchKeywordsEn = ["ticket", "schedule", "match", "book", "game", "upcoming", "fixture", "event"];
-    const isMatchQuery = [...matchKeywordsVi, ...matchKeywordsEn].some(kw => lowerMsg.includes(kw));
+    // 3. If they just mention a team name but no specific buy intent
+    if (mentionedMatch) {
+      return {
+        message: `I found a match for ${mentionedMatch.home_team} vs ${mentionedMatch.away_team}! Would you like to see the ticket prices?`,
+        action: "search_matches",
+        data: { params: { keyword: mentionedMatch.home_team } },
+        provider: "offline"
+      };
+    }
+
+    // 4. Handle match search
+    const matchKeywordsEn = ["ticket", "schedule", "match", "book", "game", "upcoming", "fixture", "event", "buy", "want", "find", "search"];
+    const isMatchQuery = matchKeywordsEn.some(kw => lowerMsg.includes(kw));
     
     if (isMatchQuery) {
-      const stopWordsPattern = /ticket|schedule|match|book|find|search|trận|đấu|lịch|xem|bóng đá|giải|có không|sắp|diễn ra/g;
+      const stopWordsPattern = /ticket|schedule|match|book|find|search|i want|buy|want to/g;
       const keyword = lowerMsg.replace(stopWordsPattern, "").trim();
-      const isVietnamese = matchKeywordsVi.some(kw => lowerMsg.includes(kw));
       return {
-        message: isVietnamese
-          ? (keyword ? `Đang tìm kiếm trận đấu liên quan đến "${keyword}". Bạn muốn chọn trận nào? 🏟️` : "Đây là các trận đấu sắp diễn ra! Bạn quan tâm đến trận nào? 🏟️")
-          : (keyword ? `Searching for matches related to "${keyword}". Which match are you interested in?` : "Here are the upcoming matches. Which one would you like to see?"),
+        message: keyword ? `Searching for matches related to "${keyword}". Which match are you interested in?` : "Here are the upcoming matches. Which one would you like to see?",
         action: "search_matches",
         data: { params: { keyword: keyword || undefined } },
         provider: "offline"
       };
     }
 
-    // 4. Greeting (Vietnamese + English)
-    const greetVi = ["xin chào", "chào", "hello", "hi", "hey", "alo"];
-    if (greetVi.some(kw => lowerMsg.includes(kw))) {
-      const isVi = ["xin chào", "chào", "alo"].some(kw => lowerMsg.includes(kw));
+    // 5. Greeting
+    const greetKeywords = ["hello", "hi", "hey"];
+    if (greetKeywords.some(kw => lowerMsg.includes(kw))) {
       return {
-        message: isVi
-          ? "Xin chào! 👋 Tôi là GoTicket Advisor. Tôi có thể giúp bạn tìm kiếm các trận đấu hot nhất và đặt vé ngay trong chat. Bạn muốn xem trận đấu nào?"
-          : "Hello! 👋 I'm your GoTicket ticket advisor. I can help you find the hottest matches. Which match are you interested in?",
+        message: "Hello! I'm your GoTicket Advisor. I can help you find the hottest matches and book tickets right in the chat. Which match are you interested in?",
         provider: "offline"
       };
     }
 
     return {
-      message: "Xin chào! Tôi là GoTicket Advisor. Bạn muốn xem lịch trận đấu, hoặc đặt vé không? Hãy hỏi tôi bất cứ điều gì! 🎫",
+      message: "Hello! I'm your GoTicket Advisor. Need help checking match schedules or booking tickets? Just ask!",
       provider: "offline"
     };
   },

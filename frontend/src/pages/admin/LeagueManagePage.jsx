@@ -178,7 +178,7 @@ export default function LeagueManagePage() {
 
       <div className="hero-search-box" style={{ marginBottom: '30px', maxWidth: '100%' }}>
         <div className="hs-input-wrap">
-          <Search size={20} color="#94a3b8" />
+          <Search size={20} color="var(--color-slate-400)" />
           <input 
             type="text" 
             placeholder="Search leagues by name..." 
@@ -203,7 +203,7 @@ export default function LeagueManagePage() {
               >
                 {!league.logo_url && (
                   <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Trophy size={32} color="#cbd5e1" />
+                    <Trophy size={32} color="var(--color-slate-300)" />
                   </div>
                 )}
                 <KebabMenu variant="glass" onEdit={() => handleOpenModal(league)} onDelete={() => { setLeagueToDelete(league); setIsDeleteModalOpen(true); }} />

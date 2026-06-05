@@ -51,8 +51,8 @@ export default function ManagerMatchCard({ match, onOpenEdit, onDelete }) {
           top: '12px', 
           left: '12px', 
           zIndex: 20,
-          background: '#f59e0b',
-          color: '#fff',
+          background: 'var(--color-warning)',
+          color: 'var(--color-white)',
           boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
         }}>
           Pending
@@ -63,7 +63,7 @@ export default function ManagerMatchCard({ match, onOpenEdit, onDelete }) {
           top: '12px', 
           left: '12px', 
           zIndex: 20,
-          background: '#10b981',
+          background: 'var(--color-success)',
           boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
         }}>
           {match.status === 'published' ? 'Published' : 'Approved'}
@@ -108,29 +108,29 @@ export default function ManagerMatchCard({ match, onOpenEdit, onDelete }) {
       <div className="mc-body" style={{ flex: 1, paddingBottom: '16px', paddingTop: '0' }}>
         <div className="mc-info">
           <div className="mc-info-row">
-            <Calendar size={14} color="#64748b" className="mc-icon" />
+            <Calendar size={14} color="var(--color-slate-500)" className="mc-icon" />
             <span>{formatDateTime(match.match_date)}</span>
           </div>
           {match.ticket_sale_open_at && (
             <div className="mc-info-row">
-              <ShoppingCart size={14} color="#f59e0b" className="mc-icon" />
+              <ShoppingCart size={14} color="var(--color-warning)" className="mc-icon" />
               <span style={{ color: '#b45309', fontWeight: 600 }}>Sale opens: {formatDateTime(match.ticket_sale_open_at)}</span>
             </div>
           )}
           <div className="mc-info-row">
-            <MapPin size={14} color="#64748b" className="mc-icon" />
+            <MapPin size={14} color="var(--color-slate-500)" className="mc-icon" />
             <span>{match.stadium_name || 'Grand Arena'}</span>
           </div>
         </div>
 
-        <div className="mmc-metric-row" style={{ marginTop: '20px', borderTop: '1px solid #f1f5f9', paddingTop: '16px', display: 'flex', justifyContent: 'space-between' }}>
+        <div className="mmc-metric-row" style={{ marginTop: '20px', borderTop: '1px solid var(--color-slate-100)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between' }}>
           <div className="mmc-metric">
-            <span className="mmc-metric-label" style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>Revenue Generated</span>
+            <span className="mmc-metric-label" style={{ fontSize: '0.65rem', color: 'var(--color-slate-400)', fontWeight: 800, textTransform: 'uppercase' }}>Revenue Generated</span>
             <span className="mmc-metric-value" style={{ color: '#16a34a', fontSize: '1rem', fontWeight: 900 }}>{formatVND(match.revenue)}</span>
           </div>
           <div className="mmc-metric">
-            <span className="mmc-metric-label" style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>Tickets Sold</span>
-            <span className="mmc-metric-value" style={{ fontSize: '1rem', fontWeight: 900, color: '#1e293b' }}>{match.tickets_sold}</span>
+            <span className="mmc-metric-label" style={{ fontSize: '0.65rem', color: 'var(--color-slate-400)', fontWeight: 800, textTransform: 'uppercase' }}>Tickets Sold</span>
+            <span className="mmc-metric-value" style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--color-slate-800)' }}>{match.tickets_sold}</span>
           </div>
         </div>
 

@@ -5,19 +5,19 @@
 import { inputBase, fieldGroup, fieldLabel, btnDanger } from '../../styles/common'
 
 const focusInput = (e) => {
-  e.target.style.borderColor = '#6366f1'
-  e.target.style.background = '#fff'
+  e.target.style.borderColor = 'var(--color-primary)'
+  e.target.style.background = 'var(--color-white)'
 }
 const blurInput = (e) => {
-  e.target.style.borderColor = '#e2e8f0'
-  e.target.style.background = '#f8fafc'
+  e.target.style.borderColor = 'var(--color-slate-200)'
+  e.target.style.background = 'var(--color-slate-50)'
 }
 
 /** Password strength helpers — pure functions, no state needed */
 const getStrength = (pw) => {
-  if (pw.length >= 12) return { label: 'Very Strong', color: '#10b981', width: '100%' }
-  if (pw.length >= 8)  return { label: 'Medium',      color: '#f59e0b', width: '60%' }
-  return                      { label: 'Weak',         color: '#ef4444', width: '25%' }
+  if (pw.length >= 12) return { label: 'Very Strong', color: 'var(--color-success)', width: '100%' }
+  if (pw.length >= 8)  return { label: 'Medium',      color: 'var(--color-warning)', width: '60%' }
+  return                      { label: 'Weak',         color: 'var(--color-danger)', width: '25%' }
 }
 
 /** Reusable password input field */
@@ -51,7 +51,7 @@ export default function PasswordTab({ pwForm, setPwForm, pwLoading, hasPassword,
             onChange={(e) => setPwForm((f) => ({ ...f, currentPassword: e.target.value }))}
             placeholder="••••••••"
           />
-          <div style={{ height: '1px', background: '#f1f5f9', margin: '8px 0' }} />
+          <div style={{ height: '1px', background: 'var(--color-slate-100)', margin: '8px 0' }} />
         </>
       )}
 
@@ -73,11 +73,11 @@ export default function PasswordTab({ pwForm, setPwForm, pwLoading, hasPassword,
       {/* Strength meter */}
       {strength && (
         <div style={{ padding: '0 4px' }}>
-          <div style={{ display: 'flex', marginBottom: '8px', fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+          <div style={{ display: 'flex', marginBottom: '8px', fontSize: '11px', fontWeight: 700, color: 'var(--color-slate-500)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
             Strength:&nbsp;
             <span style={{ color: strength.color }}>{strength.label}</span>
           </div>
-          <div style={{ height: '6px', borderRadius: '3px', background: '#f1f5f9', overflow: 'hidden' }}>
+          <div style={{ height: '6px', borderRadius: '3px', background: 'var(--color-slate-100)', overflow: 'hidden' }}>
             <div
               style={{
                 height: '100%',

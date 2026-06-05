@@ -129,39 +129,39 @@ export default function CheckerDashboard() {
 
       <main className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
         <div className="checker-actions-grid" style={{ marginBottom: '32px' }}>
-          <Link to="/checker/scan" className="action-card scan full-width" style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: '#fff', border: 'none' }}>
+          <Link to="/checker/scan" className="action-card scan full-width" style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-600))', color: 'var(--color-white)', border: 'none' }}>
             <div className="action-icon" style={{ background: 'rgba(255,255,255,0.2)' }}><QrCode size={32} /></div>
             <div className="action-text">
-              <h3 style={{ color: '#fff' }}>Launch QR Scanner</h3>
+              <h3 style={{ color: 'var(--color-white)' }}>Launch QR Scanner</h3>
               <p style={{ color: 'rgba(255,255,255,0.8)' }}>Validate ticket codes and grant entry access to the venue</p>
             </div>
-            <ChevronRight className="action-arrow" style={{ color: '#fff' }} />
+            <ChevronRight className="action-arrow" style={{ color: 'var(--color-white)' }} />
           </Link>
         </div>
 
             <div className="stats-grid">
-              <div className="stat-card" style={{ color: '#4f46e5' }}>
-                <div className="stat-icon-wrap" style={{ background: '#e0e7ff', color: '#4f46e5' }}>
+              <div className="stat-card" style={{ color: 'var(--color-primary-600)' }}>
+                <div className="stat-icon-wrap" style={{ background: 'var(--color-primary-100)', color: 'var(--color-primary-600)' }}>
                   <Users size={24} />
                 </div>
                 <span className="stat-label">Total Tickets</span>
-                <h2 className="stat-value" style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: '#0f172a' }}>{stats.total_tickets.toLocaleString()}</h2>
+                <h2 className="stat-value" style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: 'var(--color-slate-900)' }}>{stats.total_tickets.toLocaleString()}</h2>
               </div>
               
-              <div className="stat-card" style={{ color: '#10b981' }}>
+              <div className="stat-card" style={{ color: 'var(--color-success)' }}>
                 <div className="stat-icon-wrap" style={{ background: '#dcfce7', color: '#166534' }}>
                   <CheckCircle2 size={24} />
                 </div>
                 <span className="stat-label">Checked-in</span>
-                <h2 className="stat-value" style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: '#0f172a' }}>{stats.checked_in_tickets.toLocaleString()}</h2>
+                <h2 className="stat-value" style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: 'var(--color-slate-900)' }}>{stats.checked_in_tickets.toLocaleString()}</h2>
               </div>
 
-              <div className="stat-card" style={{ color: '#ef4444' }}>
-                <div className="stat-icon-wrap" style={{ background: '#fee2e2', color: '#991b1b' }}>
+              <div className="stat-card" style={{ color: 'var(--color-danger)' }}>
+                <div className="stat-icon-wrap" style={{ background: 'var(--color-danger-light)', color: '#991b1b' }}>
                   <XCircle size={24} />
                 </div>
                 <span className="stat-label">Remaining</span>
-                <h2 className="stat-value" style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: '#0f172a' }}>{stats.not_checked_in_tickets.toLocaleString()}</h2>
+                <h2 className="stat-value" style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: 'var(--color-slate-900)' }}>{stats.not_checked_in_tickets.toLocaleString()}</h2>
               </div>
 
               <div className="stat-card" style={{ color: '#8b5cf6' }}>
@@ -169,7 +169,7 @@ export default function CheckerDashboard() {
                   <BarChart3 size={24} />
                 </div>
                 <span className="stat-label">Attendance Rate</span>
-                <h2 className="stat-value" style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: '#0f172a' }}>{checkinRatio}%</h2>
+                <h2 className="stat-value" style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: 'var(--color-slate-900)' }}>{checkinRatio}%</h2>
                 <div className="progress-container" style={{ marginTop: 'auto' }}>
                   <div className="progress-bar" style={{ width: `${checkinRatio}%`, background: '#8b5cf6' }}></div>
                 </div>

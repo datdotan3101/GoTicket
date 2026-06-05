@@ -36,15 +36,15 @@ export default function MatchCard({ match, showHotBadge = false }) {
   return (
     <>
       <Link to={(isNotYetOpen || isEnded) ? '#' : `/audience/matches/${match.id}/seats`} className="match-card-link" onClick={handleClick}>
-        <article className="match-card" style={{ border: '1px solid #cbd5e1', position: 'relative', opacity: isNotYetOpen ? 0.8 : 1 }}>
+        <article className="match-card" style={{ border: '1px solid var(--color-slate-300)', position: 'relative', opacity: isNotYetOpen ? 0.8 : 1 }}>
           {/* Ended badge */}
           {isEnded && (
             <div style={{
               position: 'absolute',
               top: '12px',
               right: '12px',
-              background: '#64748b',
-              color: '#fff',
+              background: 'var(--color-slate-500)',
+              color: 'var(--color-white)',
               fontSize: '0.65rem',
               fontWeight: 800,
               padding: '4px 12px',
@@ -62,8 +62,8 @@ export default function MatchCard({ match, showHotBadge = false }) {
               position: 'absolute',
               top: '12px',
               right: '12px',
-              background: '#f97316',
-              color: '#fff',
+              background: 'var(--color-orange)',
+              color: 'var(--color-white)',
               fontSize: '0.65rem',
               fontWeight: 800,
               padding: '4px 12px',
@@ -81,8 +81,8 @@ export default function MatchCard({ match, showHotBadge = false }) {
               position: 'absolute',
               top: '12px',
               right: '12px',
-              background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-              color: '#fff',
+              background: 'linear-gradient(135deg, var(--color-danger), var(--color-danger-dark))',
+              color: 'var(--color-white)',
               fontSize: '0.65rem',
               fontWeight: 900,
               padding: '4px 12px',
@@ -130,11 +130,11 @@ export default function MatchCard({ match, showHotBadge = false }) {
 
             <div className="mc-info">
               <div className="mc-info-row">
-                <Calendar size={14} color="#64748b" className="mc-icon" />
+                <Calendar size={14} color="var(--color-slate-500)" className="mc-icon" />
                 <span>{formatDateTime(match.match_date)}</span>
               </div>
               <div className="mc-info-row">
-                <MapPin size={14} color="#64748b" className="mc-icon" />
+                <MapPin size={14} color="var(--color-slate-500)" className="mc-icon" />
                 <span>{match.stadium_name || 'Grand Arena, London'}</span>
               </div>
             </div>
@@ -155,7 +155,7 @@ export default function MatchCard({ match, showHotBadge = false }) {
           padding: '20px'
         }} onClick={() => setIsSaleModalOpen(false)}>
           <div style={{
-            background: '#fff',
+            background: 'var(--color-white)',
             padding: '40px',
             borderRadius: '32px',
             maxWidth: '450px',
@@ -167,7 +167,7 @@ export default function MatchCard({ match, showHotBadge = false }) {
           }} onClick={e => e.stopPropagation()}>
             <button 
               onClick={() => setIsSaleModalOpen(false)}
-              style={{ position: 'absolute', top: '20px', right: '20px', background: '#f1f5f9', border: 'none', color: '#64748b', width: '32px', height: '32px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              style={{ position: 'absolute', top: '20px', right: '20px', background: 'var(--color-slate-100)', border: 'none', color: 'var(--color-slate-500)', width: '32px', height: '32px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
             >
               <X size={18} />
             </button>
@@ -176,7 +176,7 @@ export default function MatchCard({ match, showHotBadge = false }) {
               width: '72px',
               height: '72px',
               background: '#fff7ed',
-              color: '#f97316',
+              color: 'var(--color-orange)',
               borderRadius: '24px',
               display: 'flex',
               alignItems: 'center',
@@ -186,19 +186,19 @@ export default function MatchCard({ match, showHotBadge = false }) {
               <ShoppingCart size={32} />
             </div>
 
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '12px', color: '#0f172a' }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '12px', color: 'var(--color-slate-900)' }}>
               COMING SOON
             </h2>
-            <p style={{ color: '#64748b', lineHeight: 1.6, marginBottom: '32px', fontSize: '1rem' }}>
+            <p style={{ color: 'var(--color-slate-500)', lineHeight: 1.6, marginBottom: '32px', fontSize: '1rem' }}>
               Tickets for <strong>{match.home_team} vs {match.away_team}</strong> are not yet available for purchase.
             </p>
 
-            <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '20px', border: '1px solid #f1f5f9', marginBottom: '32px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center', color: '#f97316', fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px' }}>
+            <div style={{ background: 'var(--color-slate-50)', padding: '20px', borderRadius: '20px', border: '1px solid var(--color-slate-100)', marginBottom: '32px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center', color: 'var(--color-orange)', fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px' }}>
                 <Calendar size={14} />
                 Sale Opens At
               </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1e293b' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--color-slate-800)' }}>
                 {formatDateTime(match.ticket_sale_open_at)}
               </div>
             </div>
@@ -209,8 +209,8 @@ export default function MatchCard({ match, showHotBadge = false }) {
                 width: '100%',
                 padding: '16px',
                 borderRadius: '16px',
-                background: '#0f172a',
-                color: '#fff',
+                background: 'var(--color-slate-900)',
+                color: 'var(--color-white)',
                 fontWeight: 800,
                 fontSize: '1rem',
                 border: 'none',
@@ -237,7 +237,7 @@ export default function MatchCard({ match, showHotBadge = false }) {
           padding: '20px'
         }} onClick={() => setIsEndedModalOpen(false)}>
           <div style={{
-            background: '#fff',
+            background: 'var(--color-white)',
             padding: '40px',
             borderRadius: '32px',
             maxWidth: '450px',
@@ -249,15 +249,15 @@ export default function MatchCard({ match, showHotBadge = false }) {
           }} onClick={e => e.stopPropagation()}>
             <button 
               onClick={() => setIsEndedModalOpen(false)}
-              style={{ position: 'absolute', top: '20px', right: '20px', background: '#f1f5f9', border: 'none', color: '#64748b', width: '32px', height: '32px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              style={{ position: 'absolute', top: '20px', right: '20px', background: 'var(--color-slate-100)', border: 'none', color: 'var(--color-slate-500)', width: '32px', height: '32px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
             >
               <X size={18} />
             </button>
 
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '12px', color: '#0f172a' }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '12px', color: 'var(--color-slate-900)' }}>
               MATCH ENDED
             </h2>
-            <p style={{ color: '#64748b', lineHeight: 1.6, marginBottom: '32px', fontSize: '1rem' }}>
+            <p style={{ color: 'var(--color-slate-500)', lineHeight: 1.6, marginBottom: '32px', fontSize: '1rem' }}>
               This match has already taken place on <strong>{formatDateTime(match.match_date)}</strong>. Ticket sales are closed.
             </p>
 
@@ -267,8 +267,8 @@ export default function MatchCard({ match, showHotBadge = false }) {
                 width: '100%',
                 padding: '16px',
                 borderRadius: '16px',
-                background: '#64748b',
-                color: '#fff',
+                background: 'var(--color-slate-500)',
+                color: 'var(--color-white)',
                 fontWeight: 800,
                 fontSize: '1rem',
                 border: 'none',

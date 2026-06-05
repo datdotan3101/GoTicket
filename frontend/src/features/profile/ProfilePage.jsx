@@ -19,10 +19,10 @@ function SectionHeader({ icon, title, subtitle, variant = 'blue' }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
       <div style={sectionIconBox(variant)}>{icon}</div>
       <div>
-        <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: variant === 'red' ? '#b91c1c' : '#0f172a' }}>
+        <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: variant === 'red' ? '#b91c1c' : 'var(--color-slate-900)' }}>
           {title}
         </h2>
-        <p style={{ margin: 0, fontSize: '14px', color: variant === 'red' ? '#ef4444' : '#64748b' }}>
+        <p style={{ margin: 0, fontSize: '14px', color: variant === 'red' ? 'var(--color-danger)' : 'var(--color-slate-500)' }}>
           {subtitle}
         </p>
       </div>
@@ -35,7 +35,7 @@ export default function ProfilePage() {
   const profile = useProfile()
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '60px 16px 80px', color: '#1e293b' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--color-slate-50)', padding: '60px 16px 80px', color: 'var(--color-slate-800)' }}>
       <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: '32px' }}>
 
         {/* Left sidebar */}
@@ -87,7 +87,7 @@ export default function ProfilePage() {
           )}
 
           {activeTab === 'danger' && (
-            <section style={{ ...cardSection, border: '1px solid #fee2e2' }}>
+            <section style={{ ...cardSection, border: '1px solid var(--color-danger-light)' }}>
               <SectionHeader
                 icon={<AlertTriangle size={20} />}
                 title="Danger Zone"

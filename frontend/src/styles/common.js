@@ -10,9 +10,9 @@
 
 /** Standard white card with shadow */
 export const card = {
-  background: '#ffffff',
+  background: 'var(--color-white)',
   borderRadius: '16px',
-  border: '1px solid #e2e8f0',
+  border: '1px solid var(--color-slate-200)',
   boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
 }
 
@@ -24,8 +24,8 @@ export const cardPadded = {
 
 /** Rounded card with larger padding, used in Profile / detail sections */
 export const cardSection = {
-  background: '#ffffff',
-  border: '1px solid #e2e8f0',
+  background: 'var(--color-white)',
+  border: '1px solid var(--color-slate-200)',
   borderRadius: '20px',
   padding: '32px 36px',
   boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
@@ -34,9 +34,9 @@ export const cardSection = {
 
 /** Full-page dot-grid background (admin pages) */
 export const dotGridPage = {
-  backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)',
+  backgroundImage: 'radial-gradient(var(--color-slate-300) 1px, transparent 1px)',
   backgroundSize: '24px 24px',
-  backgroundColor: '#f8fafc',
+  backgroundColor: 'var(--color-slate-50)',
   minHeight: '100vh',
   padding: '40px',
   paddingBottom: '80px',
@@ -48,7 +48,7 @@ export const dotGridPage = {
 export const fieldLabel = {
   fontSize: '12px',
   fontWeight: 800,
-  color: '#475569',
+  color: 'var(--color-slate-600)',
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
 }
@@ -59,7 +59,7 @@ export const adminHeader = {
   fontWeight: 950,
   textTransform: 'uppercase',
   letterSpacing: '-2px',
-  color: '#111827',
+  color: 'var(--color-slate-900)',
   lineHeight: 1,
   margin: 0,
 }
@@ -67,7 +67,7 @@ export const adminHeader = {
 /** Section subtitle / description text */
 export const sectionSubtitle = {
   fontSize: '1rem',
-  color: '#6b7280',
+  color: 'var(--color-slate-500)',
   marginTop: '8px',
 }
 
@@ -75,12 +75,12 @@ export const sectionSubtitle = {
 
 /** Base text input / select style */
 export const inputBase = {
-  background: '#f8fafc',
-  border: '1px solid #e2e8f0',
+  background: 'var(--color-slate-50)',
+  border: '1px solid var(--color-slate-200)',
   borderRadius: '12px',
   padding: '14px 18px',
   fontSize: '15px',
-  color: '#1e293b',
+  color: 'var(--color-slate-800)',
   outline: 'none',
   transition: 'all 0.2s',
   width: '100%',
@@ -89,14 +89,14 @@ export const inputBase = {
 
 /** Focused input (apply onFocus / remove onBlur) */
 export const inputFocused = {
-  borderColor: '#6366f1',
-  background: '#ffffff',
+  borderColor: 'var(--color-primary)',
+  background: 'var(--color-white)',
 }
 
 /** Blurred input (revert on onBlur) */
 export const inputBlurred = {
-  borderColor: '#e2e8f0',
-  background: '#f8fafc',
+  borderColor: 'var(--color-slate-200)',
+  background: 'var(--color-slate-50)',
 }
 
 /** Flex column wrapper for a label + input field group */
@@ -125,27 +125,27 @@ const btnBase = {
 export const btnPrimary = {
   ...btnBase,
   background: '#1e1514',
-  color: '#ffffff',
+  color: 'var(--color-white)',
 }
 
 /** Red danger button (Delete, Change Password) */
 export const btnDanger = {
   ...btnBase,
-  background: '#ef4444',
-  color: '#ffffff',
+  background: 'var(--color-danger)',
+  color: 'var(--color-white)',
 }
 
 /** Red delete confirmation button */
 export const btnDelete = {
   ...btnBase,
-  background: '#dc2626',
-  color: '#ffffff',
+  background: 'var(--color-danger-dark)',
+  color: 'var(--color-white)',
 }
 
 /** Ghost / cancel button */
 export const btnCancel = {
   ...btnBase,
-  background: '#ffffff',
+  background: 'var(--color-white)',
   border: '1px solid #d1d5db',
   color: '#374151',
 }
@@ -154,7 +154,7 @@ export const btnCancel = {
 export const btnIcon = {
   background: 'none',
   border: 'none',
-  color: '#64748b',
+  color: 'var(--color-slate-500)',
   cursor: 'pointer',
   padding: '8px',
 }
@@ -164,8 +164,8 @@ export const btnAddNew = {
   display: 'flex',
   alignItems: 'center',
   gap: '8px',
-  background: '#0f172a',
-  color: '#ffffff',
+  background: 'var(--color-slate-900)',
+  color: 'var(--color-white)',
   border: 'none',
   padding: '10px 16px',
   borderRadius: '8px',
@@ -190,7 +190,7 @@ export const modalBackdrop = {
 
 /** Modal content box */
 export const modalBox = {
-  background: '#ffffff',
+  background: 'var(--color-white)',
   padding: '32px',
   borderRadius: '20px',
   maxWidth: '500px',
@@ -219,9 +219,9 @@ const badgeBase = {
 }
 
 export const badgeActive = { ...badgeBase, background: '#dcfce7', color: '#16a34a' }
-export const badgeBlocked = { ...badgeBase, background: '#fee2e2', color: '#dc2626' }
+export const badgeBlocked = { ...badgeBase, background: 'var(--color-danger-light)', color: 'var(--color-danger-dark)' }
 export const badgePending = { ...badgeBase, background: '#fef9c3', color: '#ca8a04' }
-export const badgeRole = { ...badgeBase, background: '#e0e7ff', color: '#4f46e5' }
+export const badgeRole = { ...badgeBase, background: 'var(--color-primary-100)', color: 'var(--color-primary-600)' }
 
 /**
  * Generate a role-specific color badge.
@@ -233,7 +233,7 @@ export const badgeForRole = (role) => {
     manager: { background: '#ede9fe', color: '#6d28d9' },
     editor: { background: '#dbeafe', color: '#1e3a8a' },
     checker: { background: '#d1fae5', color: '#065f46' },
-    audience: { background: '#e0e7ff', color: '#4f46e5' },
+    audience: { background: 'var(--color-primary-100)', color: 'var(--color-primary-600)' },
   }
   return { ...badgeBase, ...(map[role] ?? map.audience) }
 }
@@ -245,13 +245,13 @@ export const tableHeaderCell = {
   padding: '16px 0',
   fontSize: '0.75rem',
   fontWeight: 800,
-  color: '#64748b',
+  color: 'var(--color-slate-500)',
   textTransform: 'uppercase',
   letterSpacing: '1px',
 }
 
 export const tableRow = {
-  borderBottom: '1px solid #f1f5f9',
+  borderBottom: '1px solid var(--color-slate-100)',
 }
 
 export const tableCell = {
@@ -266,10 +266,10 @@ export const tableCell = {
  */
 export const sectionIconBox = (variant = 'blue') => {
   const map = {
-    blue: { background: '#e0e7ff', color: '#4f46e5' },
-    red: { background: '#fef2f2', color: '#ef4444' },
+    blue: { background: 'var(--color-primary-100)', color: 'var(--color-primary-600)' },
+    red: { background: '#fef2f2', color: 'var(--color-danger)' },
     yellow: { background: '#fef9c3', color: '#ca8a04' },
-    green: { background: '#d1fae5', color: '#10b981' },
+    green: { background: '#d1fae5', color: 'var(--color-success)' },
   }
   return {
     width: '40px',
@@ -308,7 +308,7 @@ export const warningBox = {
 /** Horizontal divider */
 export const divider = {
   height: '1px',
-  background: '#f1f5f9',
+  background: 'var(--color-slate-100)',
   margin: '8px 0',
 }
 

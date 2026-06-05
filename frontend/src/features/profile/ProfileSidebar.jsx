@@ -12,11 +12,11 @@ const getAvatarInitial = (fullName) => {
 }
 
 const ROLE_COLORS = {
-  admin:    '#f59e0b',
+  admin:    'var(--color-warning)',
   manager:  '#8b5cf6',
-  editor:   '#3b82f6',
-  checker:  '#10b981',
-  audience: '#6366f1',
+  editor:   'var(--color-primary)',
+  checker:  'var(--color-success)',
+  audience: 'var(--color-primary)',
 }
 
 /** Tab button — active/inactive styles computed here */
@@ -32,8 +32,8 @@ function TabButton({ tab, isActive, onClick }) {
         padding: '14px 16px',
         borderRadius: '12px',
         border: 'none',
-        background: isActive ? (isDanger ? '#fef2f2' : '#eff6ff') : 'transparent',
-        color: isActive ? (isDanger ? '#dc2626' : '#2563eb') : '#64748b',
+        background: isActive ? (isDanger ? '#fef2f2' : 'var(--color-primary-50)') : 'transparent',
+        color: isActive ? (isDanger ? 'var(--color-danger-dark)' : 'var(--color-primary-600)') : 'var(--color-slate-500)',
         fontSize: '15px',
         fontWeight: isActive ? 800 : 600,
         cursor: 'pointer',
@@ -41,7 +41,7 @@ function TabButton({ tab, isActive, onClick }) {
         textAlign: 'left',
         width: '100%',
       }}
-      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = '#f8fafc' }}
+      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--color-slate-50)' }}
       onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
     >
       <span style={{ filter: isActive ? 'none' : 'grayscale(100%) opacity(0.7)' }}>
@@ -60,7 +60,7 @@ export default function ProfileSidebar({
   fileInputRef,
   onAvatarChange,
 }) {
-  const roleBg = ROLE_COLORS[user?.role] ?? '#6366f1'
+  const roleBg = ROLE_COLORS[user?.role] ?? 'var(--color-primary)'
 
   const tabs = [
     { id: 'profile',  label: 'Personal Info',   icon: <User size={18} /> },
@@ -84,13 +84,13 @@ export default function ProfileSidebar({
               borderRadius: '50%',
               background: user?.avatar_url
                 ? `url(${user.avatar_url}) center/cover`
-                : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                : 'linear-gradient(135deg, var(--color-primary) 0%, #8b5cf6 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '32px',
               fontWeight: 700,
-              color: '#fff',
+              color: 'var(--color-white)',
               boxShadow: '0 0 0 4px rgba(99,102,241,.1)',
               cursor: 'pointer',
               position: 'relative',
@@ -111,28 +111,28 @@ export default function ProfileSidebar({
           <div
             style={{
               position: 'absolute', bottom: '-2px', right: '-2px',
-              background: '#ffffff', borderRadius: '50%',
+              background: 'var(--color-white)', borderRadius: '50%',
               width: '28px', height: '28px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 2px 5px rgba(0,0,0,0.15)',
-              cursor: 'pointer', border: '2px solid #ffffff',
+              cursor: 'pointer', border: '2px solid var(--color-white)',
             }}
             onClick={() => fileInputRef.current?.click()}
             title="Click to change avatar"
           >
-            <Camera size={14} color="#64748b" />
+            <Camera size={14} color="var(--color-slate-500)" />
           </div>
         </div>
 
         <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={onAvatarChange} />
-        <h2 style={{ margin: '0 0 4px 0', fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>
+        <h2 style={{ margin: '0 0 4px 0', fontSize: '20px', fontWeight: 800, color: 'var(--color-slate-900)' }}>
           {user?.full_name || 'User'}
         </h2>
-        <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#64748b' }}>{user?.email}</p>
+        <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--color-slate-500)' }}>{user?.email}</p>
         <span style={{
           display: 'inline-block', padding: '4px 12px', borderRadius: '20px',
           fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
-          background: '#e0e7ff', color: '#4f46e5',
+          background: 'var(--color-primary-100)', color: 'var(--color-primary-600)',
         }}>
           {user?.role} Account
         </span>

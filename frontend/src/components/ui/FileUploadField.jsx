@@ -22,7 +22,7 @@ export default function FileUploadField({
   onChange,
   accept = 'image/*',
   previewType = 'logo',
-  icon = <UploadCloud size={32} strokeWidth={1.5} color="#94a3b8" />,
+  icon = <UploadCloud size={32} strokeWidth={1.5} color="var(--color-slate-400)" />,
   placeholder = 'Click to upload file'
 }) {
   const [uploading, setUploading] = useState(false)
@@ -60,16 +60,16 @@ export default function FileUploadField({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>
+      <label style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-slate-500)', letterSpacing: '1px' }}>
         {label}
       </label>
       {!value && (
         <div style={{
-          border: '2px dashed #cbd5e1',
+          border: '2px dashed var(--color-slate-300)',
           borderRadius: '16px',
           padding: '30px',
           textAlign: 'center',
-          background: '#f1f5f9',
+          background: 'var(--color-slate-100)',
           position: 'relative',
           cursor: 'pointer',
           transition: 'all 0.2s'
@@ -84,7 +84,7 @@ export default function FileUploadField({
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {uploading ? '⏳' : icon}
             </div>
-            <span style={{ fontSize: '0.9rem', color: '#475569', fontWeight: 700 }}>
+            <span style={{ fontSize: '0.9rem', color: 'var(--color-slate-600)', fontWeight: 700 }}>
               {uploading ? 'Uploading...' : placeholder}
             </span>
           </div>
@@ -99,23 +99,23 @@ export default function FileUploadField({
           alignItems: 'center',
           gap: '16px',
           padding: '16px',
-          background: '#f8fafc',
+          background: 'var(--color-slate-50)',
           borderRadius: '16px',
-          border: '1px solid #e2e8f0'
+          border: '1px solid var(--color-slate-200)'
         }}>
           <img
             src={value}
             alt="Preview"
-            style={{ width: '56px', height: '56px', objectFit: 'contain', borderRadius: '10px', background: '#fff', padding: '6px' }}
+            style={{ width: '56px', height: '56px', objectFit: 'contain', borderRadius: '10px', background: 'var(--color-white)', padding: '6px' }}
           />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>File uploaded</div>
-            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Ready to save</div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-slate-900)' }}>File uploaded</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-slate-500)' }}>Ready to save</div>
           </div>
           <button 
             type="button" 
             onClick={() => onChange('')}
-            style={{ padding: '8px 12px', background: '#fee2e2', border: '1px solid #fecaca', borderRadius: '8px', color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+            style={{ padding: '8px 12px', background: 'var(--color-danger-light)', border: '1px solid #fecaca', borderRadius: '8px', color: 'var(--color-danger)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
           >
             Remove
           </button>
@@ -128,7 +128,7 @@ export default function FileUploadField({
           borderRadius: '16px',
           overflow: 'hidden',
           height: '120px',
-          border: '4px solid #f8fafc',
+          border: '4px solid var(--color-slate-50)',
           boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
           position: 'relative'
         }}>
@@ -138,7 +138,7 @@ export default function FileUploadField({
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
           <label 
-            style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '0.7rem', fontWeight: 800, color: '#ef4444', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+            style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-danger)', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
           >
             {uploading ? '⏳...' : 'Change'}
             <input

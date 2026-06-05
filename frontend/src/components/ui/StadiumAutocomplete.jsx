@@ -42,7 +42,7 @@ export default function StadiumAutocomplete({
   return (
     <div className={className} style={{ position: 'relative' }}>
       {/* Icon */}
-      <MapPin size={iconSize} color="#94a3b8" style={{ flexShrink: 0 }} />
+      <MapPin size={iconSize} color="var(--color-slate-400)" style={{ flexShrink: 0 }} />
 
       {/* Input */}
       <input
@@ -71,7 +71,7 @@ export default function StadiumAutocomplete({
                 className="custom-autocomplete-item"
                 onClick={() => handleSelect(s.name)}
               >
-                <MapPin size={14} color="#94a3b8" />
+                <MapPin size={14} color="var(--color-slate-400)" />
                 {s.name}
               </div>
             ))
@@ -97,7 +97,7 @@ export default function StadiumAutocomplete({
       {!value && (
         <ChevronDown
           size={14}
-          color="#94a3b8"
+          color="var(--color-slate-400)"
           style={{
             position: 'absolute',
             right: '12px',

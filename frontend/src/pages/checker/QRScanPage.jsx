@@ -290,7 +290,7 @@ export default function QRScanPage() {
             {/* Header overlay */}
             <div className="absolute top-0 left-0 right-0 p-6 flex flex-col md:flex-row justify-between items-start md:items-center z-20 bg-linear-to-b from-slate-900/80 to-transparent gap-4">
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${cameraStatus === 'active' ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : 'bg-red-500 animate-pulse'}`}></div>
+                <div className={`w-3 h-3 rounded-full ${cameraStatus === 'active' ? 'bg-green-500 shadow-[0_0_10px_var(--color-success-alt)]' : 'bg-red-500 animate-pulse'}`}></div>
                 <span className="text-white font-bold text-sm tracking-wide uppercase">
                   {mode === 'scan' ? (cameraStatus === 'active' ? 'Camera Active' : 'Initializing...') : 'Manual Mode'}
                 </span>
@@ -336,7 +336,7 @@ export default function QRScanPage() {
                         <div className="absolute -bottom-0.5 -right-0.5 w-10 h-10 border-b-4 border-r-4 border-indigo-500 rounded-br-4xl"></div>
                         
                         {/* Scan line */}
-                        <div className="absolute left-2 right-2 h-0.5 bg-indigo-500/80 animate-scan-line shadow-[0_0_15px_#6366f1]"></div>
+                        <div className="absolute left-2 right-2 h-0.5 bg-indigo-500/80 animate-scan-line shadow-[0_0_15px_var(--color-primary)]"></div>
                         
                         {/* Target reticles */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 opacity-20">
@@ -401,11 +401,11 @@ export default function QRScanPage() {
             
             <div className="relative w-48 h-48 mb-8 flex items-center justify-center">
               <svg width="100%" height="100%" viewBox="0 0 160 160" className="-rotate-90">
-                <circle cx="80" cy="80" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="12" />
+                <circle cx="80" cy="80" r={radius} fill="none" stroke="var(--color-slate-100)" strokeWidth="12" />
                 <circle 
                   cx="80" cy="80" r={radius} 
                   fill="none" 
-                  stroke="#4f46e5" 
+                  stroke="var(--color-primary-600)" 
                   strokeWidth="12" 
                   strokeLinecap="round"
                   strokeDasharray={circumference}

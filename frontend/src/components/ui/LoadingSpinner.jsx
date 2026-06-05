@@ -7,7 +7,7 @@ export default function LoadingSpinner({ text = 'Loading...' }) {
           width: '40px',
           height: '40px',
           border: '4px solid rgba(0, 0, 0, 0.1)',
-          borderTopColor: '#3b82f6',
+          borderTopColor: 'var(--color-primary)',
           borderRadius: '50%',
           animation: 'spin 1s ease-in-out infinite',
         }}

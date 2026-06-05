@@ -32,7 +32,7 @@ export default function DeleteAccountTab({
           onClick={() => setShowDeleteModal(true)}
           style={btnDelete}
           onMouseEnter={(e) => (e.target.style.background = '#b91c1c')}
-          onMouseLeave={(e) => (e.target.style.background = '#dc2626')}
+          onMouseLeave={(e) => (e.target.style.background = 'var(--color-danger-dark)')}
         >
           Delete Account
         </button>
@@ -43,18 +43,18 @@ export default function DeleteAccountTab({
         <div style={{ ...modalBackdrop, zIndex: 9999 }}>
           <div
             className="modal-content"
-            style={{ maxWidth: '460px', padding: 0, overflow: 'hidden', borderRadius: '20px', background: '#fff' }}
+            style={{ maxWidth: '460px', padding: 0, overflow: 'hidden', borderRadius: '20px', background: 'var(--color-white)' }}
           >
             {/* Modal body */}
             <div style={{ padding: '32px 32px 24px', textAlign: 'center' }}>
-              <div style={{ ...sectionIconBox('red'), width: '64px', height: '64px', borderRadius: '50%', margin: '0 auto 20px', color: '#dc2626' }}>
+              <div style={{ ...sectionIconBox('red'), width: '64px', height: '64px', borderRadius: '50%', margin: '0 auto 20px', color: 'var(--color-danger-dark)' }}>
                 <AlertTriangle size={32} />
               </div>
-              <h3 style={{ margin: '0 0 12px 0', fontSize: '22px', fontWeight: 900, color: '#111827', letterSpacing: '-0.5px' }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '22px', fontWeight: 900, color: 'var(--color-slate-900)', letterSpacing: '-0.5px' }}>
                 Confirm Account Deletion
               </h3>
-              <p style={{ margin: '0 0 24px 0', fontSize: '15px', color: '#6b7280', lineHeight: 1.5 }}>
-                This action <strong style={{ color: '#dc2626' }}>cannot be undone</strong>. All
+              <p style={{ margin: '0 0 24px 0', fontSize: '15px', color: 'var(--color-slate-500)', lineHeight: 1.5 }}>
+                This action <strong style={{ color: 'var(--color-danger-dark)' }}>cannot be undone</strong>. All
                 your data may be permanently deleted or hidden from the system. Are you sure you
                 want to continue?
               </p>
@@ -75,24 +75,24 @@ export default function DeleteAccountTab({
                     border: '1px solid #fca5a5',
                     fontSize: '15px',
                     outline: 'none',
-                    background: '#fff',
+                    background: 'var(--color-white)',
                     color: '#7f1d1d',
                     boxSizing: 'border-box',
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = '#ef4444')}
+                  onFocus={(e) => (e.target.style.borderColor = 'var(--color-danger)')}
                   onBlur={(e) => (e.target.style.borderColor = '#fca5a5')}
                 />
               </div>
             </div>
 
             {/* Modal footer */}
-            <div style={{ padding: '20px 32px 32px', display: 'flex', gap: '12px', background: '#f9fafb', borderTop: '1px solid #f3f4f6' }}>
+            <div style={{ padding: '20px 32px 32px', display: 'flex', gap: '12px', background: '#f9fafb', borderTop: '1px solid var(--color-slate-100)' }}>
               <button
                 onClick={() => { setShowDeleteModal(false); setDeleteConfirmText('') }}
                 disabled={deleteLoading}
                 style={{ ...btnCancel, flex: 1, padding: '12px', cursor: deleteLoading ? 'not-allowed' : 'pointer' }}
-                onMouseEnter={(e) => !deleteLoading && (e.target.style.background = '#f3f4f6')}
-                onMouseLeave={(e) => !deleteLoading && (e.target.style.background = '#fff')}
+                onMouseEnter={(e) => !deleteLoading && (e.target.style.background = 'var(--color-slate-100)')}
+                onMouseLeave={(e) => !deleteLoading && (e.target.style.background = 'var(--color-white)')}
               >
                 Cancel
               </button>
@@ -105,8 +105,8 @@ export default function DeleteAccountTab({
                   borderRadius: '10px',
                   border: 'none',
                   fontWeight: 800,
-                  color: '#fff',
-                  background: canConfirm ? '#dc2626' : '#fca5a5',
+                  color: 'var(--color-white)',
+                  background: canConfirm ? 'var(--color-danger-dark)' : '#fca5a5',
                   cursor: deleteLoading || !canConfirm ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s',
                   display: 'flex',
@@ -114,7 +114,7 @@ export default function DeleteAccountTab({
                   justifyContent: 'center',
                 }}
                 onMouseEnter={(e) => { if (!deleteLoading && canConfirm) e.target.style.background = '#b91c1c' }}
-                onMouseLeave={(e) => { if (!deleteLoading && canConfirm) e.target.style.background = '#dc2626' }}
+                onMouseLeave={(e) => { if (!deleteLoading && canConfirm) e.target.style.background = 'var(--color-danger-dark)' }}
               >
                 {deleteLoading ? 'Deleting...' : 'Confirm Deletion'}
               </button>

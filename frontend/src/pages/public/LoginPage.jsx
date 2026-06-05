@@ -100,7 +100,7 @@ export default function LoginPage() {
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              color: '#6b7280',
+              color: 'var(--color-slate-500)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

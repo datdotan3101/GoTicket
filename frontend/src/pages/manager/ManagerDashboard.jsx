@@ -99,7 +99,7 @@ export default function ManagerDashboard() {
   if (loading) {
     return (
       <div className="container" style={{ padding: '100px 0', textAlign: 'center' }}>
-        <p style={{ color: '#64748b', fontWeight: 600 }}>Loading manager analytics...</p>
+        <p style={{ color: 'var(--color-slate-500)', fontWeight: 600 }}>Loading manager analytics...</p>
       </div>
     )
   }
@@ -120,7 +120,7 @@ export default function ManagerDashboard() {
             <Download size={18} />
             Export Data
           </button>
-          <Link className="mc-btn mc-btn-ghost" to={APP_ROUTES.MANAGER_MAILBOX} style={{ position: 'relative', border: '1px solid #cbd5e1' }}>
+          <Link className="mc-btn mc-btn-ghost" to={APP_ROUTES.MANAGER_MAILBOX} style={{ position: 'relative', border: '1px solid var(--color-slate-300)' }}>
             <Mail size={18} style={{ marginRight: '8px' }} />
             Mailbox
             {unreadCount > 0 && (
@@ -128,8 +128,8 @@ export default function ManagerDashboard() {
                 position: 'absolute',
                 top: '-5px',
                 right: '-5px',
-                background: '#ef4444',
-                color: '#fff',
+                background: 'var(--color-danger)',
+                color: 'var(--color-white)',
                 fontSize: '0.65rem',
                 fontWeight: 900,
                 width: '18px',
@@ -138,7 +138,7 @@ export default function ManagerDashboard() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '50%',
-                border: '2px solid #fff'
+                border: '2px solid var(--color-white)'
               }}>
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
@@ -164,14 +164,14 @@ export default function ManagerDashboard() {
 
             return (
               <>
-                <div className="stat-card" style={{ color: '#4f46e5' }}>
-                  <div className="stat-icon-wrap" style={{ background: '#e0e7ff' }}>
+                <div className="stat-card" style={{ color: 'var(--color-primary-600)' }}>
+                  <div className="stat-icon-wrap" style={{ background: 'var(--color-primary-100)' }}>
                     <DollarSign size={24} />
                   </div>
                   <span className="stat-label">Total Revenue</span>
                   <h2 className="stat-value">{formatVND(data.summary.total_revenue)}</h2>
                   {revGrowth !== null ? (
-                    <div className={`stat-trend ${revGrowth >= 0 ? 'up' : 'down'}`} style={{ color: revGrowth >= 0 ? '#10b981' : '#ef4444' }}>
+                    <div className={`stat-trend ${revGrowth >= 0 ? 'up' : 'down'}`} style={{ color: revGrowth >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
                       {revGrowth >= 0 ? <TrendingUp size={12} /> : <TrendingUp size={12} style={{ transform: 'rotate(180deg)' }} />}
                       <span>{Math.abs(revGrowth)}% vs last match</span>
                     </div>
@@ -190,7 +190,7 @@ export default function ManagerDashboard() {
                   <span className="stat-label">Tickets Sold</span>
                   <h2 className="stat-value">{data.summary.total_tickets.toLocaleString()}</h2>
                   {tickGrowth !== null ? (
-                    <div className={`stat-trend ${tickGrowth >= 0 ? 'up' : 'down'}`} style={{ color: tickGrowth >= 0 ? '#10b981' : '#ef4444' }}>
+                    <div className={`stat-trend ${tickGrowth >= 0 ? 'up' : 'down'}`} style={{ color: tickGrowth >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
                       {tickGrowth >= 0 ? <TrendingUp size={12} /> : <TrendingUp size={12} style={{ transform: 'rotate(180deg)' }} />}
                       <span>{Math.abs(tickGrowth)}% vs last match</span>
                     </div>
@@ -219,13 +219,13 @@ export default function ManagerDashboard() {
       {data?.byMatch && (
         <div style={{ 
           marginTop: '40px', 
-          background: '#fff', 
+          background: 'var(--color-white)', 
           padding: '24px', 
           borderRadius: '16px', 
-          border: '1px solid #e2e8f0',
+          border: '1px solid var(--color-slate-200)',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
         }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '24px', color: '#0f172a' }}>Revenue Overview</h3>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '24px', color: 'var(--color-slate-900)' }}>Revenue Overview</h3>
           <div style={{ width: '100%', height: '300px' }}>
             <ResponsiveContainer>
               <BarChart
@@ -235,15 +235,15 @@ export default function ManagerDashboard() {
                 }))}
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} tickFormatter={(value) => `${value}M`} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-slate-200)" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-slate-500)', fontSize: 12 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--color-slate-500)', fontSize: 12 }} tickFormatter={(value) => `${value}M`} />
                 <Tooltip 
-                  cursor={{ fill: '#f1f5f9' }}
+                  cursor={{ fill: 'var(--color-slate-100)' }}
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
                   formatter={(value) => [`${value}M VND`, 'Revenue']}
                 />
-                <Bar dataKey="revenue" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                <Bar dataKey="revenue" fill="var(--color-primary-600)" radius={[4, 4, 0, 0]} maxBarSize={50} />
               </BarChart>
             </ResponsiveContainer>
           </div>

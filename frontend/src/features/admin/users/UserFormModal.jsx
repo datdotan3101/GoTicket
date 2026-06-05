@@ -17,10 +17,10 @@ export default function UserFormModal({ mode = 'add', form, setForm, clubs, onSu
       <div style={modalBox}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-slate-900)', margin: 0 }}>
             {isEdit ? 'Edit Member' : 'Add New Member'}
           </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-slate-500)' }}>
             <X size={24} />
           </button>
         </div>
@@ -73,7 +73,7 @@ export default function UserFormModal({ mode = 'add', form, setForm, clubs, onSu
                   onClick={() => setShowPassword(!showPassword)}
                   style={{
                     position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', cursor: 'pointer', color: '#64748b',
+                    background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-slate-500)',
                     display: 'flex', alignItems: 'center', padding: 0
                   }}
                 >
@@ -120,13 +120,13 @@ export default function UserFormModal({ mode = 'add', form, setForm, clubs, onSu
             <button
               type="button"
               onClick={onClose}
-              style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#f1f5f9', color: '#475569', fontWeight: 700, border: 'none', cursor: 'pointer' }}
+              style={{ flex: 1, padding: '12px', borderRadius: '10px', background: 'var(--color-slate-100)', color: 'var(--color-slate-600)', fontWeight: 700, border: 'none', cursor: 'pointer' }}
             >
               Cancel
             </button>
             <button
               type="submit"
-              style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#0f172a', color: '#fff', fontWeight: 700, border: 'none', cursor: 'pointer' }}
+              style={{ flex: 1, padding: '12px', borderRadius: '10px', background: 'var(--color-slate-900)', color: 'var(--color-white)', fontWeight: 700, border: 'none', cursor: 'pointer' }}
             >
               {isEdit ? 'Save Changes' : 'Create Member'}
             </button>

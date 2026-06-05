@@ -24,15 +24,14 @@ const SportPage = lazy(() => import('./pages/public/SportPage'))
 const MatchDetailPage = lazy(() => import('./pages/public/MatchDetailPage'))
 const SearchResultsPage = lazy(() => import('./pages/public/SearchResultsPage'))
 const SeatSelectPage = lazy(() => import('./pages/audience/SeatSelectPage'))
-const CheckoutPage = lazy(() => import('./pages/audience/CheckoutPage'))
+const CheckoutPage = lazy(() => import('./features/checkout/CheckoutPage'))
 const PaymentSuccessPage = lazy(() => import('./pages/audience/PaymentSuccessPage'))
 const MyTicketsPage = lazy(() => import('./pages/audience/MyTicketsPage'))
 const TicketDetailPage = lazy(() => import('./pages/audience/TicketDetailPage'))
 const CheckerDashboard = lazy(() => import('./pages/checker/CheckerDashboard'))
 const QRScanPage = lazy(() => import('./pages/checker/QRScanPage'))
 const ManagerDashboard = lazy(() => import('./pages/manager/ManagerDashboard'))
-const MatchCreatePage = lazy(() => import('./pages/manager/MatchCreatePage'))
-const MatchEditPage = lazy(() => import('./pages/manager/MatchEditPage'))
+const MatchFormPage = lazy(() => import('./features/manager/match-form/MatchFormPage'))
 const StandConfigPage = lazy(() => import('./pages/manager/StandConfigPage'))
 const MatchAnalyticsPage = lazy(() => import('./pages/manager/MatchAnalyticsPage'))
 const ManagerMatchesPage = lazy(() => import('./pages/manager/ManagerMatchesPage'))
@@ -43,7 +42,7 @@ const LeagueManagePage = lazy(() => import('./pages/admin/LeagueManagePage'))
 const MatchManagePage = lazy(() => import('./pages/admin/MatchManagePage'))
 const ClubManagePage = lazy(() => import('./pages/admin/ClubManagePage'))
 const StadiumManagePage = lazy(() => import('./pages/admin/StadiumManagePage'))
-const MailboxPage = lazy(() => import('./pages/common/MailboxPage'))
+const MailboxPage = lazy(() => import('./features/mailbox/MailboxPage'))
 
 export default function App() {
   return (
@@ -85,8 +84,8 @@ export default function App() {
               <Route element={<ManagerLayout />}>
                 <Route path={APP_ROUTES.MANAGER_DASHBOARD} element={<ManagerDashboard />} />
                 <Route path={APP_ROUTES.MANAGER_MATCHES} element={<ManagerMatchesPage />} />
-                <Route path={APP_ROUTES.MANAGER_MATCH_CREATE} element={<MatchCreatePage />} />
-                <Route path={APP_ROUTES.MANAGER_MATCH_EDIT} element={<MatchEditPage />} />
+                <Route path={APP_ROUTES.MANAGER_MATCH_CREATE} element={<MatchFormPage />} />
+                <Route path={APP_ROUTES.MANAGER_MATCH_EDIT} element={<MatchFormPage />} />
                 <Route path={APP_ROUTES.MANAGER_STAND_CONFIG} element={<StandConfigPage />} />
                 <Route path={APP_ROUTES.MANAGER_ANALYTICS} element={<MatchAnalyticsPage />} />
                 <Route path={APP_ROUTES.MANAGER_MAILBOX} element={<MailboxPage />} />

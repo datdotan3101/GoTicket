@@ -126,7 +126,7 @@ export default function SearchResultsPage() {
                 onChange={e => setDate(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(e) }}
                 id="search-date-input"
-                style={{ cursor: 'pointer', fontFamily: 'inherit', color: date ? '#1e293b' : '#94a3b8' }}
+                style={{ cursor: 'pointer', fontFamily: 'inherit', color: date ? 'var(--color-slate-800)' : 'var(--color-slate-400)' }}
               />
               {date && (
                 <button type="button" className="sr-clear-btn" onClick={clearDate} aria-label="Clear">

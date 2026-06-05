@@ -42,8 +42,8 @@ export default function MyTicketsPage() {
             <button
               onClick={() => setActiveTab('upcoming')}
               style={{ 
-                background: activeTab === 'upcoming' ? '#2563eb' : 'transparent',
-                color: activeTab === 'upcoming' ? 'white' : '#64748b',
+                background: activeTab === 'upcoming' ? 'var(--color-primary-600)' : 'transparent',
+                color: activeTab === 'upcoming' ? 'white' : 'var(--color-slate-500)',
                 border: 'none'
               }}
               className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 ${
@@ -55,8 +55,8 @@ export default function MyTicketsPage() {
             <button
               onClick={() => setActiveTab('past')}
               style={{ 
-                background: activeTab === 'past' ? '#2563eb' : 'transparent',
-                color: activeTab === 'past' ? 'white' : '#64748b',
+                background: activeTab === 'past' ? 'var(--color-primary-600)' : 'transparent',
+                color: activeTab === 'past' ? 'white' : 'var(--color-slate-500)',
                 border: 'none'
               }}
               className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 ${

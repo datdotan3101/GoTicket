@@ -131,7 +131,7 @@ export default function ManagerMatchesPage() {
   if (loading) {
     return (
       <div style={{ padding: '100px 0', textAlign: 'center' }}>
-        <p style={{ color: '#64748b', fontWeight: 600 }}>Loading matches...</p>
+        <p style={{ color: 'var(--color-slate-500)', fontWeight: 600 }}>Loading matches...</p>
       </div>
     )
   }
@@ -152,7 +152,7 @@ export default function ManagerMatchesPage() {
       </div>
 
       {/* TABS */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px' }}>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--color-slate-200)', paddingBottom: '16px' }}>
         {[
           { id: 'pending', label: 'Pending match' },
           { id: 'approved', label: 'Published match' },
@@ -164,8 +164,8 @@ export default function ManagerMatchesPage() {
             style={{
               padding: '8px 16px',
               border: 'none',
-              background: activeTab === tab.id ? '#1e293b' : 'transparent',
-              color: activeTab === tab.id ? '#fff' : '#64748b',
+              background: activeTab === tab.id ? 'var(--color-slate-800)' : 'transparent',
+              color: activeTab === tab.id ? 'var(--color-white)' : 'var(--color-slate-500)',
               borderRadius: '8px',
               fontWeight: 700,
               fontSize: '0.9rem',
@@ -179,7 +179,7 @@ export default function ManagerMatchesPage() {
       </div>
 
       <div className="manager-match-grid">
-        <Suspense fallback={[1, 2, 3].map(i => <div key={i} className="si-skeleton-card" style={{ height: '400px', background: '#f1f5f9', borderRadius: '16px' }} />)}>
+        <Suspense fallback={[1, 2, 3].map(i => <div key={i} className="si-skeleton-card" style={{ height: '400px', background: 'var(--color-slate-100)', borderRadius: '16px' }} />)}>
           {paginatedItems.map((match) => (
             <ManagerMatchCard 
               key={match.match_id} 
@@ -200,10 +200,10 @@ export default function ManagerMatchesPage() {
         />
 
         {filteredMatches.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', padding: '60px', textAlign: 'center', background: '#fff', borderRadius: '20px', border: '1px dashed #e2e8f0' }}>
-            <Calendar size={48} color="#cbd5e1" style={{ margin: '0 auto 20px' }} />
-            <h3 style={{ margin: '0 0 8px 0', color: '#1e293b' }}>No matches found</h3>
-            <p style={{ color: '#64748b', margin: '0 0 20px 0' }}>There are no matches in this category.</p>
+          <div style={{ gridColumn: '1 / -1', padding: '60px', textAlign: 'center', background: 'var(--color-white)', borderRadius: '20px', border: '1px dashed var(--color-slate-200)' }}>
+            <Calendar size={48} color="var(--color-slate-300)" style={{ margin: '0 auto 20px' }} />
+            <h3 style={{ margin: '0 0 8px 0', color: 'var(--color-slate-800)' }}>No matches found</h3>
+            <p style={{ color: 'var(--color-slate-500)', margin: '0 0 20px 0' }}>There are no matches in this category.</p>
             {activeTab === 'approved' && (
               <Link className="mc-btn mc-btn-primary" to={APP_ROUTES.MANAGER_MATCH_CREATE} style={{ display: 'inline-flex', marginTop: '12px' }}>
                 <Plus size={18} style={{ marginRight: '8px' }} />

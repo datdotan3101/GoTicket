@@ -101,7 +101,7 @@ export default function SportPage() {
         </div>
 
         {isLoading ? (
-          <p className="loading-state" style={{ textAlign: 'center', padding: '40px 0', color: '#94a3b8' }}>Loading match schedule...</p>
+          <p className="loading-state" style={{ textAlign: 'center', padding: '40px 0', color: 'var(--color-slate-400)' }}>Loading match schedule...</p>
         ) : scheduleMatches.length === 0 ? (
           <div className="schedule-empty">
             <span className="schedule-empty-icon">📅</span>

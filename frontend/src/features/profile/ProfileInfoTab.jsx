@@ -5,12 +5,12 @@
 import { inputBase, fieldGroup, fieldLabel, btnPrimary } from '../../styles/common'
 
 const focusInput = (e) => {
-  e.target.style.borderColor = '#6366f1'
-  e.target.style.background = '#fff'
+  e.target.style.borderColor = 'var(--color-primary)'
+  e.target.style.background = 'var(--color-white)'
 }
 const blurInput = (e) => {
-  e.target.style.borderColor = '#e2e8f0'
-  e.target.style.background = '#f8fafc'
+  e.target.style.borderColor = 'var(--color-slate-200)'
+  e.target.style.background = 'var(--color-slate-50)'
 }
 
 export default function ProfileInfoTab({ profileForm, setProfileForm, profileLoading, onSubmit }) {

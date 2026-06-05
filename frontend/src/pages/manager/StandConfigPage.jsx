@@ -238,8 +238,8 @@ export default function StandConfigPage() {
   if (fetching) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px', flexDirection: 'column', gap: '16px' }}>
-        <Loader2 size={40} className="animate-spin" color="#4f46e5" />
-        <p style={{ color: '#64748b', fontWeight: 600 }}>Fetching stadium configuration...</p>
+        <Loader2 size={40} className="animate-spin" color="var(--color-primary-600)" />
+        <p style={{ color: 'var(--color-slate-500)', fontWeight: 600 }}>Fetching stadium configuration...</p>
       </div>
     )
   }
@@ -248,7 +248,7 @@ export default function StandConfigPage() {
     <section className="container manager-dashboard">
       <div className="dashboard-header">
         <div className="dashboard-header-left">
-          <Link to="/manager/matches" className="back-link" style={{ display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none', color: '#64748b', fontWeight: 600, marginBottom: '16px' }}>
+          <Link to="/manager/matches" className="back-link" style={{ display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none', color: 'var(--color-slate-500)', fontWeight: 600, marginBottom: '16px' }}>
             <ArrowLeft size={18} />
             Back to Matches
           </Link>
@@ -263,11 +263,11 @@ export default function StandConfigPage() {
             style={{ display: 'none' }} 
             onChange={handleFileUpload} 
           />
-          <button className="mc-btn mc-btn-ghost" onClick={() => downloadTemplate()} style={{ border: '1px solid #cbd5e1', padding: '0 12px' }}>
+          <button className="mc-btn mc-btn-ghost" onClick={() => downloadTemplate()} style={{ border: '1px solid var(--color-slate-300)', padding: '0 12px' }}>
             <Download size={18} style={{ marginRight: '6px' }} />
             Template
           </button>
-          <button className="mc-btn mc-btn-ghost" onClick={() => fileInputRef.current?.click()} style={{ border: '1px solid #cbd5e1', padding: '0 12px' }}>
+          <button className="mc-btn mc-btn-ghost" onClick={() => fileInputRef.current?.click()} style={{ border: '1px solid var(--color-slate-300)', padding: '0 12px' }}>
             <Upload size={18} style={{ marginRight: '6px' }} />
             Import
           </button>
@@ -281,7 +281,7 @@ export default function StandConfigPage() {
       <div className="dashboard-section-head">
         <h2 className="dashboard-section-title">Visual Seating Plan</h2>
       </div>
-      <div style={{ background: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0', marginBottom: '32px' }}>
+      <div style={{ background: 'var(--color-white)', padding: '24px', borderRadius: '16px', border: '1px solid var(--color-slate-200)', marginBottom: '32px' }}>
         <StadiumMap stands={localPreview} blockConfigs={blockConfigs} />
       </div>
 
@@ -289,27 +289,27 @@ export default function StandConfigPage() {
       <div className="config-layout">
         <div className="config-form-section">
           <h3 className="config-sub-title" style={{ marginTop: '0px' }}>Block-Level Configuration</h3>
-          <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '20px' }}>Set prices by column block and toggle sale status per tier.</p>
+          <p style={{ color: 'var(--color-slate-500)', fontSize: '0.9rem', marginBottom: '20px' }}>Set prices by column block and toggle sale status per tier.</p>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             {['A', 'B', 'C', 'D'].map(standName => {
                const columns = STADIUM_COLUMNS.filter(c => c.stand === standName)
                if (columns.length === 0) return null
                return (
-                 <div key={standName} style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                   <h4 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', fontWeight: 800, color: '#1e293b' }}>Stand {standName}</h4>
+                 <div key={standName} style={{ background: 'var(--color-slate-50)', padding: '20px', borderRadius: '12px', border: '1px solid var(--color-slate-200)' }}>
+                   <h4 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-slate-800)' }}>Stand {standName}</h4>
                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '16px' }}>
                      {columns.map(col => {
                        const isActive = col.tiers.some(t => columnConfigs[col.id]?.activeTiers.includes(t))
                        return (
                          <div key={col.id} style={{ 
-                           background: '#fff', 
+                           background: 'var(--color-white)', 
                            padding: '16px', 
                            borderRadius: '8px', 
-                           border: `1px solid ${isActive ? '#cbd5e1' : '#e2e8f0'}`,
+                           border: `1px solid ${isActive ? 'var(--color-slate-300)' : 'var(--color-slate-200)'}`,
                          }}>
                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                             <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.1rem' }}>Block {col.id}</span>
+                             <span style={{ fontWeight: 800, color: 'var(--color-slate-900)', fontSize: '1.1rem' }}>Block {col.id}</span>
                            </div>
                            <div style={{ position: 'relative', marginBottom: '16px' }}>
                              <input 
@@ -320,19 +320,19 @@ export default function StandConfigPage() {
                                value={columnConfigs[col.id]?.price} 
                                onChange={(e) => setColumnConfigs(p => ({ ...p, [col.id]: { ...p[col.id], price: e.target.value } }))} 
                              />
-                             <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '0.75rem', fontWeight: 800 }}>VND</span>
+                             <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-slate-500)', fontSize: '0.75rem', fontWeight: 800 }}>VND</span>
                            </div>
                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                              {col.tiers.map(tier => {
                                const isActive = columnConfigs[col.id]?.activeTiers.includes(tier)
                                return (
-                               <div key={tier} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: `1px solid ${isActive ? '#4f46e5' : '#e2e8f0'}`, flexWrap: 'wrap' }}>
-                                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: '#475569', minWidth: '120px', width: '100%' }}>
+                               <div key={tier} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--color-slate-50)', padding: '12px', borderRadius: '8px', border: `1px solid ${isActive ? 'var(--color-primary-600)' : 'var(--color-slate-200)'}`, flexWrap: 'wrap' }}>
+                                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-slate-600)', minWidth: '120px', width: '100%' }}>
                                    <input 
                                      type="checkbox" 
                                      checked={isActive} 
                                      onChange={() => toggleTier(col.id, tier)} 
-                                     style={{ width: '16px', height: '16px', accentColor: '#4f46e5' }}
+                                     style={{ width: '16px', height: '16px', accentColor: 'var(--color-primary-600)' }}
                                    />
                                    Floor {tier.replace('T', '')}
                                  </label>
@@ -353,7 +353,7 @@ export default function StandConfigPage() {
         <div className="config-summary-section">
           <div className="config-summary-card" style={{ position: 'sticky', top: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <ShieldCheck size={24} color="#4f46e5" />
+              <ShieldCheck size={24} color="var(--color-primary-600)" />
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Configuration Summary</h3>
             </div>
             <div className="summary-list">
@@ -373,18 +373,18 @@ export default function StandConfigPage() {
                       width: '120px', 
                       background: 'transparent', 
                       border: 'none', 
-                      borderBottom: '2px dashed #94a3b8',
+                      borderBottom: '2px dashed var(--color-slate-400)',
                       textAlign: 'right',
                       fontSize: '1.25rem',
                       fontWeight: 800,
-                      color: '#475569',
+                      color: 'var(--color-slate-600)',
                       padding: '0 4px',
                       outline: 'none',
                       marginRight: '8px',
                       cursor: 'not-allowed'
                     }}
                   />
-                  <span className="summary-seats" style={{ fontSize: '1.25rem', color: '#475569' }}>Seats</span>
+                  <span className="summary-seats" style={{ fontSize: '1.25rem', color: 'var(--color-slate-600)' }}>Seats</span>
                 </div>
               </div>
               {globalCapacity !== String(Object.values(blockConfigs).filter(b => b.active).reduce((sum, b) => sum + (Number(b.capacity) || 0), 0)) && (
@@ -394,8 +394,8 @@ export default function StandConfigPage() {
                     width: '100%', 
                     marginTop: '12px', 
                     padding: '8px', 
-                    background: '#4f46e5', 
-                    color: '#fff', 
+                    background: 'var(--color-primary-600)', 
+                    color: 'var(--color-white)', 
                     border: 'none', 
                     borderRadius: '8px', 
                     fontSize: '0.85rem', 

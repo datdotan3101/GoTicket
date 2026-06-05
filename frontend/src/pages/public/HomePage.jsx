@@ -138,7 +138,7 @@ export default function HomePage() {
             <div className="hero-search-box">
               {/* Query input */}
               <div className="hs-input-wrap hs-border-r" style={{ position: 'relative' }}>
-                <Search size={16} color="#94a3b8" style={{ flexShrink: 0 }} />
+                <Search size={16} color="var(--color-slate-400)" style={{ flexShrink: 0 }} />
                 <input
                   type="text"
                   placeholder="Search by team, league..."
@@ -171,13 +171,13 @@ export default function HomePage() {
               
               {/* Date input */}
               <div className="hs-input-wrap" style={{ position: 'relative' }}>
-                <Calendar size={16} color="#94a3b8" style={{ flexShrink: 0 }} />
+                <Calendar size={16} color="var(--color-slate-400)" style={{ flexShrink: 0 }} />
                 <input
                   type="date"
                   value={heroDate}
                   onChange={e => setHeroDate(e.target.value)}
                   id="hero-date-input"
-                  style={{ border: 'none', background: 'transparent', outline: 'none', color: heroDate ? '#1e293b' : '#94a3b8', fontFamily: 'inherit', fontSize: '0.875rem', fontWeight: 500, width: '100%', padding: '12px 0', cursor: 'pointer' }}
+                  style={{ border: 'none', background: 'transparent', outline: 'none', color: heroDate ? 'var(--color-slate-800)' : 'var(--color-slate-400)', fontFamily: 'inherit', fontSize: '0.875rem', fontWeight: 500, width: '100%', padding: '12px 0', cursor: 'pointer' }}
                 />
                 {heroDate && (
                   <button
@@ -269,7 +269,7 @@ export default function HomePage() {
                     </Suspense>
                   </div>
                 ) : (
-                  <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                  <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--color-slate-500)', backgroundColor: 'var(--color-slate-50)', borderRadius: '12px', border: '1px dashed var(--color-slate-300)' }}>
                     No matches available.
                   </div>
                 )}
@@ -291,7 +291,7 @@ export default function HomePage() {
                     </Suspense>
                   </div>
                 ) : (
-                  <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                  <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--color-slate-500)', backgroundColor: 'var(--color-slate-50)', borderRadius: '12px', border: '1px dashed var(--color-slate-300)' }}>
                     No upcoming ticket sales at the moment.
                   </div>
                 )}
@@ -304,7 +304,7 @@ export default function HomePage() {
             <section className="featured-section" style={{ paddingTop: 0 }}>
               <div className="container">
                 <div className="section-head" style={{ marginBottom: '24px' }}>
-                  <h2 className="section-title" style={{ margin: 0 }}>ENDED MATCHES</h2>
+                  <h2 className="section-title" style={{ margin: 0 }}>ENDED SALE</h2>
                 </div>
                 {endedMatches.length > 0 ? (
                   <>
@@ -322,7 +322,7 @@ export default function HomePage() {
                     )}
                   </>
                 ) : (
-                  <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                  <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--color-slate-500)', backgroundColor: 'var(--color-slate-50)', borderRadius: '12px', border: '1px dashed var(--color-slate-300)' }}>
                     No matches available.
                   </div>
                 )}

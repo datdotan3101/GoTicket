@@ -121,13 +121,13 @@ export default function SportsManagePage() {
       <div className="section-head" style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1 className="admin-header">Sports</h1>
-          <p className="section-subtitle" style={{ fontSize: '1rem', color: '#6b7280', marginTop: '8px' }}>
+          <p className="section-subtitle" style={{ fontSize: '1rem', color: 'var(--color-slate-500)', marginTop: '8px' }}>
             Manage sports categories and their visual representations.
           </p>
         </div>
         <button 
           onClick={() => { clearForm(); setIsFormModalOpen(true); }}
-          style={{ padding: '14px 28px', borderRadius: '12px', background: '#111827', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer', fontSize: '0.9rem', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
+          style={{ padding: '14px 28px', borderRadius: '12px', background: 'var(--color-slate-900)', color: 'var(--color-white)', border: 'none', fontWeight: 800, cursor: 'pointer', fontSize: '0.9rem', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
         >
           + Add Category
         </button>
@@ -185,10 +185,10 @@ export default function SportsManagePage() {
       {/* Sport Cards */}
       <div className="cards-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
         {sports.map((sport) => (
-          <article className="card" key={sport.id} style={{ padding: '0', overflow: 'visible', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', borderRadius: '20px', background: '#fff' }}>
-            <div style={{ width: '100%', height: '140px', position: 'relative', borderRadius: '20px 20px 0 0', background: sport.banner_url ? `url(${sport.banner_url}) center/cover` : '#f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: '12px' }}>
+          <article className="card" key={sport.id} style={{ padding: '0', overflow: 'visible', border: '1px solid var(--color-slate-200)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', borderRadius: '20px', background: 'var(--color-white)' }}>
+            <div style={{ width: '100%', height: '140px', position: 'relative', borderRadius: '20px 20px 0 0', background: sport.banner_url ? `url(${sport.banner_url}) center/cover` : 'var(--color-slate-100)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: '12px' }}>
               {!sport.banner_url && (
-                <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-slate-400)' }}>
                   No Banner
                 </div>
               )}
@@ -198,8 +198,8 @@ export default function SportsManagePage() {
             <div style={{ padding: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#111827' }}>{sport.name}</h3>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>Slug: {sport.slug}</p>
+                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-slate-900)' }}>{sport.name}</h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--color-slate-500)' }}>Slug: {sport.slug}</p>
                 </div>
               </div>
             </div>

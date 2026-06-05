@@ -13,15 +13,15 @@ const BUBBLE_WRAPPER_STYLE = {
 }
 
 const GREETING_STYLE = {
-  background: '#ffffff',
+  background: 'var(--color-white)',
   padding: '12px 18px',
   borderRadius: '24px',
   boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
   fontSize: '0.85rem',
-  color: '#111827',
+  color: 'var(--color-slate-900)',
   fontWeight: '600',
   cursor: 'pointer',
-  border: '1px solid #f3f4f6',
+  border: '1px solid var(--color-slate-100)',
   whiteSpace: 'nowrap'
 }
 

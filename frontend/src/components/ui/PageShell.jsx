@@ -21,7 +21,7 @@ import { dotGridPage } from '../../styles/common'
 export default function PageShell({
   title,
   subtitle,
-  accentColor = '#f97316',
+  accentColor = 'var(--color-orange)',
   action,
   children,
   style = {},
@@ -40,14 +40,14 @@ export default function PageShell({
         <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             {title && (
-              <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#0f172a', margin: '0 0 12px 0', letterSpacing: '-0.5px' }}>
+              <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--color-slate-900)', margin: '0 0 12px 0', letterSpacing: '-0.5px' }}>
                 {title}
               </h1>
             )}
             {subtitle && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ width: '4px', height: '20px', background: accentColor, borderRadius: '2px' }} />
-                <span style={{ color: '#64748b', fontSize: '1.05rem', fontStyle: 'italic' }}>
+                <span style={{ color: 'var(--color-slate-500)', fontSize: '1.05rem', fontStyle: 'italic' }}>
                   {subtitle}
                 </span>
               </div>

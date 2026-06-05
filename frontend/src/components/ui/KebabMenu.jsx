@@ -10,14 +10,14 @@ export default function KebabMenu({ onEdit, onDelete, variant = 'solid', customI
     ? {
         background: 'rgba(255,255,255,0.8)',
         backdropFilter: 'blur(4px)',
-        color: '#111827'
+        color: 'var(--color-slate-900)'
       }
     : {
         background: 'transparent',
-        color: '#64748b'
+        color: 'var(--color-slate-500)'
       }
 
-  const hoverBackground = variant === 'glass' ? '#fff' : '#e2e8f0'
+  const hoverBackground = variant === 'glass' ? 'var(--color-white)' : 'var(--color-slate-200)'
   const defaultBackground = variant === 'glass' ? 'rgba(255,255,255,0.8)' : 'transparent'
 
   return (
@@ -47,8 +47,8 @@ export default function KebabMenu({ onEdit, onDelete, variant = 'solid', customI
           position: 'absolute',
           top: '100%',
           right: 0,
-          background: '#fff',
-          border: '1px solid #e2e8f0',
+          background: 'var(--color-white)',
+          border: '1px solid var(--color-slate-200)',
           borderRadius: '12px',
           boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
           zIndex: 10,
@@ -59,18 +59,18 @@ export default function KebabMenu({ onEdit, onDelete, variant = 'solid', customI
           {onEdit && (
             <button 
               onClick={() => { setIsOpen(false); onEdit(); }} 
-              style={{ width: '100%', textAlign: 'left', padding: '10px 12px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: '#334155', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px', fontWeight: 600 }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#111827' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#334155' }}
+              style={{ width: '100%', textAlign: 'left', padding: '10px 12px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--color-slate-700)', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px', fontWeight: 600 }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-slate-100)'; e.currentTarget.style.color = 'var(--color-slate-900)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-slate-700)' }}
             >
               <Edit2 size={16} /> Edit
             </button>
           )}
 
           {customItems && customItems.map((item, idx) => {
-            const commonStyle = { width: '100%', textAlign: 'left', padding: '10px 12px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: item.color || '#334155', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px', fontWeight: 600, textDecoration: 'none', boxSizing: 'border-box' }
-            const handleMouseEnter = (e) => { e.currentTarget.style.background = item.hoverBg || '#f1f5f9'; e.currentTarget.style.color = item.hoverColor || '#111827' }
-            const handleMouseLeave = (e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = item.color || '#334155' }
+            const commonStyle = { width: '100%', textAlign: 'left', padding: '10px 12px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: item.color || 'var(--color-slate-700)', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px', fontWeight: 600, textDecoration: 'none', boxSizing: 'border-box' }
+            const handleMouseEnter = (e) => { e.currentTarget.style.background = item.hoverBg || 'var(--color-slate-100)'; e.currentTarget.style.color = item.hoverColor || 'var(--color-slate-900)' }
+            const handleMouseLeave = (e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = item.color || 'var(--color-slate-700)' }
 
             if (item.to) {
               return (
@@ -103,7 +103,7 @@ export default function KebabMenu({ onEdit, onDelete, variant = 'solid', customI
           {onDelete && (
             <button 
               onClick={() => { setIsOpen(false); onDelete(); }} 
-              style={{ width: '100%', textAlign: 'left', padding: '10px 12px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px', fontWeight: 600 }}
+              style={{ width: '100%', textAlign: 'left', padding: '10px 12px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px', fontWeight: 600 }}
               onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >

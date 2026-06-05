@@ -42,20 +42,20 @@ export default function FormModal({
         borderRadius: '28px',
         border: 'none',
         boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-        background: '#fff'
+        background: 'var(--color-white)'
       }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#111827', margin: 0 }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-slate-900)', margin: 0 }}>
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
             style={{
-              background: '#f1f5f9',
+              background: 'var(--color-slate-100)',
               border: 'none',
-              color: '#64748b',
+              color: 'var(--color-slate-500)',
               width: '32px',
               height: '32px',
               borderRadius: '16px',
@@ -83,8 +83,8 @@ export default function FormModal({
                 flex: 1,
                 padding: '14px',
                 borderRadius: '12px',
-                background: '#f1f5f9',
-                color: '#475569',
+                background: 'var(--color-slate-100)',
+                color: 'var(--color-slate-600)',
                 border: 'none',
                 fontWeight: 800,
                 cursor: 'pointer'
@@ -99,8 +99,8 @@ export default function FormModal({
                 flex: 2,
                 padding: '14px',
                 borderRadius: '12px',
-                background: '#111827',
-                color: '#fff',
+                background: 'var(--color-slate-900)',
+                color: 'var(--color-white)',
                 border: 'none',
                 fontWeight: 800,
                 cursor: submitDisabled ? 'not-allowed' : 'pointer',

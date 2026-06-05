@@ -32,8 +32,8 @@ export default function MatchAnalyticsPage() {
   if (loading) {
     return (
       <div className="container" style={{ padding: '100px 0', textAlign: 'center' }}>
-        <Loader2 size={32} className="lucide-spin" style={{ margin: '0 auto 16px', color: '#4f46e5' }} />
-        <p style={{ color: '#64748b', fontWeight: 600 }}>Loading match analytics...</p>
+        <Loader2 size={32} className="lucide-spin" style={{ margin: '0 auto 16px', color: 'var(--color-primary-600)' }} />
+        <p style={{ color: 'var(--color-slate-500)', fontWeight: 600 }}>Loading match analytics...</p>
       </div>
     )
   }
@@ -41,7 +41,7 @@ export default function MatchAnalyticsPage() {
   if (!data) {
     return (
       <div className="container" style={{ padding: '100px 0', textAlign: 'center' }}>
-        <p style={{ color: '#ef4444', fontWeight: 600 }}>No analytics available for this match.</p>
+        <p style={{ color: 'var(--color-danger)', fontWeight: 600 }}>No analytics available for this match.</p>
       </div>
     )
   }
@@ -53,8 +53,8 @@ export default function MatchAnalyticsPage() {
   }))
 
   const pieData = [
-    { name: 'Checked In', value: Number(data.checkinStats?.checked_in_tickets || 0), color: '#10b981' },
-    { name: 'Not Checked In', value: Math.max(0, Number(data.checkinStats?.paid_tickets || 0) - Number(data.checkinStats?.checked_in_tickets || 0)), color: '#e2e8f0' }
+    { name: 'Checked In', value: Number(data.checkinStats?.checked_in_tickets || 0), color: 'var(--color-success)' },
+    { name: 'Not Checked In', value: Math.max(0, Number(data.checkinStats?.paid_tickets || 0) - Number(data.checkinStats?.checked_in_tickets || 0)), color: 'var(--color-slate-200)' }
   ]
 
   return (
@@ -69,7 +69,7 @@ export default function MatchAnalyticsPage() {
       {/* Metric Cards */}
       <div className="stats-grid" style={{ marginBottom: '32px' }}>
         <div className="stat-card">
-          <div className="stat-icon-wrap" style={{ background: '#e0e7ff', color: '#4f46e5' }}>
+          <div className="stat-icon-wrap" style={{ background: 'var(--color-primary-100)', color: 'var(--color-primary-600)' }}>
             <Ticket size={24} />
           </div>
           <span className="stat-label">Total Capacity</span>
@@ -95,27 +95,27 @@ export default function MatchAnalyticsPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px', marginBottom: '32px' }}>
         
         {/* Peak Hours Line Chart */}
-        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <TrendingUp size={18} color="#4f46e5" />
+        <div style={{ background: 'var(--color-white)', border: '1px solid var(--color-slate-200)', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-slate-800)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <TrendingUp size={18} color="var(--color-primary-600)" />
             Peak Check-in Hours
           </h3>
           <div style={{ height: '300px' }}>
             {peakHoursData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={peakHoursData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-slate-200)" />
+                  <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-slate-500)' }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-slate-500)' }} />
                   <RechartsTooltip 
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                    labelStyle={{ color: '#64748b', fontWeight: 600, marginBottom: '4px' }}
+                    labelStyle={{ color: 'var(--color-slate-500)', fontWeight: 600, marginBottom: '4px' }}
                   />
-                  <Line type="monotone" dataKey="checkins" name="Check-ins" stroke="#4f46e5" strokeWidth={3} dot={{ r: 4, fill: '#4f46e5', strokeWidth: 0 }} activeDot={{ r: 6, fill: '#fff', stroke: '#4f46e5', strokeWidth: 2 }} />
+                  <Line type="monotone" dataKey="checkins" name="Check-ins" stroke="var(--color-primary-600)" strokeWidth={3} dot={{ r: 4, fill: 'var(--color-primary-600)', strokeWidth: 0 }} activeDot={{ r: 6, fill: 'var(--color-white)', stroke: 'var(--color-primary-600)', strokeWidth: 2 }} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-slate-400)' }}>
                 No check-in data yet
               </div>
             )}
@@ -123,8 +123,8 @@ export default function MatchAnalyticsPage() {
         </div>
 
         {/* Checkin Pie Chart */}
-        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b', marginBottom: '16px' }}>Attendance Overview</h3>
+        <div style={{ background: 'var(--color-white)', border: '1px solid var(--color-slate-200)', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-slate-800)', marginBottom: '16px' }}>Attendance Overview</h3>
           <div style={{ height: '300px' }}>
             {pieData.reduce((acc, curr) => acc + curr.value, 0) > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -147,7 +147,7 @@ export default function MatchAnalyticsPage() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-slate-400)' }}>
                 No tickets sold yet
               </div>
             )}
@@ -156,32 +156,32 @@ export default function MatchAnalyticsPage() {
       </div>
 
       {/* Stand Bar Chart */}
-      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b', marginBottom: '16px' }}>Stand Performance</h3>
+      <div style={{ background: 'var(--color-white)', border: '1px solid var(--color-slate-200)', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-slate-800)', marginBottom: '16px' }}>Stand Performance</h3>
         <div style={{ height: '400px' }}>
           {data.byStand && data.byStand.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.byStand} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="stand_name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} angle={-45} textAnchor="end" />
-                <YAxis yAxisId="left" orientation="left" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} tickFormatter={(val) => `₫${(val/1000000).toFixed(1)}M`} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-slate-200)" />
+                <XAxis dataKey="stand_name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-slate-500)' }} angle={-45} textAnchor="end" />
+                <YAxis yAxisId="left" orientation="left" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-slate-500)' }} />
+                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-slate-500)' }} tickFormatter={(val) => `₫${(val/1000000).toFixed(1)}M`} />
                 <RechartsTooltip 
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
                   formatter={(value, name) => {
                     if (name === 'Revenue') return [formatVND(value), name]
                     return [value, name]
                   }}
-                  labelStyle={{ color: '#64748b', fontWeight: 600, marginBottom: '4px' }}
+                  labelStyle={{ color: 'var(--color-slate-500)', fontWeight: 600, marginBottom: '4px' }}
                 />
                 <Legend verticalAlign="top" height={36} iconType="circle" />
-                <Bar yAxisId="left" dataKey="sold" name="Tickets Sold" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={20} />
-                <Bar yAxisId="left" dataKey="checked_in" name="Checked In" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
-                <Bar yAxisId="right" dataKey="revenue" name="Revenue" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={20} />
+                <Bar yAxisId="left" dataKey="sold" name="Tickets Sold" fill="var(--color-primary)" radius={[4, 4, 0, 0]} barSize={20} />
+                <Bar yAxisId="left" dataKey="checked_in" name="Checked In" fill="var(--color-success)" radius={[4, 4, 0, 0]} barSize={20} />
+                <Bar yAxisId="right" dataKey="revenue" name="Revenue" fill="var(--color-warning)" radius={[4, 4, 0, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-slate-400)' }}>
               No stand data available
             </div>
           )}

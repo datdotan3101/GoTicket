@@ -41,9 +41,9 @@ export default function Pagination({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    border: '1px solid #e2e8f0',
-    background: '#fff',
-    color: '#64748b',
+    border: '1px solid var(--color-slate-200)',
+    background: 'var(--color-white)',
+    color: 'var(--color-slate-500)',
     cursor: 'pointer',
     transition: 'all 0.2s',
     fontSize: '0.9rem',
@@ -52,9 +52,9 @@ export default function Pagination({
 
   const activeBtnStyle = {
     ...btnStyle,
-    background: '#0f172a',
-    color: '#fff',
-    borderColor: '#0f172a',
+    background: 'var(--color-slate-900)',
+    color: 'var(--color-white)',
+    borderColor: 'var(--color-slate-900)',
     boxShadow: '0 4px 12px rgba(15,23,42,0.2)'
   }
 
@@ -62,7 +62,7 @@ export default function Pagination({
     ...btnStyle,
     opacity: 0.5,
     cursor: 'not-allowed',
-    background: '#f8fafc'
+    background: 'var(--color-slate-50)'
   }
 
   return (
@@ -79,8 +79,8 @@ export default function Pagination({
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
         style={currentPage === 1 ? disabledBtnStyle : btnStyle}
-        onMouseEnter={e => { if (currentPage !== 1) e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.color = '#3b82f6' }}
-        onMouseLeave={e => { if (currentPage !== 1) e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#64748b' }}
+        onMouseEnter={e => { if (currentPage !== 1) e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.color = 'var(--color-primary)' }}
+        onMouseLeave={e => { if (currentPage !== 1) e.currentTarget.style.borderColor = 'var(--color-slate-200)'; e.currentTarget.style.color = 'var(--color-slate-500)' }}
       >
         <ChevronLeft size={18} />
       </button>
@@ -91,12 +91,12 @@ export default function Pagination({
           <button 
             onClick={() => onPageChange(1)} 
             style={btnStyle}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.color = '#3b82f6' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#64748b' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.color = 'var(--color-primary)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-slate-200)'; e.currentTarget.style.color = 'var(--color-slate-500)' }}
           >
             1
           </button>
-          {pages[0] > 2 && <span style={{ color: '#94a3b8' }}>...</span>}
+          {pages[0] > 2 && <span style={{ color: 'var(--color-slate-400)' }}>...</span>}
         </>
       )}
 
@@ -106,8 +106,8 @@ export default function Pagination({
           key={page}
           onClick={() => onPageChange(page)}
           style={currentPage === page ? activeBtnStyle : btnStyle}
-          onMouseEnter={e => { if (currentPage !== page) { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.color = '#3b82f6' } }}
-          onMouseLeave={e => { if (currentPage !== page) { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#64748b' } }}
+          onMouseEnter={e => { if (currentPage !== page) { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.color = 'var(--color-primary)' } }}
+          onMouseLeave={e => { if (currentPage !== page) { e.currentTarget.style.borderColor = 'var(--color-slate-200)'; e.currentTarget.style.color = 'var(--color-slate-500)' } }}
         >
           {page}
         </button>
@@ -116,12 +116,12 @@ export default function Pagination({
       {/* Last Page if not in visible range */}
       {pages[pages.length - 1] < totalPages && (
         <>
-          {pages[pages.length - 1] < totalPages - 1 && <span style={{ color: '#94a3b8' }}>...</span>}
+          {pages[pages.length - 1] < totalPages - 1 && <span style={{ color: 'var(--color-slate-400)' }}>...</span>}
           <button 
             onClick={() => onPageChange(totalPages)} 
             style={btnStyle}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.color = '#3b82f6' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#64748b' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.color = 'var(--color-primary)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-slate-200)'; e.currentTarget.style.color = 'var(--color-slate-500)' }}
           >
             {totalPages}
           </button>
@@ -133,8 +133,8 @@ export default function Pagination({
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
         style={currentPage === totalPages ? disabledBtnStyle : btnStyle}
-        onMouseEnter={e => { if (currentPage !== totalPages) e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.color = '#3b82f6' }}
-        onMouseLeave={e => { if (currentPage !== totalPages) e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#64748b' }}
+        onMouseEnter={e => { if (currentPage !== totalPages) e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.color = 'var(--color-primary)' }}
+        onMouseLeave={e => { if (currentPage !== totalPages) e.currentTarget.style.borderColor = 'var(--color-slate-200)'; e.currentTarget.style.color = 'var(--color-slate-500)' }}
       >
         <ChevronRight size={18} />
       </button>

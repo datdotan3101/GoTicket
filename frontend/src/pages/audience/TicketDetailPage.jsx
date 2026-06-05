@@ -50,7 +50,7 @@ export default function TicketDetailPage() {
       const el = ticketRef.current
       const dataUrl = await toPng(el, {
         cacheBust: true,
-        backgroundColor: '#f1f5f9',
+        backgroundColor: 'var(--color-slate-100)',
         pixelRatio: 2,
         width: el.offsetWidth,
         height: el.offsetHeight,
@@ -124,9 +124,9 @@ export default function TicketDetailPage() {
               className="save-image-btn"
               disabled={ticket.is_gifted}
               style={{ 
-                background: ticket.is_gifted ? '#cbd5e1' : '#ec4899', 
+                background: ticket.is_gifted ? 'var(--color-slate-300)' : '#ec4899', 
                 color: 'white', 
-                borderColor: ticket.is_gifted ? '#cbd5e1' : '#ec4899',
+                borderColor: ticket.is_gifted ? 'var(--color-slate-300)' : '#ec4899',
                 cursor: ticket.is_gifted ? 'not-allowed' : 'pointer'
               }}
             >
@@ -264,13 +264,13 @@ export default function TicketDetailPage() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px'
         }} onClick={() => setIsGiftModalOpen(false)}>
           <div style={{
-            background: '#fff', padding: '32px', borderRadius: '24px', maxWidth: '420px', width: '100%',
+            background: 'var(--color-white)', padding: '32px', borderRadius: '24px', maxWidth: '420px', width: '100%',
             boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', position: 'relative',
             animation: 'modalSlideUp 0.3s ease-out'
           }} onClick={e => e.stopPropagation()}>
             <button 
               onClick={() => setIsGiftModalOpen(false)}
-              style={{ position: 'absolute', top: '16px', right: '16px', background: '#f1f5f9', border: 'none', color: '#64748b', width: '32px', height: '32px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              style={{ position: 'absolute', top: '16px', right: '16px', background: 'var(--color-slate-100)', border: 'none', color: 'var(--color-slate-500)', width: '32px', height: '32px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
             >
               <X size={18} />
             </button>
@@ -283,16 +283,16 @@ export default function TicketDetailPage() {
               <Gift size={32} />
             </div>
 
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '8px', color: '#0f172a' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '8px', color: 'var(--color-slate-900)' }}>
               Gift this Ticket 🎁
             </h2>
-            <p style={{ color: '#64748b', lineHeight: 1.5, marginBottom: '24px', fontSize: '0.95rem' }}>
+            <p style={{ color: 'var(--color-slate-500)', lineHeight: 1.5, marginBottom: '24px', fontSize: '0.95rem' }}>
               We'll send the QR code and match details directly to your friend's email.
             </p>
 
             <form onSubmit={handleGiftTicket}>
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '8px', textTransform: 'uppercase' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-slate-700)', marginBottom: '8px', textTransform: 'uppercase' }}>
                   Friend's Email
                 </label>
                 <input
@@ -303,11 +303,11 @@ export default function TicketDetailPage() {
                   onChange={(e) => setGiftEmail(e.target.value)}
                   style={{
                     width: '100%', padding: '12px 16px', borderRadius: '12px',
-                    border: '1.5px solid #cbd5e1', outline: 'none', fontSize: '1rem',
+                    border: '1.5px solid var(--color-slate-300)', outline: 'none', fontSize: '1rem',
                     transition: 'all 0.2s'
                   }}
                   onFocus={(e) => e.target.style.borderColor = '#ec4899'}
-                  onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--color-slate-300)'}
                 />
               </div>
 
@@ -316,7 +316,7 @@ export default function TicketDetailPage() {
                 disabled={isGifting}
                 style={{
                   width: '100%', padding: '14px', borderRadius: '12px',
-                  background: isGifting ? '#f472b6' : '#ec4899', color: '#fff',
+                  background: isGifting ? '#f472b6' : '#ec4899', color: 'var(--color-white)',
                   fontWeight: 800, fontSize: '1rem', border: 'none',
                   cursor: isGifting ? 'not-allowed' : 'pointer',
                   boxShadow: '0 4px 14px rgba(236, 72, 153, 0.4)',

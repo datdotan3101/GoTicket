@@ -58,7 +58,7 @@ function MatchCard({ match, onSelect }) {
           <button type="button" className="ai-match-card-btn">Select match →</button>
         )}
         {isComingSoon && (
-          <button type="button" className="ai-match-card-btn" style={{background: '#f59e0b'}}>Get Info</button>
+          <button type="button" className="ai-match-card-btn" style={{background: 'var(--color-warning)'}}>Get Info</button>
         )}
       </div>
     </div>

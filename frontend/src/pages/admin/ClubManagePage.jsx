@@ -163,13 +163,13 @@ export default function ClubManagePage() {
           <h1 className="admin-header">
             Clubs
           </h1>
-          <p className="section-subtitle" style={{ fontSize: '1rem', color: '#6b7280', marginTop: '8px' }}>
+          <p className="section-subtitle" style={{ fontSize: '1rem', color: 'var(--color-slate-500)', marginTop: '8px' }}>
             Manage sports clubs and their associated sport categories.
           </p>
         </div>
         <button 
           onClick={() => { clearForm(); setIsFormModalOpen(true); }}
-          style={{ padding: '14px 28px', borderRadius: '12px', background: '#111827', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer', fontSize: '0.9rem', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
+          style={{ padding: '14px 28px', borderRadius: '12px', background: 'var(--color-slate-900)', color: 'var(--color-white)', border: 'none', fontWeight: 800, cursor: 'pointer', fontSize: '0.9rem', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
         >
           + Add New Club
         </button>
@@ -239,15 +239,15 @@ export default function ClubManagePage() {
             placeholder="Search clubs..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.9rem', width: '280px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
+            style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--color-slate-300)', outline: 'none', fontSize: '0.9rem', width: '280px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
           />
-          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+          <span style={{ color: 'var(--color-slate-400)', fontSize: '0.85rem' }}>
             {filteredClubs.length} club{filteredClubs.length !== 1 ? 's' : ''} found
           </span>
         </div>
 
         {/* League Tabs */}
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0' }}>
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', borderBottom: '1px solid var(--color-slate-200)' }}>
           {[...leagues].sort((a, b) => a.name.localeCompare(b.name)).map(l => (
             <button
               key={l.id}
@@ -256,8 +256,8 @@ export default function ClubManagePage() {
                 padding: '8px 20px',
                 borderRadius: '999px',
                 border: 'none',
-                background: activeLeagueTab === l.name ? '#111827' : '#f1f5f9',
-                color: activeLeagueTab === l.name ? '#fff' : '#64748b',
+                background: activeLeagueTab === l.name ? 'var(--color-slate-900)' : 'var(--color-slate-100)',
+                color: activeLeagueTab === l.name ? 'var(--color-white)' : 'var(--color-slate-500)',
                 fontWeight: 700,
                 fontSize: '0.9rem',
                 cursor: 'pointer',
@@ -275,24 +275,24 @@ export default function ClubManagePage() {
         {filteredClubs.map((club) => {
           const sportName = getSportName(club.sport_id)
           return (
-            <article className="card" key={club.id} style={{ padding: '0', overflow: 'visible', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', borderRadius: '20px', background: '#fff' }}>
+            <article className="card" key={club.id} style={{ padding: '0', overflow: 'visible', border: '1px solid var(--color-slate-200)', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', borderRadius: '20px', background: 'var(--color-white)' }}>
               {/* Card Header */}
-              <div style={{ background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)', padding: '28px 24px', display: 'flex', alignItems: 'center', gap: '16px', borderRadius: 'inherit' }}>
-                <div style={{ position: 'relative', width: '64px', height: '64px', flexShrink: 0, borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', background: '#fff', overflow: 'hidden' }}>
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 900, color: '#3b82f6' }}>
+              <div style={{ background: 'linear-gradient(135deg, var(--color-slate-100) 0%, var(--color-slate-200) 100%)', padding: '28px 24px', display: 'flex', alignItems: 'center', gap: '16px', borderRadius: 'inherit' }}>
+                <div style={{ position: 'relative', width: '64px', height: '64px', flexShrink: 0, borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', background: 'var(--color-white)', overflow: 'hidden' }}>
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-primary)' }}>
                     {club.name?.[0]?.toUpperCase() || '?'}
                   </div>
                   {club.logo_url && (
                     <img
                       src={club.logo_url}
                       alt={club.name}
-                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain', background: '#fff', padding: '6px' }}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain', background: 'var(--color-white)', padding: '6px' }}
                       onError={(e) => { e.target.style.display = 'none' }}
                     />
                   )}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#111827', lineHeight: 1.2 }}>{club.name}</h3>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-slate-900)', lineHeight: 1.2 }}>{club.name}</h3>
                   {sportName && (
                     <span style={{ display: 'inline-block', marginTop: '6px', marginRight: '6px', background: '#dbeafe', color: '#1e40af', padding: '3px 10px', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700 }}>
                       {sportName}
@@ -315,7 +315,7 @@ export default function ClubManagePage() {
         })}
 
         {filteredClubs.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px', color: '#94a3b8', background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0' }}>
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px', color: 'var(--color-slate-400)', background: 'var(--color-white)', borderRadius: '20px', border: '1px solid var(--color-slate-200)' }}>
             No clubs found.
           </div>
         )}

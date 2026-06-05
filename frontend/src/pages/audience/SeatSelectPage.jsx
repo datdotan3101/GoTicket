@@ -11,7 +11,7 @@ import { formatDateTime } from '../../utils/formatters'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import ErrorState from '../../components/ui/ErrorState'
 import EmptyState from '../../components/ui/EmptyState'
-import CheckoutPage from './CheckoutPage'
+import CheckoutPage from '../../features/checkout/CheckoutPage'
 
 export default function SeatSelectPage() {
   const { matchId } = useParams()
@@ -114,19 +114,19 @@ export default function SeatSelectPage() {
 
   if (isNotYetOpen) return (
     <section className="container page" style={{ paddingTop: '100px', maxWidth: '800px' }}>
-      <div style={{ textAlign: 'center', background: '#fff', padding: '60px', borderRadius: '32px', boxShadow: '0 20px 40px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
+      <div style={{ textAlign: 'center', background: 'var(--color-white)', padding: '60px', borderRadius: '32px', boxShadow: '0 20px 40px rgba(0,0,0,0.05)', border: '1px solid var(--color-slate-100)' }}>
         <div style={{ width: '80px', height: '80px', borderRadius: '40px', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
-          <ShoppingCart size={36} color="#f97316" />
+          <ShoppingCart size={36} color="var(--color-orange)" />
         </div>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#1e293b', marginBottom: '16px' }}>Tickets Not Yet On Sale</h1>
-        <p style={{ fontSize: '1.1rem', color: '#64748b', marginBottom: '32px', lineHeight: 1.6 }}>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--color-slate-800)', marginBottom: '16px' }}>Tickets Not Yet On Sale</h1>
+        <p style={{ fontSize: '1.1rem', color: 'var(--color-slate-500)', marginBottom: '32px', lineHeight: 1.6 }}>
           We're excited for the upcoming match! However, ticket sales haven't started yet.<br/>
           Please come back when the sale officially opens.
         </p>
         
-        <div style={{ background: '#f8fafc', padding: '24px', borderRadius: '24px', display: 'inline-block', marginBottom: '32px' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '1px' }}>SALE OPENS ON</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#f97316' }}>{formatDateTime(match.ticket_sale_open_at)}</div>
+        <div style={{ background: 'var(--color-slate-50)', padding: '24px', borderRadius: '24px', display: 'inline-block', marginBottom: '32px' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-slate-400)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '1px' }}>SALE OPENS ON</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-orange)' }}>{formatDateTime(match.ticket_sale_open_at)}</div>
         </div>
 
         <br/>
@@ -139,7 +139,7 @@ export default function SeatSelectPage() {
 
   if (stands.length === 0) return (
     <section className="container page" style={{ paddingTop: '60px' }}>
-      <EmptyState title="Sold Out" message="Sorry, this match is sold out." icon={<Map size={48} color="#cbd5e1" />} />
+      <EmptyState title="Sold Out" message="Sorry, this match is sold out." icon={<Map size={48} color="var(--color-slate-300)" />} />
     </section>
   )
 
@@ -147,13 +147,13 @@ export default function SeatSelectPage() {
   const totalQuantity = selections.reduce((acc, sel) => acc + sel.quantity, 0)
 
   return (
-    <section style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: '80px' }}>
+    <section style={{ background: 'var(--color-slate-50)', minHeight: '100vh', paddingBottom: '80px' }}>
       {/* ─── UNIFIED BREADCRUMB ─── */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '20px 0', marginBottom: '40px', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+      <div style={{ background: 'var(--color-white)', borderBottom: '1px solid var(--color-slate-200)', padding: '20px 0', marginBottom: '40px', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
         <div className="container" style={{ display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 700 }}>
           <span 
             style={{ 
-              color: step === 1 ? '#6366F1' : '#64748b', 
+              color: step === 1 ? 'var(--color-primary)' : 'var(--color-slate-500)', 
               cursor: 'pointer', 
               fontSize: '1.25rem',
               fontWeight: 900,
@@ -163,10 +163,10 @@ export default function SeatSelectPage() {
           >
             Home page
           </span>
-          <span style={{ color: '#cbd5e1', fontSize: '1.2rem' }}>›</span>
+          <span style={{ color: 'var(--color-slate-300)', fontSize: '1.2rem' }}>›</span>
           <span 
             style={{ 
-              color: step === 2 ? '#6366F1' : '#64748b', 
+              color: step === 2 ? 'var(--color-primary)' : 'var(--color-slate-500)', 
               fontSize: '1.25rem', 
               fontWeight: 900,
               transition: 'color 0.2s'
@@ -196,10 +196,10 @@ export default function SeatSelectPage() {
       {/* ─── HEADER CARD ─── */}
       <div className="container" style={{ paddingTop: '40px' }}>
         <div style={{
-          background: '#fff',
+          background: 'var(--color-white)',
           borderRadius: '12px',
           padding: '40px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid var(--color-slate-200)',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
           textAlign: 'center',
           display: 'flex',
@@ -209,7 +209,7 @@ export default function SeatSelectPage() {
           <h1 style={{ 
             fontSize: '2.5rem', 
             fontWeight: 800, 
-            color: '#1e293b', 
+            color: 'var(--color-slate-800)', 
             margin: 0,
             letterSpacing: '-1px'
           }}>
@@ -222,20 +222,20 @@ export default function SeatSelectPage() {
             alignItems: 'center',
             gap: '40px',
             flexWrap: 'wrap',
-            color: '#64748b',
+            color: 'var(--color-slate-500)',
             fontSize: '0.9rem',
             fontWeight: 600
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin size={18} color="#ef4444" style={{ flexShrink: 0 }} />
+              <MapPin size={18} color="var(--color-danger)" style={{ flexShrink: 0 }} />
               {match?.stadium_name || 'Hang Day Stadium'}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Calendar size={18} color="#3b82f6" style={{ flexShrink: 0 }} />
+              <Calendar size={18} color="var(--color-primary)" style={{ flexShrink: 0 }} />
               {match ? formatDateTime(match.match_date, 'dd/MM/yyyy') : '--/--/----'}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Clock size={18} color="#64748b" style={{ flexShrink: 0 }} />
+              <Clock size={18} color="var(--color-slate-500)" style={{ flexShrink: 0 }} />
               {match ? new Date(match.match_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
             </div>
           </div>
@@ -254,20 +254,20 @@ export default function SeatSelectPage() {
           {/* LEFT COLUMN: Stadium Map */}
           <div style={{ position: 'sticky', top: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', margin: 0 }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-slate-800)', margin: 0 }}>
                 Stand Layout
               </h2>
-              <div style={{ display: 'flex', gap: '16px', fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '12px', height: '12px', background: '#e2e8f0', borderRadius: '3px' }}></div>Sold Out</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '12px', height: '12px', background: '#4f46e5', borderRadius: '3px' }}></div>Selected</div>
+              <div style={{ display: 'flex', gap: '16px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-slate-500)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '12px', height: '12px', background: 'var(--color-slate-200)', borderRadius: '3px' }}></div>Sold Out</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '12px', height: '12px', background: 'var(--color-primary-600)', borderRadius: '3px' }}></div>Selected</div>
               </div>
             </div>
             
             <div style={{ 
-              background: '#fff', 
+              background: 'var(--color-white)', 
               borderRadius: '24px', 
               padding: '32px', 
-              border: '1px solid #e2e8f0',
+              border: '1px solid var(--color-slate-200)',
               boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)'
             }}>
               <StadiumMap
@@ -284,7 +284,7 @@ export default function SeatSelectPage() {
             {/* 1. Selection Summary (Cart) */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', margin: 0 }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-slate-800)', margin: 0 }}>
                   Selected Tickets
                 </h2>
                 {selections.length > 0 && (
@@ -293,9 +293,9 @@ export default function SeatSelectPage() {
                       setSelections([])
                       toast.success('Selection cleared')
                     }}
-                    style={{ background: '#fee2e2', border: 'none', color: '#ef4444', padding: '8px 12px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' }}
+                    style={{ background: 'var(--color-danger-light)', border: 'none', color: 'var(--color-danger)', padding: '8px 12px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' }}
                     onMouseEnter={(e) => e.currentTarget.style.background = '#fecaca'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = '#fee2e2'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-danger-light)'}
                   >
                     <Trash2 size={16} />
                     Clear All
@@ -307,22 +307,22 @@ export default function SeatSelectPage() {
                 {selections.map((sel) => (
                   <div key={sel.blockId} style={{
                     padding: '24px',
-                    background: '#1e293b',
+                    background: 'var(--color-slate-800)',
                     borderRadius: '20px',
-                    color: '#fff',
+                    color: 'var(--color-white)',
                     animation: 'fadeIn 0.3s ease-out',
                     boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '20px', marginBottom: '20px' }}>
                       <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                         <div>
-                          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Stand</div>
-                          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff' }}>Section {sel.blockId}</div>
-                          <div style={{ fontSize: '0.9rem', color: '#cbd5e1', marginTop: '4px', fontWeight: 600 }}>{sel.tierName}</div>
+                          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-slate-400)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Stand</div>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-white)' }}>Section {sel.blockId}</div>
+                          <div style={{ fontSize: '0.9rem', color: 'var(--color-slate-300)', marginTop: '4px', fontWeight: 600 }}>{sel.tierName}</div>
                         </div>
                         <button 
                           onClick={() => setSelections(prev => prev.filter(s => s.blockId !== sel.blockId))}
-                          style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444', padding: '6px', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.2s', marginTop: '18px' }}
+                          style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: 'var(--color-danger)', padding: '6px', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.2s', marginTop: '18px' }}
                           onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
                           onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
                           title="Remove"
@@ -331,14 +331,14 @@ export default function SeatSelectPage() {
                         </button>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Unit Price</div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-slate-400)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Unit Price</div>
                         <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fbbf24' }}>{formatVND(sel.stand.price)}</div>
                       </div>
                     </div>
                     
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
-                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 700, marginBottom: '8px' }}>QUANTITY</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-slate-400)', fontWeight: 700, marginBottom: '8px' }}>QUANTITY</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '12px', width: 'fit-content' }}>
                           <button 
                             onClick={() => {
@@ -348,7 +348,7 @@ export default function SeatSelectPage() {
                                 setSelections(prev => prev.map(s => s.blockId === sel.blockId ? { ...s, quantity: s.quantity - 1 } : s))
                               }
                             }}
-                            style={{ background: 'transparent', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.2rem', transition: 'background 0.2s' }}
+                            style={{ background: 'transparent', border: 'none', color: 'var(--color-white)', width: '32px', height: '32px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.2rem', transition: 'background 0.2s' }}
                             onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
                             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                           >
@@ -364,7 +364,7 @@ export default function SeatSelectPage() {
                               }
                               setSelections(prev => prev.map(s => s.blockId === sel.blockId ? { ...s, quantity: Math.min(sel.stand.available_seats, s.quantity + 1) } : s))
                             }} 
-                            style={{ background: 'transparent', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.2rem', transition: 'background 0.2s' }}
+                            style={{ background: 'transparent', border: 'none', color: 'var(--color-white)', width: '32px', height: '32px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.2rem', transition: 'background 0.2s' }}
                             onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background='transparent'}
                           >
                             <Plus size={20} />
@@ -372,8 +372,8 @@ export default function SeatSelectPage() {
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Subtotal</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 950, color: '#fff' }}>{formatVND(sel.stand.price * sel.quantity)}</div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-slate-400)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Subtotal</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 950, color: 'var(--color-white)' }}>{formatVND(sel.stand.price * sel.quantity)}</div>
                       </div>
                     </div>
                   </div>
@@ -383,33 +383,33 @@ export default function SeatSelectPage() {
               {selections.length === 0 && (
                 <div style={{ 
                   padding: '60px 40px', 
-                  background: '#fff', 
+                  background: 'var(--color-white)', 
                   borderRadius: '20px', 
-                  border: '2px dashed #e2e8f0',
+                  border: '2px dashed var(--color-slate-200)',
                   textAlign: 'center',
-                  color: '#94a3b8',
+                  color: 'var(--color-slate-400)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center'
                 }}>
                   <Ticket size={48} color="#fbbf24" style={{ marginBottom: '16px' }} />
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#475569' }}>No sections selected</h3>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-slate-600)' }}>No sections selected</h3>
                   <p style={{ margin: '8px 0 0 0', fontSize: '0.9rem' }}>Click on the stadium map to pick your seats (max 2 sections).</p>
                 </div>
               )}
 
               {selections.length > 0 && (
                 <div style={{ marginTop: '24px', textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>Total Price: <span style={{ fontSize: '1.5rem', color: '#1e293b', fontWeight: 900 }}>{formatVND(totalPrice)}</span></div>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--color-slate-500)', fontWeight: 600 }}>Total Price: <span style={{ fontSize: '1.5rem', color: 'var(--color-slate-800)', fontWeight: 900 }}>{formatVND(totalPrice)}</span></div>
                   <button 
                     onClick={continueCheckout}
                     style={{
-                      width: '100%', marginTop: '24px', padding: '16px', background: '#3b82f6',
-                      color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer',
+                      width: '100%', marginTop: '24px', padding: '16px', background: 'var(--color-primary)',
+                      color: 'var(--color-white)', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer',
                       fontSize: '1.1rem', transition: 'all 0.2s', boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.5)'
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = '#2563eb'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = '#3b82f6'; e.currentTarget.style.transform = 'translateY(0)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-primary-600)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-primary)'; e.currentTarget.style.transform = 'translateY(0)' }}
                   >
                     Checkout Now →
                   </button>
@@ -419,7 +419,7 @@ export default function SeatSelectPage() {
 
             {/* 2. Ticket List */}
             <div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-slate-800)', marginBottom: '20px' }}>
                 Detailed Pricing
               </h2>
 
@@ -438,13 +438,13 @@ export default function SeatSelectPage() {
                   return Object.keys(groupedStands).sort().map(mainStand => {
                     const group = groupedStands[mainStand]
                     return (
-                      <div key={mainStand} style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                        <div style={{ padding: '16px 20px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div key={mainStand} style={{ background: 'var(--color-white)', borderRadius: '16px', border: '1px solid var(--color-slate-200)', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                        <div style={{ padding: '16px 20px', background: 'var(--color-slate-50)', borderBottom: '1px solid var(--color-slate-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
-                            <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#1e293b' }}>Stand {mainStand}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px', fontWeight: 600 }}>{group.totalAvailable > 0 ? `${group.totalAvailable} tickets left` : 'Sold Out'}</div>
+                            <div style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--color-slate-800)' }}>Stand {mainStand}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-slate-500)', marginTop: '2px', fontWeight: 600 }}>{group.totalAvailable > 0 ? `${group.totalAvailable} tickets left` : 'Sold Out'}</div>
                           </div>
-                          <div style={{ color: '#ef4444', fontWeight: 800, fontSize: '1.1rem' }}>{formatVND(group.price)}</div>
+                          <div style={{ color: 'var(--color-danger)', fontWeight: 800, fontSize: '1.1rem' }}>{formatVND(group.price)}</div>
                         </div>
                         
                         <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -455,15 +455,15 @@ export default function SeatSelectPage() {
                               style={{
                                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                                 padding: '12px 16px', borderRadius: '10px',
-                                border: selections.find(s => s.stand.id === tier.id) ? '2px solid #ef4444' : '1px solid transparent',
+                                border: selections.find(s => s.stand.id === tier.id) ? '2px solid var(--color-danger)' : '1px solid transparent',
                                 cursor: tier.available_seats > 0 ? 'pointer' : 'not-allowed',
-                                background: tier.available_seats > 0 ? (selections.find(s => s.stand.id === tier.id) ? '#fef2f2' : '#f8fafc') : '#f1f5f9',
+                                background: tier.available_seats > 0 ? (selections.find(s => s.stand.id === tier.id) ? '#fef2f2' : 'var(--color-slate-50)') : 'var(--color-slate-100)',
                                 opacity: tier.available_seats > 0 ? 1 : 0.6,
                                 transition: 'all 0.2s'
                               }}
                             >
                               <div>
-                                <div style={{ fontWeight: 800, color: '#334155', fontSize: '0.95rem' }}>Floor {tier.tierName.replace('T', '')}</div>
+                                <div style={{ fontWeight: 800, color: 'var(--color-slate-700)', fontSize: '0.95rem' }}>Floor {tier.tierName.replace('T', '')}</div>
                               </div>
                               {tier.available_seats > 0 ? (
                                 <button 
@@ -472,16 +472,16 @@ export default function SeatSelectPage() {
                                     handleSelectBlock({ stand: tier, blockId: tier.name, tierName: tier.tierName })
                                   }}
                                   style={{ 
-                                    padding: '6px 16px', background: selections.find(s => s.stand.id === tier.id) ? '#ef4444' : '#fff', 
-                                    color: selections.find(s => s.stand.id === tier.id) ? '#fff' : '#ef4444', 
-                                    border: '1px solid #ef4444', borderRadius: '8px', fontWeight: 800, cursor: 'pointer',
+                                    padding: '6px 16px', background: selections.find(s => s.stand.id === tier.id) ? 'var(--color-danger)' : 'var(--color-white)', 
+                                    color: selections.find(s => s.stand.id === tier.id) ? 'var(--color-white)' : 'var(--color-danger)', 
+                                    border: '1px solid var(--color-danger)', borderRadius: '8px', fontWeight: 800, cursor: 'pointer',
                                     fontSize: '0.85rem', transition: 'all 0.2s'
                                   }}
                                 >
                                   Select
                                 </button>
                               ) : (
-                                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#94a3b8' }}>Sold Out</div>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-slate-400)' }}>Sold Out</div>
                               )}
                             </div>
                           ))}

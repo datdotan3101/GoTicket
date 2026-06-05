@@ -81,12 +81,12 @@ export default function CityAutocomplete({
           type="button"
           style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', padding: 0 }}
         >
-          <X size={14} color="#94a3b8" />
+          <X size={14} color="var(--color-slate-400)" />
         </button>
       ) : (
         <ChevronDown
           size={16}
-          color="#94a3b8"
+          color="var(--color-slate-400)"
           style={{
             position: 'absolute',
             right: '12px',
