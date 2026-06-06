@@ -11,7 +11,7 @@ import { unwrapData } from '../../utils/apiData'
 import { formatDateTime, formatVND } from '../../utils/formatters'
 import { downloadCSV } from '../../utils/excelUtils'
 
-const COLORS = ['var(--color-primary-700)', 'var(--color-success)', 'var(--color-warning)', 'var(--color-danger)', '#8b5cf6'];
+const COLORS = ['var(--color-primary-700)', 'var(--color-success)', 'var(--color-warning)', 'var(--color-danger)', 'var(--color-primary)'];
 
 const EMPTY_DATA = {
   summary: {
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
         <article className="card" style={kpiCardStyle}>
           <h3 style={kpiLabelStyle}>Total Revenue</h3>
           <p style={kpiValueStyle}>{formatVND(summary.total_revenue)}</p>
-          <span style={{ fontSize: '0.8rem', color: growthRate >= 0 ? '#166534' : '#991b1b', fontWeight: 700 }}>
+          <span style={{ fontSize: '0.8rem', color: growthRate >= 0 ? 'var(--color-success)' : 'var(--color-danger-dark)', fontWeight: 700 }}>
             {growthRate >= 0 ? '↑' : '↓'} {Math.abs(growthRate)}% vs Yesterday
           </span>
         </article>
@@ -166,7 +166,7 @@ export default function AdminDashboard() {
                 <tr key={club.id} style={{ borderBottom: '1px solid var(--color-slate-100)', cursor: 'pointer' }} onClick={() => window.location.href=`/admin/clubs/${club.id}`}>
                   <td style={tdStyle}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {index === 0 ? <Trophy size={18} color="#eab308" /> : index === 1 ? <Medal size={18} color="var(--color-slate-400)" /> : index === 2 ? <Medal size={18} color="#b45309" /> : <span style={{ width: '18px', display: 'inline-block', textAlign: 'center', color: 'var(--color-slate-400)', fontSize: '0.9rem', fontWeight: 600 }}>{index + 1}</span>}
+                      {index === 0 ? <Trophy size={18} color="var(--color-warning)" /> : index === 1 ? <Medal size={18} color="var(--color-slate-400)" /> : index === 2 ? <Medal size={18} color="var(--color-orange)" /> : <span style={{ width: '18px', display: 'inline-block', textAlign: 'center', color: 'var(--color-slate-400)', fontSize: '0.9rem', fontWeight: 600 }}>{index + 1}</span>}
                       <strong>{club.name}</strong>
                     </div>
                   </td>
@@ -246,13 +246,13 @@ export default function AdminDashboard() {
 
           {/* Critical: Low Fill Rate */}
           <div className="card" style={opCardStyle}>
-            <h4 style={{ ...opTitleStyle, color: '#991b1b' }}>Low Fill Rate (&lt;30%)</h4>
+            <h4 style={{ ...opTitleStyle, color: 'var(--color-danger-dark)' }}>Low Fill Rate (&lt;30%)</h4>
             <div style={{ display: 'grid', gap: '12px' }}>
               {operations.filter(m => m.status === 'published' && (m.sold / m.total_seats) < 0.3).slice(0, 3).map(m => (
                 <div key={m.id} style={opItemStyle}>
                   <div>
                     <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>{m.home_team} vs {m.away_team}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#991b1b' }}>Sold: {m.sold} / {m.total_seats}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--color-danger-dark)' }}>Sold: {m.sold} / {m.total_seats}</div>
                   </div>
                 </div>
               ))}
@@ -262,7 +262,7 @@ export default function AdminDashboard() {
 
           {/* Alerts: Canceled */}
           <div className="card" style={opCardStyle}>
-            <h4 style={{ ...opTitleStyle, color: '#991b1b' }}>Alerts: Canceled</h4>
+            <h4 style={{ ...opTitleStyle, color: 'var(--color-danger-dark)' }}>Alerts: Canceled</h4>
             <div style={{ display: 'grid', gap: '12px' }}>
               {operations.filter(m => m.status === 'canceled').slice(0, 3).map(m => (
                 <div key={m.id} style={opItemStyle}>

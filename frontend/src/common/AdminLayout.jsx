@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState, useCallback } from 'react'
 import { APP_ROUTES } from '../constants/routes'
 import { messageService } from '../services/messageService'
 import { approvalsService } from '../services/approvalsService'
 import { unwrapData } from '../utils/apiData'
+import { usePolling } from '../hooks/usePolling'
 import { 
   LayoutDashboard, 
   Users, 
@@ -20,42 +21,26 @@ export default function AdminLayout() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [pendingMatchesCount, setPendingMatchesCount] = useState(0)
 
-  useEffect(() => {
-    const fetchCounts = async () => {
-      try {
-        const [msgRes, matchRes] = await Promise.all([
-          messageService.getUnreadCount().catch(() => ({})),
-          approvalsService.getPending({ type: 'match' }).catch(() => ({}))
-        ])
+  const fetchCounts = useCallback(async () => {
+    try {
+      const [msgRes, matchRes] = await Promise.all([
+        messageService.getUnreadCount().catch(() => ({})),
+        approvalsService.getPending({ type: 'match' }).catch(() => ({}))
+      ])
 
-        const msgData = unwrapData(msgRes)
-        if (msgData?.count !== undefined) setUnreadCount(msgData.count)
+      const msgData = unwrapData(msgRes)
+      if (msgData?.count !== undefined) setUnreadCount(msgData.count)
 
-        const matchData = unwrapData(matchRes)
-        if (Array.isArray(matchData)) {
-          setPendingMatchesCount(matchData.length)
-        }
-      } catch {
-        // Ignore error
+      const matchData = unwrapData(matchRes)
+      if (Array.isArray(matchData)) {
+        setPendingMatchesCount(matchData.length)
       }
-    }
-
-    fetchCounts()
-    
-    window.addEventListener('message-read', fetchCounts)
-    window.addEventListener('message-sent', fetchCounts)
-    window.addEventListener('approval-updated', fetchCounts)
-    
-    const interval = setInterval(() => {
-      fetchCounts()
-    }, 30000)
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener('message-read', fetchCounts)
-      window.removeEventListener('message-sent', fetchCounts)
-      window.removeEventListener('approval-updated', fetchCounts)
+    } catch {
+      // Ignore error
     }
   }, [])
+
+  usePolling(fetchCounts, ['message-read', 'message-sent', 'approval-updated'], 30000)
 
   const menuSections = [
     {

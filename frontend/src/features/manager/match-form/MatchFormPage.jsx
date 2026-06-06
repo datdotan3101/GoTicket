@@ -13,6 +13,7 @@ import { notifySuccess, notifyError } from '../../../utils/toastUtils';
 import { ArrowRight, CheckCircle, Rocket } from 'lucide-react';
 import BasicInfoStep from './BasicInfoStep';
 import StadiumConfigStep from './StadiumConfigStep';
+import { STAND_RATIOS } from '../../../constants/standRatios';
 
 const STADIUM_COLUMNS = [
   { id: 'A1', stand: 'A', tiers: ['T1', 'T2'] }, { id: 'A2', stand: 'A', tiers: ['T1', 'T2'] },
@@ -24,7 +25,6 @@ const STADIUM_COLUMNS = [
   { id: 'C', stand: 'C', tiers: ['T1'] }, { id: 'D', stand: 'D', tiers: ['T1'] },
 ];
 
-const STAND_RATIOS = { A: 0.3, B: 0.3, C: 0.2, D: 0.2 };
 
 export default function MatchFormPage() {
   const { matchId } = useParams();

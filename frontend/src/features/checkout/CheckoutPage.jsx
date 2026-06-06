@@ -12,6 +12,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import CheckoutForm from './CheckoutForm';
 import OrderSummary from './OrderSummary';
 import { SuccessModal, SessionExpiredModal } from './CheckoutModals';
+import { useCountdown } from '../../hooks/useCountdown';
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
@@ -34,7 +35,8 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
   const [isGlobalProcessing, setIsGlobalProcessing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const [timeLeft, setTimeLeft] = useState(null);
+  const [targetDate, setTargetDate] = useState(null);
+  const countdown = useCountdown(targetDate);
   const [isExpired, setIsExpired] = useState(false);
   const isPaidRef = useRef(false);
   const ticketIdsRef = useRef([]);
@@ -57,22 +59,16 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
   const clearSession = useCallback(() => { sessionStorage.removeItem('checkoutSession'); }, []);
 
   useEffect(() => {
-    if (timeLeft === null) return;
-    if (timeLeft <= 0) {
+    if (targetDate && countdown.isExpired && !isExpired) {
       setIsExpired(true);
       clearSession();
       if (ticketIds.length > 0) ticketService.cancel(ticketIds).catch(console.error);
-      return;
     }
-    const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
-    return () => clearInterval(timer);
-  }, [timeLeft, ticketIds, clearSession]);
+  }, [countdown.isExpired, targetDate, isExpired, clearSession, ticketIds]);
 
-  const formatTime = (seconds) => {
-    if (seconds === null) return '--:--';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const formatTime = (cd) => {
+    if (!targetDate) return '--:--';
+    return `${cd.minutes.toString().padStart(2, '0')}:${cd.seconds.toString().padStart(2, '0')}`;
   };
 
   const handleBack = () => {
@@ -93,7 +89,7 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
       setTicketIds(checkoutData._ticketIds);
       setClientSecret(checkoutData._clientSecret);
       setIsInitializing(false);
-      setTimeLeft(600);
+      setTargetDate(Date.now() + 600 * 1000);
       return;
     }
 
@@ -112,7 +108,7 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
         if (remaining > 0 && isSameCheckout && session.ticketIds?.length && session.clientSecret) {
           setTicketIds(session.ticketIds);
           setClientSecret(session.clientSecret);
-          setTimeLeft(remaining);
+          setTargetDate(createdAtTime + 10 * 60 * 1000);
           setIsInitializing(false);
           return;
         } else {
@@ -147,9 +143,9 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
       }
       
       const createdAtTime = new Date(createdAt).getTime();
-      const remaining = Math.max(0, Math.floor((createdAtTime + 10 * 60 * 1000 - Date.now()) / 1000));
-      setTimeLeft(remaining);
-      if (remaining <= 0) setIsExpired(true);
+      const expirationTime = createdAtTime + 10 * 60 * 1000;
+      setTargetDate(expirationTime);
+      if (Date.now() >= expirationTime) setIsExpired(true);
 
       const intentResponse = await paymentService.createIntent({ ticketIds: ids });
       const newClientSecret = intentResponse.data?.data?.clientSecret || '';
@@ -181,7 +177,7 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
         <div className="countdown-banner">
           <Clock size={18} />
           <span>
-            Your seats are reserved. Please complete payment in <strong>{formatTime(timeLeft)}</strong>. After this, your booking will be cancelled.
+            Your seats are reserved. Please complete payment in <strong>{formatTime(countdown)}</strong>. After this, your booking will be cancelled.
           </span>
         </div>
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, RefreshCw } from 'lucide-react'
 import { toast } from 'react-toastify'
 import api from '../../services/api'
+import { useTimer } from '../../hooks/useTimer'
 
 const RESEND_COUNTDOWN = 60 // seconds
 
@@ -100,15 +101,8 @@ export default function ForgotPasswordPage() {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [resendCountdown, setResendCountdown] = useState(0)
+  const [resendCountdown, setResendCountdown] = useTimer(0)
   const navigate = useNavigate()
-
-  // Countdown timer for resend
-  useEffect(() => {
-    if (resendCountdown <= 0) return
-    const timer = setInterval(() => setResendCountdown((c) => c - 1), 1000)
-    return () => clearInterval(timer)
-  }, [resendCountdown])
 
   const sendOTP = useCallback(async () => {
     setIsLoading(true)

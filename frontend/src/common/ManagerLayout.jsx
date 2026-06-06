@@ -1,36 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useState, useCallback } from 'react'
 import { APP_ROUTES } from '../constants/routes'
 import { LayoutDashboard, Trophy, Mailbox } from 'lucide-react'
 import DashboardLayout from './DashboardLayout'
 import { messageService } from '../services/messageService'
 import { unwrapData } from '../utils/apiData'
+import { usePolling } from '../hooks/usePolling'
 
 export default function ManagerLayout() {
   const [unreadCount, setUnreadCount] = useState(0)
 
-  useEffect(() => {
-    const fetchUnread = async () => {
-      try {
-        const response = await messageService.getUnreadCount()
-        const data = unwrapData(response)
-        if (data?.count !== undefined) setUnreadCount(data.count)
-      } catch {
-        // Ignore error
-      }
-    }
-
-    fetchUnread()
-    
-    window.addEventListener('message-read', fetchUnread)
-    window.addEventListener('message-sent', fetchUnread)
-    
-    const interval = setInterval(fetchUnread, 30000)
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener('message-read', fetchUnread)
-      window.removeEventListener('message-sent', fetchUnread)
+  const fetchUnread = useCallback(async () => {
+    try {
+      const response = await messageService.getUnreadCount()
+      const data = unwrapData(response)
+      if (data?.count !== undefined) setUnreadCount(data.count)
+    } catch {
+      // Ignore error
     }
   }, [])
+
+  usePolling(fetchUnread, ['message-read', 'message-sent'], 30000)
 
   const menuSections = [
     {

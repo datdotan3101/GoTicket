@@ -124,9 +124,9 @@ export default function TicketDetailPage() {
               className="save-image-btn"
               disabled={ticket.is_gifted}
               style={{ 
-                background: ticket.is_gifted ? 'var(--color-slate-300)' : '#ec4899', 
-                color: 'white', 
-                borderColor: ticket.is_gifted ? 'var(--color-slate-300)' : '#ec4899',
+                background: ticket.is_gifted ? 'var(--color-slate-300)' : 'var(--color-primary)', 
+                color: 'var(--color-white)', 
+                borderColor: ticket.is_gifted ? 'var(--color-slate-300)' : 'var(--color-primary)',
                 cursor: ticket.is_gifted ? 'not-allowed' : 'pointer'
               }}
             >
@@ -276,7 +276,7 @@ export default function TicketDetailPage() {
             </button>
 
             <div style={{
-              width: '64px', height: '64px', background: '#fdf2f8', color: '#ec4899',
+              width: '64px', height: '64px', background: 'var(--color-primary-50)', color: 'var(--color-primary)',
               borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center',
               marginBottom: '20px',
             }}>
@@ -306,7 +306,7 @@ export default function TicketDetailPage() {
                     border: '1.5px solid var(--color-slate-300)', outline: 'none', fontSize: '1rem',
                     transition: 'all 0.2s'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#ec4899'}
+                  onFocus={(e) => e.target.style.borderColor = 'var(--color-primary)'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--color-slate-300)'}
                 />
               </div>
@@ -316,10 +316,10 @@ export default function TicketDetailPage() {
                 disabled={isGifting}
                 style={{
                   width: '100%', padding: '14px', borderRadius: '12px',
-                  background: isGifting ? '#f472b6' : '#ec4899', color: 'var(--color-white)',
+                  background: isGifting ? 'var(--color-slate-400)' : 'var(--color-primary)', color: 'var(--color-white)',
                   fontWeight: 800, fontSize: '1rem', border: 'none',
                   cursor: isGifting ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 4px 14px rgba(236, 72, 153, 0.4)',
+                  boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
                   display: 'flex', justifyContent: 'center', alignItems: 'center'
                 }}
               >
