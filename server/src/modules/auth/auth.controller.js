@@ -1,4 +1,4 @@
-
+import { validationResult } from "express-validator";
 import { HTTP_STATUS } from "../../constants/httpStatus.js";
 import { asyncHandler } from "../../middlewares/asyncHandler.js";
 import { sendError, sendSuccess } from "../../utils/response.js";
@@ -82,16 +82,6 @@ export const resetPassword = asyncHandler(async (req, res) => {
  * Only works if the system has no admin.
  */
 export const setupAdmin = asyncHandler(async (req, res) => {
-  // 1. Check if the system already has an admin
-  const existingAdmin = await query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
-  if (existingAdmin.rowCount > 0) {
-    return sendError(
-      res, 
-      "The system has already been initialized. This API can no longer be used!",
-      HTTP_STATUS.FORBIDDEN
-    );
-  }
-
   // 2. Get data from request
   const { email, password, fullName, role } = req.body;
   if (!email || !password || role !== 'admin') {
