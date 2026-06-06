@@ -1,26 +1,17 @@
-import { validationResult } from "express-validator";
+
 import { HTTP_STATUS } from "../../constants/httpStatus.js";
 import { asyncHandler } from "../../middlewares/asyncHandler.js";
 import { sendError, sendSuccess } from "../../utils/response.js";
 import { authService } from "./auth.service.js";
 
-const ensureValidation = (req, res) => {
-  const errors = validationResult(req);
-  if (errors.isEmpty()) {
-    return true;
-  }
-  sendError(res, "Invalid request data.", HTTP_STATUS.BAD_REQUEST, errors.array());
-  return false;
-};
+
 
 export const register = asyncHandler(async (req, res) => {
-  if (!ensureValidation(req, res)) return;
   const user = await authService.register(req.body);
   return sendSuccess(res, user, HTTP_STATUS.CREATED);
 });
 
 export const login = asyncHandler(async (req, res) => {
-  if (!ensureValidation(req, res)) return;
   const payload = await authService.login(req.body);
   return sendSuccess(res, payload);
 });
@@ -70,19 +61,16 @@ export const logout = asyncHandler(async (req, res) => {
 });
 
 export const forgotPassword = asyncHandler(async (req, res) => {
-  if (!ensureValidation(req, res)) return;
   const data = await authService.forgotPassword(req.body);
   return sendSuccess(res, data);
 });
 
 export const verifyOTP = asyncHandler(async (req, res) => {
-  if (!ensureValidation(req, res)) return;
   const data = await authService.verifyOTP(req.body);
   return sendSuccess(res, data);
 });
 
 export const resetPassword = asyncHandler(async (req, res) => {
-  if (!ensureValidation(req, res)) return;
   const data = await authService.resetPassword(req.body);
   return sendSuccess(res, data);
 });
