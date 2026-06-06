@@ -6,6 +6,7 @@ import { authService } from '../../services/authService'
 import { uploadService } from '../../services/uploadService'
 import { APP_ROUTES } from '../../constants/routes'
 import { validateForm } from '../../utils/validator'
+import { profileUpdateSchema, passwordChangeSchema } from '../../validations/profile.validation'
 
 export function useProfile() {
   const navigate = useNavigate()
@@ -22,10 +23,7 @@ export function useProfile() {
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault()
-    const valid = validateForm(
-      { fullName: profileForm.fullName },
-      { fullName: { required: 'Full Name is required', maxLength: { value: 255, message: 'Full name exceeds 255 characters.' } } }
-    )
+    const valid = validateForm({ fullName: profileForm.fullName }, profileUpdateSchema)
     if (!valid) return
     try {
       setProfileLoading(true)
@@ -69,19 +67,7 @@ export function useProfile() {
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault()
-    const schema = {
-      oldPassword: { required: 'Current password is required' },
-      newPassword: {
-        required: 'New password is required',
-        minLength: { value: 6, message: 'Password must be at least 6 characters' },
-        maxLength: { value: 100, message: 'Password exceeds 100 characters' },
-        regex: {
-          pattern: /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_]).*$/,
-          message: 'Password must contain an uppercase letter, a number, and a special character',
-        },
-      },
-    }
-    if (!validateForm(pwForm, schema)) return
+    if (!validateForm(pwForm, passwordChangeSchema)) return
     try {
       setPwLoading(true)
       await authService.changePassword({

@@ -5,7 +5,7 @@ import { unwrapData } from '../../utils/apiData'
 
 export default function MyTicketsPage() {
   const [tickets, setTickets] = useState([])
-  const [activeTab, setActiveTab] = useState('upcoming')
+  const [activeTab, setActiveTab] = useState('unused')
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -22,8 +22,8 @@ export default function MyTicketsPage() {
   }, [])
 
   const now = new Date()
-  const upcomingTickets = tickets.filter((ticket) => new Date(ticket.match_date) >= now)
-  const pastTickets = tickets.filter((ticket) => new Date(ticket.match_date) < now)
+  const unusedTickets = tickets.filter((ticket) => ticket.status === 'paid' && new Date(ticket.match_date) >= now)
+  const usedTickets = tickets.filter((ticket) => ticket.status === 'checked_in' || new Date(ticket.match_date) < now)
 
   return (
     <section className="container page py-10">
@@ -40,56 +40,56 @@ export default function MyTicketsPage() {
           {/* Tabs - Segmented Control Style */}
           <div className="inline-flex p-1 bg-slate-100 rounded-2xl mb-10 gap-1 border border-slate-200/60 shadow-sm">
             <button
-              onClick={() => setActiveTab('upcoming')}
+              onClick={() => setActiveTab('unused')}
               style={{ 
-                background: activeTab === 'upcoming' ? 'var(--color-primary-600)' : 'transparent',
-                color: activeTab === 'upcoming' ? 'white' : 'var(--color-slate-500)',
+                background: activeTab === 'unused' ? 'var(--color-primary-600)' : 'transparent',
+                color: activeTab === 'unused' ? 'white' : 'var(--color-slate-500)',
                 border: 'none'
               }}
               className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 ${
-                activeTab === 'upcoming' ? 'shadow-md' : 'hover:bg-slate-200/50'
+                activeTab === 'unused' ? 'shadow-md' : 'hover:bg-slate-200/50'
               }`}
             >
-              Upcoming
+              Unused
             </button>
             <button
-              onClick={() => setActiveTab('past')}
+              onClick={() => setActiveTab('used')}
               style={{ 
-                background: activeTab === 'past' ? 'var(--color-primary-600)' : 'transparent',
-                color: activeTab === 'past' ? 'white' : 'var(--color-slate-500)',
+                background: activeTab === 'used' ? 'var(--color-primary-600)' : 'transparent',
+                color: activeTab === 'used' ? 'white' : 'var(--color-slate-500)',
                 border: 'none'
               }}
               className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 ${
-                activeTab === 'past' ? 'shadow-md' : 'hover:bg-slate-200/50'
+                activeTab === 'used' ? 'shadow-md' : 'hover:bg-slate-200/50'
               }`}
             >
-              Past Matches
+              Used
             </button>
           </div>
 
           {/* Tab Content */}
           <div>
-            {activeTab === 'upcoming' ? (
-              upcomingTickets.length === 0 ? (
+            {activeTab === 'unused' ? (
+              unusedTickets.length === 0 ? (
                 <div className="py-12 text-center bg-gray-50 rounded-lg">
-                  <p className="text-gray-500">No upcoming tickets.</p>
+                  <p className="text-gray-500">No unused tickets.</p>
                 </div>
               ) : (
                 <div className="cards-grid">
-                  {upcomingTickets.map((ticket) => (
+                  {unusedTickets.map((ticket) => (
                     <TicketCard key={ticket.ticket_code} ticket={ticket} />
                   ))}
                 </div>
               )
             ) : (
-              pastTickets.length === 0 ? (
+              usedTickets.length === 0 ? (
                 <div className="py-12 text-center bg-gray-50 rounded-lg">
-                  <p className="text-gray-500">No past tickets.</p>
+                  <p className="text-gray-500">No used tickets.</p>
                 </div>
               ) : (
                 <div className="cards-grid opacity-80 hover:opacity-100 transition-opacity">
-                  {pastTickets.map((ticket) => (
-                    <div key={ticket.ticket_code} className="grayscale-20">
+                  {usedTickets.map((ticket) => (
+                    <div key={ticket.ticket_code} className="grayscale-[0.2]">
                       <TicketCard ticket={ticket} />
                     </div>
                   ))}

@@ -7,6 +7,7 @@ import { clubService } from '../../../services/clubService';
 import { uploadService } from '../../../services/uploadService';
 import { unwrapData } from '../../../utils/apiData';
 import { validateForm } from '../../../utils/validator';
+import { getMatchBasicInfoSchema } from '../../../validations/match.validation';
 import { redistributeStadiumSeats } from '../../../utils/seatDistribution';
 import { notifySuccess, notifyError } from '../../../utils/toastUtils';
 import { ArrowRight, CheckCircle, Rocket } from 'lucide-react';
@@ -111,13 +112,7 @@ export default function MatchFormPage() {
 
   const validateStep = (currentStep) => {
     if (currentStep === 1) {
-      const schema = {
-        leagueId: { required: 'League' }, stadiumId: { required: 'Stadium' }, homeTeam: { required: 'Home Team' },
-        awayTeam: { required: 'Away Team', custom: val => val === form.homeTeam ? 'Home and Away must be different' : null },
-        matchDate: { required: 'Date & Time', custom: val => new Date(val) < new Date() ? 'Date cannot be in the past' : null },
-        description: { required: 'Description' }
-      };
-      if (!isEditMode && !previewBannerUrl) schema.banner = { required: 'Banner Image' };
+      const schema = getMatchBasicInfoSchema(form, isEditMode, previewBannerUrl);
       return validateForm(form, schema);
     }
     if (currentStep === 2) {

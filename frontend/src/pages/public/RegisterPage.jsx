@@ -6,6 +6,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { authService } from '../../services/authService'
 import GoogleAuthButton from '../../common/GoogleAuthButton'
 import { validateForm } from '../../utils/validator'
+import { registerSchema } from '../../validations/auth.validation'
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ email: '', password: '', confirmPassword: '', fullName: '' })
@@ -28,12 +29,7 @@ export default function RegisterPage() {
       return
     }
 
-    const schema = {
-      fullName: { required: 'Full Name is required', maxLength: { value: 255, message: 'Full Name exceeds 255 characters' } },
-      email: { required: 'Email is required', regex: { pattern: /\S+@\S+\.\S+/, message: 'Invalid email format' } },
-      password: { required: 'Password is required', minLength: { value: 6, message: 'Password must be at least 6 characters' }, maxLength: { value: 100, message: 'Password exceeds 100 characters' }, regex: { pattern: /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_]).*$/, message: 'Password must contain an uppercase letter, a number, and a special character' } }
-    }
-    if (!validateForm(form, schema)) return
+    if (!validateForm(form, registerSchema)) return
 
     setIsSubmitting(true)
 

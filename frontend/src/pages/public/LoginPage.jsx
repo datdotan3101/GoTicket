@@ -8,6 +8,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { getRedirectPath } from '../../utils/authUtils'
 import GoogleAuthButton from '../../common/GoogleAuthButton'
 import { validateForm } from '../../utils/validator'
+import { loginSchema } from '../../validations/auth.validation'
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
@@ -39,11 +40,7 @@ export default function LoginPage() {
       return
     }
 
-    const schema = {
-      email: { required: 'Email is required', regex: { pattern: /\S+@\S+\.\S+/, message: 'Invalid email format' } },
-      password: { required: 'Password is required' }
-    }
-    if (!validateForm(form, schema)) return
+    if (!validateForm(form, loginSchema)) return
 
     setIsSubmitting(true)
 

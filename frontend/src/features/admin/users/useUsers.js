@@ -9,6 +9,7 @@ import { approvalsService } from '../../../services/approvalsService'
 import { clubService } from '../../../services/clubService'
 import { unwrapData } from '../../../utils/apiData'
 import { validateForm } from '../../../utils/validator'
+import { getAddUserSchema, getEditUserSchema } from '../../../validations/user.validation'
 import { useAuth } from '../../../hooks/useAuth'
 
 const EMPTY_ADD_FORM = { fullName: '', email: '', password: '', role: ROLES.MANAGER, clubId: '' }
@@ -123,12 +124,7 @@ export function useUsers() {
   /* ── Add user ── */
   const handleAddUser = async (e) => {
     e.preventDefault()
-    const schema = {
-      fullName: { required: 'Full Name is required', maxLength: { value: 255, message: 'Full Name exceeds 255 characters' } },
-      email: { required: 'Email is required', regex: { pattern: /\S+@\S+\.\S+/, message: 'Invalid email format' } },
-      password: { required: 'Password is required', minLength: { value: 6, message: 'Password must be at least 6 characters' }, maxLength: { value: 100, message: 'Password exceeds 100 characters' }, regex: { pattern: /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_]).*$/, message: 'Password must contain an uppercase letter, a number, and a special character' } },
-      clubId: { custom: (val) => (addForm.role === ROLES.MANAGER && !val) ? 'Please assign a club for Manager role' : null },
-    }
+    const schema = getAddUserSchema(addForm, ROLES)
     if (!validateForm(addForm, schema)) return
     try {
       await userService.create(addForm)
@@ -149,11 +145,7 @@ export function useUsers() {
 
   const handleEditUser = async (e) => {
     e.preventDefault()
-    const schema = {
-      fullName: { required: 'Full Name is required', maxLength: { value: 255, message: 'Full Name exceeds 255 characters' } },
-      email: { required: 'Email is required', regex: { pattern: /\S+@\S+\.\S+/, message: 'Invalid email format' } },
-      clubId: { custom: (val) => (editForm.role === ROLES.MANAGER && !val) ? 'Please assign a club for Manager role' : null },
-    }
+    const schema = getEditUserSchema(editForm, ROLES)
     if (!validateForm(editForm, schema)) return
     try {
       await userService.update(editForm.id, editForm)
