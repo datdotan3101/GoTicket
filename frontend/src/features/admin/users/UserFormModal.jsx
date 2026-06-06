@@ -4,6 +4,7 @@
  */
 import { X, Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
+import Select from 'react-select'
 import { ROLES } from '../../../constants/roles'
 import { modalBackdrop, modalBox } from '../../../styles/common'
 import '../../../common/AdminStyles.css'
@@ -102,16 +103,26 @@ export default function UserFormModal({ mode = 'add', form, setForm, clubs, onSu
           {form.role === ROLES.MANAGER && (
             <div>
               <label className="admin-label">Assign Club *</label>
-              <select
-                value={form.clubId || ''}
-                onChange={(e) => setForm((f) => ({ ...f, clubId: e.target.value }))}
-                className="admin-input"
-              >
-                <option value="">Select a club...</option>
-                {clubs.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              <Select
+                options={clubs.map(c => ({ value: c.id, label: c.name }))}
+                value={form.clubId ? { value: form.clubId, label: clubs.find(c => c.id === Number(form.clubId))?.name || clubs.find(c => c.id === form.clubId)?.name } : null}
+                onChange={(selected) => setForm((f) => ({ ...f, clubId: selected ? selected.value : '' }))}
+                placeholder="Select a club..."
+                isClearable
+                isSearchable
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    borderRadius: '10px',
+                    borderColor: 'var(--color-slate-200)',
+                    padding: '2px',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      borderColor: 'var(--color-slate-300)'
+                    }
+                  })
+                }}
+              />
             </div>
           )}
 

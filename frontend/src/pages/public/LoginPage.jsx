@@ -111,6 +111,26 @@ export default function LoginPage() {
           </button>
         </div>
 
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px', marginBottom: '4px' }}>
+          <button
+            type="button"
+            onClick={() => navigate('/forgot-password')}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              color: '#2563eb',
+              padding: 0,
+              textDecoration: 'underline',
+              textUnderlineOffset: '2px'
+            }}
+          >
+            Forgot password?
+          </button>
+        </div>
+
         <button
           type="submit"
           className="btn-solid dark"

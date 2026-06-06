@@ -68,3 +68,21 @@ export const logout = asyncHandler(async (req, res) => {
   await authService.logout(token, req.user);
   return sendSuccess(res, { message: "Logged out successfully." });
 });
+
+export const forgotPassword = asyncHandler(async (req, res) => {
+  if (!ensureValidation(req, res)) return;
+  const data = await authService.forgotPassword(req.body);
+  return sendSuccess(res, data);
+});
+
+export const verifyOTP = asyncHandler(async (req, res) => {
+  if (!ensureValidation(req, res)) return;
+  const data = await authService.verifyOTP(req.body);
+  return sendSuccess(res, data);
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  if (!ensureValidation(req, res)) return;
+  const data = await authService.resetPassword(req.body);
+  return sendSuccess(res, data);
+});

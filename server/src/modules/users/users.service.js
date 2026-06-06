@@ -213,13 +213,9 @@ export const usersService = {
       }
 
       // 1. Prevent deleting users who have purchased tickets
-      const orders = await client.query(`SELECT id FROM orders WHERE user_id = $1 LIMIT 1`, [id]);
-      if (orders.rows.length > 0) {
+      const userTickets = await client.query(`SELECT id FROM tickets WHERE user_id = $1 LIMIT 1`, [id]);
+      if (userTickets.rows.length > 0) {
         throw new AppError("Cannot delete user with existing ticket orders.", 400);
-      }
-      const tickets = await client.query(`SELECT id FROM tickets WHERE user_id = $1 LIMIT 1`, [id]);
-      if (tickets.rows.length > 0) {
-        throw new AppError("Cannot delete user with existing tickets.", 400);
       }
 
       // 2. Set NULL for references created by this user
@@ -227,12 +223,7 @@ export const usersService = {
       await client.query(`UPDATE approvals SET submitted_by = NULL WHERE submitted_by = $1`, [id]);
       await client.query(`UPDATE approvals SET reviewed_by = NULL WHERE reviewed_by = $1`, [id]);
       await client.query(`UPDATE news SET author_id = NULL WHERE author_id = $1`, [id]);
-      await client.query(`UPDATE sports SET created_by = NULL WHERE created_by = $1`, [id]);
-      
-      // 3. Clear cart
-      await client.query(`DELETE FROM carts WHERE user_id = $1`, [id]);
-      
-      // 4. Delete user
+      // 3. Delete user
       const result = await client.query(`DELETE FROM users WHERE id = $1 RETURNING id`, [id]);
       return result.rows[0] || null;
     });

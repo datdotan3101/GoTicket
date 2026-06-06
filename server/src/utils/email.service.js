@@ -518,9 +518,86 @@ export const sendAccountDeletionEmail = async (user) => {
   await mailer.sendMail({
     from: `"GoTicket" <${process.env.GMAIL_USER}>`,
     to: user.email,
-    subject: `🗑️ Your GoTicket account has been deleted`,
+    subject: `Your GoTicket account has been deleted`,
     html
   });
 
   logger.info(`[Email] Account deletion confirmation sent to ${user.email}`);
+};
+
+/**
+ * Send OTP email for forgot password flow.
+ * @param {string} email
+ * @param {string} otp
+ */
+export const sendOTPEmail = async (email, otp) => {
+  const mailer = getMailer();
+  if (!mailer) {
+    logger.warn("[Email] Mailer not configured — skipping OTP email.");
+    return;
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reset Your Password - GoTicket</title>
+</head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,0.10);">
+        <tr>
+          <td style="background:linear-gradient(135deg,#1d4ed8 0%,#2563eb 50%,#0ea5e9 100%);padding:40px 32px 32px;text-align:center;">
+            <div style="display:inline-block;background:rgba(255,255,255,0.15);border-radius:50px;padding:8px 24px;margin-bottom:20px;">
+              <span style="color:#ffffff;font-size:22px;font-weight:900;letter-spacing:2px;">GoTicket</span>
+            </div>
+            <h1 style="margin:0 0 8px;color:#ffffff;font-size:26px;font-weight:800;letter-spacing:-0.5px;">
+              Password Reset
+            </h1>
+            <p style="margin:0;color:rgba(255,255,255,0.85);font-size:15px;">
+              We received a request to reset your password.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:40px 32px;">
+            <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.6;text-align:center;">
+              Please use the following 6-digit OTP code to verify your identity and reset your password.
+            </p>
+            <div style="text-align:center;margin-bottom:20px;">
+              <div style="display:inline-block;background:#f8fafc;border:2px dashed #cbd5e1;border-radius:12px;padding:16px 32px;">
+                <span style="font-size:32px;font-weight:900;color:#0f172a;letter-spacing:8px;font-family:'Courier New',monospace;">${otp}</span>
+              </div>
+            </div>
+            <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:12px;padding:14px 18px;text-align:center;">
+              <p style="margin:0;font-size:13px;color:#92400e;line-height:1.6;">
+                <strong>Note:</strong> This code will expire in <strong>5 minutes</strong>. If you did not request a password reset, you can safely ignore this email.
+              </p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px;text-align:center;border-top:1px solid #f1f5f9;margin-top:32px;">
+            <p style="margin:0 0 6px;font-size:15px;font-weight:800;color:#1e40af;">GoTicket</p>
+            <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6;">
+              This email was sent automatically, please do not reply directly.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  await mailer.sendMail({
+    from: `"GoTicket" <${process.env.GMAIL_USER}>`,
+    to: email,
+    subject: `Your GoTicket Password Reset OTP: ${otp}`,
+    html
+  });
+
+  logger.info(`[Email] OTP sent to ${email}`);
 };

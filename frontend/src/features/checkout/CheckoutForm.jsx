@@ -9,13 +9,13 @@ import mastercardLogo from '../../assets/Mastercard-logo.svg.png';
 const CARD_ELEMENT_OPTIONS = {
   style: {
     base: {
-      color: 'var(--color-slate-800)',
+      color: '#1e293b',
       fontFamily: '"Inter", sans-serif',
       fontSmoothing: 'antialiased',
       fontSize: '16px',
-      '::placeholder': { color: 'var(--color-slate-400)' },
+      '::placeholder': { color: '#94a3b8' },
     },
-    invalid: { color: 'var(--color-danger)', iconColor: 'var(--color-danger)' },
+    invalid: { color: '#ef4444', iconColor: '#ef4444' },
   },
 };
 
@@ -122,13 +122,13 @@ export default function CheckoutForm({ clientSecret, onProcessing, onSuccess }) 
         <div className="input-group">
           <label><CreditCard size={14} /> Card Number ({cardBrand.charAt(0).toUpperCase() + cardBrand.slice(1)})</label>
           <div className="stripe-input-wrapper">
-            <CardNumberElement options={CARD_ELEMENT_OPTIONS} onChange={(e) => { if (e.brand && e.brand !== 'unknown') setCardBrand(e.brand === 'mastercard' ? 'mastercard' : 'visa'); }} />
+            <CardNumberElement options={{ ...CARD_ELEMENT_OPTIONS, placeholder: '•••• •••• •••• ••••' }} onChange={(e) => { if (e.brand && e.brand !== 'unknown') setCardBrand(e.brand === 'mastercard' ? 'mastercard' : 'visa'); }} />
           </div>
         </div>
 
         <div className="input-row">
-          <div className="input-group"><label>Expiry Date</label><div className="stripe-input-wrapper"><CardExpiryElement options={CARD_ELEMENT_OPTIONS} /></div></div>
-          <div className="input-group"><label>CVC / CVV</label><div className="stripe-input-wrapper"><CardCvcElement options={CARD_ELEMENT_OPTIONS} /></div></div>
+          <div className="input-group"><label>Expiry Date</label><div className="stripe-input-wrapper"><CardExpiryElement options={{ ...CARD_ELEMENT_OPTIONS, placeholder: 'MM/YY' }} /></div></div>
+          <div className="input-group"><label>CVC / CVV</label><div className="stripe-input-wrapper"><CardCvcElement options={{ ...CARD_ELEMENT_OPTIONS, placeholder: 'CVC' }} /></div></div>
         </div>
       </div>
       

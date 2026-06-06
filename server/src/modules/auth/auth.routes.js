@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { auth } from "../../middlewares/auth.js";
 import { runValidation } from "../../middlewares/validate.js";
-import { login, me, onboarding, register, updateProfile, changePassword, deleteAccount, googleLogin, logout } from "./auth.controller.js";
-import { loginRules, onboardingRules, registerRules, changePasswordRules } from "./auth.validation.js";
+import { login, me, onboarding, register, updateProfile, changePassword, deleteAccount, googleLogin, logout, forgotPassword, verifyOTP, resetPassword } from "./auth.controller.js";
+import { loginRules, onboardingRules, registerRules, changePasswordRules, forgotPasswordRules, verifyOtpRules, resetPasswordRules } from "./auth.validation.js";
 import { authLimiter } from "../../middlewares/rateLimiter.js";
 
 const router = Router();
@@ -193,5 +193,9 @@ router.put("/change-password", auth, runValidation(changePasswordRules), changeP
  *         description: "Account deleted successfully"
  */
 router.delete("/profile", auth, deleteAccount);
+
+router.post("/forgot-password", authLimiter, runValidation(forgotPasswordRules), forgotPassword);
+router.post("/verify-otp", authLimiter, runValidation(verifyOtpRules), verifyOTP);
+router.post("/reset-password", authLimiter, runValidation(resetPasswordRules), resetPassword);
 
 export default router;

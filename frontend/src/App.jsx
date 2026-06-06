@@ -15,6 +15,7 @@ import ManagerLayout from './common/ManagerLayout'
 const HomePage = lazy(() => import('./pages/public/HomePage'))
 const LoginPage = lazy(() => import('./pages/public/LoginPage'))
 const RegisterPage = lazy(() => import('./pages/public/RegisterPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/public/ForgotPasswordPage'))
 const OnboardingPage = lazy(() => import('./pages/onboarding/OnboardingPage'))
 const DashboardPage = lazy(() => import('./pages/shared/DashboardPage'))
 const ProfilePage = lazy(() => import('./features/profile/ProfilePage'))
@@ -55,6 +56,7 @@ export default function App() {
             <Route element={<GuestRoute />}>
               <Route path={APP_ROUTES.LOGIN} element={<LoginPage />} />
               <Route path={APP_ROUTES.REGISTER} element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             </Route>
             <Route path={APP_ROUTES.SEARCH} element={<SearchResultsPage />} />
             <Route path={APP_ROUTES.MATCH_DETAIL} element={<MatchDetailPage />} />

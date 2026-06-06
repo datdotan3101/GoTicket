@@ -2,8 +2,8 @@
  * DeleteAccountTab — "Danger Zone" tab + delete confirmation modal.
  * Receives state/handlers from useProfile via props.
  */
-import { AlertTriangle } from 'lucide-react'
-import { dangerZone, btnDelete, btnCancel, modalBackdrop, sectionIconBox } from '../../styles/common'
+import { dangerZone, btnDelete } from '../../styles/common'
+import ConfirmModal from '../../components/ui/ConfirmModal'
 
 export default function DeleteAccountTab({
   showDeleteModal,
@@ -13,8 +13,6 @@ export default function DeleteAccountTab({
   setDeleteConfirmText,
   onConfirm,
 }) {
-  const canConfirm = deleteConfirmText === 'Delete'
-
   return (
     <>
       {/* Danger Zone card content */}
@@ -39,89 +37,16 @@ export default function DeleteAccountTab({
       </div>
 
       {/* Confirmation Modal */}
-      {showDeleteModal && (
-        <div style={{ ...modalBackdrop, zIndex: 9999 }}>
-          <div
-            className="modal-content"
-            style={{ maxWidth: '460px', padding: 0, overflow: 'hidden', borderRadius: '20px', background: 'var(--color-white)' }}
-          >
-            {/* Modal body */}
-            <div style={{ padding: '32px 32px 24px', textAlign: 'center' }}>
-              <div style={{ ...sectionIconBox('red'), width: '64px', height: '64px', borderRadius: '50%', margin: '0 auto 20px', color: 'var(--color-danger-dark)' }}>
-                <AlertTriangle size={32} />
-              </div>
-              <h3 style={{ margin: '0 0 12px 0', fontSize: '22px', fontWeight: 900, color: 'var(--color-slate-900)', letterSpacing: '-0.5px' }}>
-                Confirm Account Deletion
-              </h3>
-              <p style={{ margin: '0 0 24px 0', fontSize: '15px', color: 'var(--color-slate-500)', lineHeight: 1.5 }}>
-                This action <strong style={{ color: 'var(--color-danger-dark)' }}>cannot be undone</strong>. All
-                your data may be permanently deleted or hidden from the system. Are you sure you
-                want to continue?
-              </p>
-
-              <div style={{ textAlign: 'left', background: '#fef2f2', padding: '16px', borderRadius: '12px', border: '1px solid #fecaca' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#991b1b', marginBottom: '8px' }}>
-                  Please type <strong style={{ userSelect: 'none' }}>&quot;Delete&quot;</strong> to confirm:
-                </label>
-                <input
-                  type="text"
-                  placeholder="Type 'Delete'..."
-                  value={deleteConfirmText}
-                  onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    borderRadius: '8px',
-                    border: '1px solid #fca5a5',
-                    fontSize: '15px',
-                    outline: 'none',
-                    background: 'var(--color-white)',
-                    color: '#7f1d1d',
-                    boxSizing: 'border-box',
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = 'var(--color-danger)')}
-                  onBlur={(e) => (e.target.style.borderColor = '#fca5a5')}
-                />
-              </div>
-            </div>
-
-            {/* Modal footer */}
-            <div style={{ padding: '20px 32px 32px', display: 'flex', gap: '12px', background: '#f9fafb', borderTop: '1px solid var(--color-slate-100)' }}>
-              <button
-                onClick={() => { setShowDeleteModal(false); setDeleteConfirmText('') }}
-                disabled={deleteLoading}
-                style={{ ...btnCancel, flex: 1, padding: '12px', cursor: deleteLoading ? 'not-allowed' : 'pointer' }}
-                onMouseEnter={(e) => !deleteLoading && (e.target.style.background = 'var(--color-slate-100)')}
-                onMouseLeave={(e) => !deleteLoading && (e.target.style.background = 'var(--color-white)')}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={onConfirm}
-                disabled={deleteLoading || !canConfirm}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  fontWeight: 800,
-                  color: 'var(--color-white)',
-                  background: canConfirm ? 'var(--color-danger-dark)' : '#fca5a5',
-                  cursor: deleteLoading || !canConfirm ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-                onMouseEnter={(e) => { if (!deleteLoading && canConfirm) e.target.style.background = '#b91c1c' }}
-                onMouseLeave={(e) => { if (!deleteLoading && canConfirm) e.target.style.background = 'var(--color-danger-dark)' }}
-              >
-                {deleteLoading ? 'Deleting...' : 'Confirm Deletion'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={onConfirm}
+        title="Confirm Account Deletion"
+        message="This action cannot be undone. All your data may be permanently deleted or hidden from the system. Are you sure you want to continue?"
+        confirmLabel={deleteLoading ? "Deleting..." : "Confirm Deletion"}
+        variant="danger"
+        isLoading={deleteLoading}
+      />
     </>
   )
 }

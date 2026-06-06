@@ -281,5 +281,83 @@ export const authService = {
       await redis.set(`blacklist:${token}`, "true", { ex: ttl });
     }
     return { success: true };
+  },
+
+  /**
+   * Request an OTP to reset password
+   */
+  async forgotPassword(payload) {
+    const { email } = payload;
+    const result = await query("SELECT id FROM users WHERE email = $1", [email]);
+    if (result.rowCount === 0) {
+      throw new Error("User with this email not found.");
+    }
+
+    // Generate a 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Delete existing OTPs for this email to prevent spam
+    await query("DELETE FROM password_resets WHERE email = $1", [email]);
+
+    // Use NOW() + INTERVAL directly in PostgreSQL to avoid JS timezone mismatch
+    await query(
+      "INSERT INTO password_resets (email, otp, expires_at) VALUES ($1, $2, NOW() + INTERVAL '5 minutes')",
+      [email, otp]
+    );
+
+    // Send the OTP email
+    const { sendOTPEmail } = await import("../../utils/email.service.js");
+    sendOTPEmail(email, otp).catch((err) =>
+      logger.error(`[Email] Failed to send OTP email to ${email}: ${err.message}`)
+    );
+
+    return { success: true, message: "OTP sent to email." };
+  },
+
+  /**
+   * Verify the received OTP
+   */
+  async verifyOTP(payload) {
+    const { email, otp } = payload;
+    const result = await query(
+      "SELECT id FROM password_resets WHERE email = $1 AND otp = $2 AND expires_at > NOW()",
+      [email, otp]
+    );
+
+    if (result.rowCount === 0) {
+      throw new Error("Invalid or expired OTP.");
+    }
+
+    await query("UPDATE password_resets SET verified = true WHERE id = $1", [result.rows[0].id]);
+
+    return { success: true, message: "OTP verified successfully." };
+  },
+
+  /**
+   * Reset the password
+   */
+  async resetPassword(payload) {
+    const { email, otp, newPassword } = payload;
+    
+    // Check if there is a verified OTP matching the email and otp
+    const result = await query(
+      "SELECT id FROM password_resets WHERE email = $1 AND otp = $2 AND verified = true AND expires_at > NOW()",
+      [email, otp]
+    );
+
+    if (result.rowCount === 0) {
+      throw new Error("Invalid, expired, or unverified OTP.");
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await query(
+      "UPDATE users SET password_hash = $1, updated_at = NOW() WHERE email = $2",
+      [newHash, email]
+    );
+
+    // Clean up the OTP
+    await query("DELETE FROM password_resets WHERE email = $1", [email]);
+
+    return { success: true, message: "Password reset successfully." };
   }
 };

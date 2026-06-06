@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Trash2, Minus, Plus, MapPin, Calendar, Clock, Ticket, ShoppingCart, Map } from 'lucide-react'
 import { toast } from 'react-toastify'
 import StadiumMap from '../../components/seat/StadiumMap'
+import ConfirmModal from '../../components/ui/ConfirmModal'
 import { matchService } from '../../services/matchService'
 import { unwrapData } from '../../utils/apiData'
 import { formatVND } from '../../utils/formatters'
@@ -21,8 +22,20 @@ export default function SeatSelectPage() {
   const [match, setMatch] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [confirmModal, setConfirmModal] = useState({ show: false, action: null, message: '' })
 
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(() => {
+    try {
+      const sessionStr = sessionStorage.getItem('checkoutSession');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        if (session.checkoutData?.matchId === Number(matchId)) {
+          return 2;
+        }
+      }
+    } catch (e) {}
+    return 1;
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -179,7 +192,7 @@ export default function SeatSelectPage() {
 
       {step === 2 ? (
         <CheckoutPage 
-          checkoutDataProp={{
+          checkoutDataProp={selections.length > 0 ? {
             matchId: Number(matchId),
             selections: selections.map(s => ({
               standId: s.stand.id,
@@ -188,7 +201,7 @@ export default function SeatSelectPage() {
               price: s.stand.price
             })),
             matchName: match?.home_team + ' - ' + match?.away_team
-          }} 
+          } : null} 
           onBackProp={() => setStep(1)} 
         />
       ) : (
@@ -289,10 +302,14 @@ export default function SeatSelectPage() {
                 </h2>
                 {selections.length > 0 && (
                   <button 
-                    onClick={() => {
-                      setSelections([])
-                      toast.success('Selection cleared')
-                    }}
+                    onClick={() => setConfirmModal({
+                      show: true,
+                      action: () => {
+                        setSelections([])
+                        toast.success('Selection cleared')
+                      },
+                      message: 'Are you sure you want to clear all your selected tickets?'
+                    })}
                     style={{ background: 'var(--color-danger-light)', border: 'none', color: 'var(--color-danger)', padding: '8px 12px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' }}
                     onMouseEnter={(e) => e.currentTarget.style.background = '#fecaca'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-danger-light)'}
@@ -321,7 +338,11 @@ export default function SeatSelectPage() {
                           <div style={{ fontSize: '0.9rem', color: 'var(--color-slate-300)', marginTop: '4px', fontWeight: 600 }}>{sel.tierName}</div>
                         </div>
                         <button 
-                          onClick={() => setSelections(prev => prev.filter(s => s.blockId !== sel.blockId))}
+                          onClick={() => setConfirmModal({
+                            show: true,
+                            action: () => setSelections(prev => prev.filter(s => s.blockId !== sel.blockId)),
+                            message: `Are you sure you want to remove the tickets in Section ${sel.blockId}?`
+                          })}
                           style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: 'var(--color-danger)', padding: '6px', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.2s', marginTop: '18px' }}
                           onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
                           onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
@@ -498,6 +519,20 @@ export default function SeatSelectPage() {
       </div>
         </>
       )}
+      
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.show}
+        onClose={() => setConfirmModal({ show: false, action: null, message: '' })}
+        onConfirm={() => {
+          if (confirmModal.action) confirmModal.action();
+          setConfirmModal({ show: false, action: null, message: '' });
+        }}
+        title="Remove Tickets?"
+        message={confirmModal.message}
+        confirmLabel="Remove"
+        variant="danger"
+      />
     </section>
   )
 }

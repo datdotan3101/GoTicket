@@ -20,7 +20,13 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY
 export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const checkoutData = checkoutDataProp || location.state;
+  
+  const checkoutData = useMemo(() => {
+    if (checkoutDataProp || location.state) return checkoutDataProp || location.state;
+    const sessionStr = sessionStorage.getItem('checkoutSession');
+    if (sessionStr) return JSON.parse(sessionStr).checkoutData;
+    return null;
+  }, [checkoutDataProp, location.state]);
 
   const [clientSecret, setClientSecret] = useState('');
   const [ticketIds, setTicketIds] = useState([]);
@@ -33,27 +39,34 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
   const isPaidRef = useRef(false);
   const ticketIdsRef = useRef([]);
   const bookingInitiated = useRef(false);
+  const isReloading = useRef(false);
 
   useEffect(() => { ticketIdsRef.current = ticketIds; }, [ticketIds]);
 
   useEffect(() => {
+    const handleBeforeUnload = () => { isReloading.current = true; };
+    window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
-      if (!isPaidRef.current && ticketIdsRef.current.length > 0) {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (!isPaidRef.current && ticketIdsRef.current.length > 0 && !isReloading.current) {
         ticketService.cancel(ticketIdsRef.current).catch(err => console.error("Auto-cancel failed on unmount:", err));
       }
     };
   }, []);
 
+  const clearSession = useCallback(() => { sessionStorage.removeItem('checkoutSession'); }, []);
+
   useEffect(() => {
     if (timeLeft === null) return;
     if (timeLeft <= 0) {
       setIsExpired(true);
+      clearSession();
       if (ticketIds.length > 0) ticketService.cancel(ticketIds).catch(console.error);
       return;
     }
     const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
     return () => clearInterval(timer);
-  }, [timeLeft, ticketIds]);
+  }, [timeLeft, ticketIds, clearSession]);
 
   const formatTime = (seconds) => {
     if (seconds === null) return '--:--';
@@ -63,6 +76,7 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
   };
 
   const handleBack = () => {
+    clearSession();
     if (onBackProp) onBackProp();
     else navigate(-1);
   };
@@ -86,6 +100,29 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
     if (bookingInitiated.current) return;
     bookingInitiated.current = true;
 
+    const sessionStr = sessionStorage.getItem('checkoutSession');
+    if (sessionStr) {
+      try {
+        const session = JSON.parse(sessionStr);
+        const now = Date.now();
+        const createdAtTime = new Date(session.createdAt).getTime();
+        const remaining = Math.max(0, Math.floor((createdAtTime + 10 * 60 * 1000 - now) / 1000));
+        const isSameCheckout = JSON.stringify(session.checkoutData) === JSON.stringify(checkoutData);
+
+        if (remaining > 0 && isSameCheckout && session.ticketIds?.length && session.clientSecret) {
+          setTicketIds(session.ticketIds);
+          setClientSecret(session.clientSecret);
+          setTimeLeft(remaining);
+          setIsInitializing(false);
+          return;
+        } else {
+          sessionStorage.removeItem('checkoutSession');
+        }
+      } catch (e) {
+        sessionStorage.removeItem('checkoutSession');
+      }
+    }
+
     if (!checkoutData?.matchId || (!checkoutData?.standId && !checkoutData?.selections)) {
       notifyError('Invalid payment data.');
       if (!onBackProp) navigate('/');
@@ -104,24 +141,33 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
       const ids = booked.map(ticket => ticket.id);
       setTicketIds(ids);
 
+      let createdAt = new Date().toISOString();
       if (booked.length > 0 && booked[0].created_at) {
-        const createdAt = new Date(booked[0].created_at).getTime();
-        const remaining = Math.max(0, Math.floor((createdAt + 10 * 60 * 1000 - Date.now()) / 1000));
-        setTimeLeft(remaining);
-        if (remaining <= 0) setIsExpired(true);
-      } else {
-        setTimeLeft(600);
+        createdAt = booked[0].created_at;
       }
+      
+      const createdAtTime = new Date(createdAt).getTime();
+      const remaining = Math.max(0, Math.floor((createdAtTime + 10 * 60 * 1000 - Date.now()) / 1000));
+      setTimeLeft(remaining);
+      if (remaining <= 0) setIsExpired(true);
 
       const intentResponse = await paymentService.createIntent({ ticketIds: ids });
-      setClientSecret(intentResponse.data?.data?.clientSecret || '');
+      const newClientSecret = intentResponse.data?.data?.clientSecret || '';
+      setClientSecret(newClientSecret);
+
+      sessionStorage.setItem('checkoutSession', JSON.stringify({
+        checkoutData,
+        ticketIds: ids,
+        clientSecret: newClientSecret,
+        createdAt: createdAt
+      }));
     } catch (error) {
       notifyError(error.response?.data?.message ?? 'Failed to initialize payment session.');
       handleBack();
     } finally {
       setIsInitializing(false);
     }
-  }, [checkoutData, navigate, onBackProp]);
+  }, [checkoutData, navigate, onBackProp, handleBack]);
 
   useEffect(() => { createPendingTickets(); }, [createPendingTickets]);
 
@@ -157,7 +203,7 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
                     <CheckoutForm 
                       clientSecret={clientSecret}
                       onProcessing={setIsGlobalProcessing} 
-                      onSuccess={() => { isPaidRef.current = true; setIsGlobalProcessing(false); setShowSuccessModal(true); }}
+                      onSuccess={() => { isPaidRef.current = true; setIsGlobalProcessing(false); clearSession(); setShowSuccessModal(true); }}
                     />
                   </Elements>
                 </div>

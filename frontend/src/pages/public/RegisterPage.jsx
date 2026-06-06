@@ -2,13 +2,16 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { APP_ROUTES } from '../../constants/routes'
+import { Eye, EyeOff } from 'lucide-react'
 import { authService } from '../../services/authService'
 import GoogleAuthButton from '../../common/GoogleAuthButton'
 import { validateForm } from '../../utils/validator'
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({ email: '', password: '', fullName: '' })
+  const [form, setForm] = useState({ email: '', password: '', confirmPassword: '', fullName: '' })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const navigate = useNavigate()
 
   const onChange = (event) => {
@@ -20,6 +23,11 @@ export default function RegisterPage() {
   const onSubmit = async (event) => {
     event.preventDefault()
     
+    if (form.password !== form.confirmPassword) {
+      toast.error('Passwords do not match')
+      return
+    }
+
     const schema = {
       fullName: { required: 'Full Name is required', maxLength: { value: 255, message: 'Full Name exceeds 255 characters' } },
       email: { required: 'Email is required', regex: { pattern: /\S+@\S+\.\S+/, message: 'Invalid email format' } },
@@ -30,7 +38,11 @@ export default function RegisterPage() {
     setIsSubmitting(true)
 
     try {
-      await authService.register(form)
+      await authService.register({
+        email: form.email,
+        password: form.password,
+        fullName: form.fullName
+      })
       toast.success('Registration successful. You can log in now.')
       navigate(APP_ROUTES.LOGIN)
     } catch (error) {
@@ -66,15 +78,66 @@ export default function RegisterPage() {
           />
         </div>
 
-        <div className="field-group">
+        <div className="field-group" style={{ position: 'relative' }}>
           <input
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="Password"
             value={form.password}
             onChange={onChange}
-           
+            style={{ paddingRight: '40px' }}
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: 'absolute',
+              right: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--color-slate-500)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0
+            }}
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+
+        <div className="field-group" style={{ position: 'relative' }}>
+          <input
+            name="confirmPassword"
+            type={showConfirmPassword ? "text" : "password"}
+            placeholder="Confirm Password"
+            value={form.confirmPassword}
+            onChange={onChange}
+            style={{ paddingRight: '40px' }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            style={{
+              position: 'absolute',
+              right: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--color-slate-500)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0
+            }}
+          >
+            {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
         </div>
 
         <button

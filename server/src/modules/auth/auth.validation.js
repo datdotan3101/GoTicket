@@ -28,3 +28,22 @@ export const onboardingRules = [
 export const changePasswordRules = [
   commonUserValidators.password("newPassword")
 ];
+
+export const forgotPasswordRules = [
+  commonUserValidators.email()
+];
+
+export const verifyOtpRules = [
+  commonUserValidators.email(),
+  body("otp")
+    .isString()
+    .isLength({ min: 6, max: 6 }).withMessage("OTP must be a 6-digit string.")
+];
+
+export const resetPasswordRules = [
+  commonUserValidators.email(),
+  body("otp")
+    .isString()
+    .isLength({ min: 6, max: 6 }).withMessage("OTP must be a 6-digit string."),
+  commonUserValidators.password("newPassword")
+];
