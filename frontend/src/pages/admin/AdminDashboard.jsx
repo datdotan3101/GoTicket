@@ -60,22 +60,41 @@ export default function AdminDashboard() {
     ? (((growth.today_revenue - growth.yesterday_revenue) / growth.yesterday_revenue) * 100).toFixed(1)
     : 0
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     if (!data) return;
     
-    let csvContent = "CLUB,REVENUE (VND),TICKETS,FILL RATE (%),MATCHES,MANAGER\n";
-    
-    topClubs.forEach(club => {
-      csvContent += `"${club.name}",${club.revenue},${club.tickets_sold},${Number(club.fill_rate).toFixed(1)},${club.matches_count},"${club.manager_name || '--'}"\n`;
-    });
-    
-    csvContent += "\nSYSTEM SUMMARY\n";
-    csvContent += `Total Revenue,${summary.total_revenue}\n`;
-    csvContent += `Tickets Sold,${summary.total_tickets}\n`;
-    csvContent += `Active Matches,${summary.total_open_matches}\n`;
-    csvContent += `System Fill Rate,${fillRate}%\n`;
-    
-    downloadCSV(csvContent, `system_overview_${new Date().toISOString().slice(0,10)}.csv`);
+    try {
+      const XLSX = await import('xlsx');
+      
+      // Top Clubs Sheet
+      const clubData = topClubs.map(club => ({
+        "CLUB": club.name,
+        "REVENUE (VND)": Number(club.revenue),
+        "TICKETS": Number(club.tickets_sold),
+        "FILL RATE (%)": Number(Number(club.fill_rate).toFixed(1)),
+        "MATCHES": Number(club.matches_count),
+        "MANAGER": club.manager_name || '--'
+      }));
+      const wsClubs = XLSX.utils.json_to_sheet(clubData);
+      
+      // System Summary Sheet
+      const summaryData = [
+        { "Metric": "Total Revenue", "Value": Number(summary.total_revenue) },
+        { "Metric": "Tickets Sold", "Value": Number(summary.total_tickets) },
+        { "Metric": "Active Matches", "Value": Number(summary.total_open_matches) },
+        { "Metric": "System Fill Rate (%)", "Value": Number(fillRate) }
+      ];
+      const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+      
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, wsClubs, "Top Clubs");
+      XLSX.utils.book_append_sheet(wb, wsSummary, "System Summary");
+      
+      XLSX.writeFile(wb, `system_overview_${new Date().toISOString().slice(0,10)}.xlsx`);
+    } catch (error) {
+      console.error("Failed to export Excel:", error);
+      alert("Failed to export Excel file.");
+    }
   };
 
   return (
