@@ -1,11 +1,13 @@
 import { Router } from "express";
 import { auth } from "../../middlewares/auth.js";
 import { runValidation } from "../../middlewares/validate.js";
-import { login, me, onboarding, register, updateProfile, changePassword, deleteAccount, googleLogin, logout, forgotPassword, verifyOTP, resetPassword } from "./auth.controller.js";
+import { login, me, onboarding, register, updateProfile, changePassword, deleteAccount, googleLogin, logout, forgotPassword, verifyOTP, resetPassword, setupAdmin } from "./auth.controller.js";
 import { loginRules, onboardingRules, registerRules, changePasswordRules, forgotPasswordRules, verifyOtpRules, resetPasswordRules } from "./auth.validation.js";
 import { authLimiter } from "../../middlewares/rateLimiter.js";
 
 const router = Router();
+
+router.post("/setup", authLimiter, setupAdmin);
 
 /**
  * @swagger

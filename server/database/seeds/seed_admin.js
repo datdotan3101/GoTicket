@@ -3,8 +3,8 @@ import { db } from "../../src/config/db.js";
 import bcrypt from "bcryptjs";
 
 /**
- * Seed: Tạo user admin mặc định.
- * Chạy: node database/seeds/seed_admin.js
+ * Seed: Create default admin user.
+ * Run: node database/seeds/seed_admin.js
  */
 const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || "admin@goticket.vn";
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || "Admin@123456";
@@ -31,7 +31,7 @@ const seedAdmin = async () => {
   const admin = result.rows[0];
   console.log(`Admin user created: ${admin.email} (id=${admin.id}, role=${admin.role})`);
   console.log(`   Password: ${ADMIN_PASSWORD}`);
-  console.log(`   \nHãy đổi mật khẩu ngay sau khi deploy!`);
+  console.log(`   \nChange password after deploy!`);
 };
 
 seedAdmin()
