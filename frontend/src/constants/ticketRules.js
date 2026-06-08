@@ -1,3 +1,0 @@
-export const MAX_SEATS_PER_ORDER = 6
-export const RECOMMENDATIONS_CACHE_MINUTES = 5
-export const AI_CHAT_DEBOUNCE_MS = 2000

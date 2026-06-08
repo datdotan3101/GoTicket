@@ -218,10 +218,10 @@ const badgeBase = {
   letterSpacing: '0.05em',
 }
 
-export const badgeActive = { ...badgeBase, background: '#dcfce7', color: '#16a34a' }
-export const badgeBlocked = { ...badgeBase, background: 'var(--color-danger-light)', color: 'var(--color-danger-dark)' }
-export const badgePending = { ...badgeBase, background: '#fef9c3', color: '#ca8a04' }
-export const badgeRole = { ...badgeBase, background: 'var(--color-primary-100)', color: 'var(--color-primary-600)' }
+
+
+
+
 
 /**
  * Generate a role-specific color badge.
