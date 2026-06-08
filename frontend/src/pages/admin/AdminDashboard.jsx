@@ -223,7 +223,7 @@ export default function AdminDashboard() {
 
       {/* LEVEL 4: Operations Status */}
       <div>
-        <h2 style={sectionTitleStyle}>📌 Operations Status</h2>
+        <h2 style={sectionTitleStyle}>Operations Status</h2>
         <div className="cards-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
           {/* Upcoming Matches */}
           <div className="card" style={opCardStyle}>

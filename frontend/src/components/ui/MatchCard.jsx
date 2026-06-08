@@ -5,12 +5,6 @@ import { formatDateTime } from '../../utils/formatters'
 import { X, Calendar, ShoppingCart, MapPin, Flame } from 'lucide-react'
 import { getValidImageUrl } from '../../utils/imageUtils'
 
-const DUMMY_IMAGES = [
-  'https://images.unsplash.com/photo-1518605368461-1ee0676644ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1540747913346-19e32fc3e6ed?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1508344928928-7137b29de218?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-]
-
 export default function MatchCard({ match, showHotBadge = false }) {
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false)
   const [isEndedModalOpen, setIsEndedModalOpen] = useState(false)
@@ -20,8 +14,7 @@ export default function MatchCard({ match, showHotBadge = false }) {
   const isEnded = match.match_date ? new Date(match.match_date) < new Date() : false
   const isNotYetOpen = match.ticket_sale_open_at ? new Date(match.ticket_sale_open_at) > new Date() : false
 
-  const matchId = parseInt(match.id, 10) || 0
-  const imgUrl = match.thumbnail_url || DUMMY_IMAGES[matchId % DUMMY_IMAGES.length]
+  const imgUrl = match.thumbnail_url || ''
 
   const handleClick = (e) => {
     if (isNotYetOpen) {

@@ -10,19 +10,6 @@ import { Eye, MapPin, Calendar, Clock, X, Check, XCircle, Users, ShoppingCart } 
 import { usePagination } from '../../hooks/usePagination'
 import Pagination from '../../components/ui/Pagination'
 
-const DUMMY_IMAGES = [
-  'https://images.unsplash.com/photo-1518605368461-1ee0676644ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1540747913346-19e32fc3e6ed?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1508344928928-7137b29de218?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-]
-
-const getFallbackImage = (id) => {
-  if (!id) return DUMMY_IMAGES[0]
-  if (typeof id === 'number') return DUMMY_IMAGES[Math.abs(id) % DUMMY_IMAGES.length]
-  const sum = String(id).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  return DUMMY_IMAGES[sum % DUMMY_IMAGES.length]
-}
-
 export default function MatchManagePage() {
   const [activeTab, setActiveTab] = useState('pending') // pending, approved, rejected
   const [matches, setMatches] = useState([])
@@ -149,7 +136,7 @@ export default function MatchManagePage() {
         <div className="cards-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
           {paginatedItems.map((match) => (
             <article className="card" key={match.id} style={{ position: 'relative', overflow: 'hidden', border: '1px solid var(--color-slate-300)', borderRadius: '16px', display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <div style={{ height: '160px', backgroundImage: `url(${match.thumbnail_url || getFallbackImage(match.id)})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', backgroundColor: 'var(--color-slate-200)', flexShrink: 0 }}>
+              <div style={{ height: '160px', backgroundImage: `url(${match.thumbnail_url || ''})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', backgroundColor: 'var(--color-slate-200)', flexShrink: 0 }}>
               <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
                 <span className={`badge ${activeTab === 'pending' ? 'warning' : activeTab === 'rejected' ? 'danger' : 'success'}`} style={{ textTransform: 'uppercase', fontSize: '0.7rem', background: activeTab === 'pending' ? 'var(--color-warning)' : activeTab === 'rejected' ? 'var(--color-danger)' : 'var(--color-success)', color: 'var(--color-white)', border: 'none', padding: '4px 8px', borderRadius: '6px' }}>
                   {activeTab}
@@ -233,7 +220,7 @@ export default function MatchManagePage() {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(4px)' }}>
           <div style={{ background: 'var(--color-white)', borderRadius: '24px', width: '100%', maxWidth: '1000px', maxHeight: '90vh', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', display: 'flex', flexDirection: 'column' }}>
             {/* Header Banner - Keeping it simple at top */}
-            <div style={{ position: 'relative', height: '120px', backgroundImage: `url(${selectedMatch.thumbnail_url || getFallbackImage(selectedMatch.id)})`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div style={{ position: 'relative', height: '120px', backgroundImage: `url(${selectedMatch.thumbnail_url || ''})`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%)' }}></div>
               <button 
                 onClick={() => setSelectedMatch(null)}

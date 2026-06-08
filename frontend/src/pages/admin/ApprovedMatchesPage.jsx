@@ -52,9 +52,9 @@ export default function ApprovedMatchesPage() {
                 </span>
               </div>
               <div style={{ fontSize: '0.9rem', color: '#4b5563', display: 'grid', gap: '8px' }}>
-                <p style={{ margin: 0 }}><strong>📅 Date:</strong> {formatDateTime(match.match_date)}</p>
-                <p style={{ margin: 0 }}><strong>🏟️ Stadium:</strong> {match.stadium_name || 'N/A'}</p>
-                <p style={{ margin: 0 }}><strong>📍 Address:</strong> {match.stadium_address || 'N/A'}</p>
+                <p style={{ margin: 0 }}><strong>Date:</strong> {formatDateTime(match.match_date)}</p>
+                <p style={{ margin: 0 }}><strong>Stadium:</strong> {match.stadium_name || 'N/A'}</p>
+                <p style={{ margin: 0 }}><strong>Address:</strong> {match.stadium_address || 'N/A'}</p>
               </div>
             </article>
           ))}

@@ -30,7 +30,7 @@ function MatchCard({ match, onSelect }) {
       style={isSoldOut ? { opacity: 0.6, cursor: 'not-allowed' } : isComingSoon ? { opacity: 0.8, cursor: 'pointer' } : {}}
     >
       {isComingSoon && <div className="ai-match-coming-soon-badge">Coming Soon</div>}
-      {isHot && <div className="ai-match-hot-badge">🔥 HOT</div>}
+      {isHot && <div className="ai-match-hot-badge">HOT</div>}
       {isSoldOut && <div className="ai-match-soldout-badge">Sold out</div>}
 
       {match.leagueName && (

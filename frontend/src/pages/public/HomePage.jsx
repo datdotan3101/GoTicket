@@ -304,7 +304,7 @@ export default function HomePage() {
             <section className="featured-section" style={{ paddingTop: 0 }}>
               <div className="container">
                 <div className="section-head" style={{ marginBottom: '24px' }}>
-                  <h2 className="section-title" style={{ margin: 0 }}>ENDED SALE</h2>
+                  <h2 className="section-title" style={{ margin: 0 }}>ENDED MATCH</h2>
                 </div>
                 {endedMatches.length > 0 ? (
                   <>

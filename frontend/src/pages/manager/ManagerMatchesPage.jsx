@@ -8,17 +8,7 @@ import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import { 
   Plus, 
-  Calendar, 
-  BarChart2, 
-  Settings, 
-  Edit3,
-  MapPin,
-  Clock,
-  X,
-  Map,
-  Shield,
-  FileText,
-  Trash2
+  Calendar
 } from 'lucide-react'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { APP_ROUTES } from '../../constants/routes'

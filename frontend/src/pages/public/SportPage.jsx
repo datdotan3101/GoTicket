@@ -1,8 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import MatchCard from '../../components/ui/MatchCard'
-import SportsBanner from '../../components/ui/SportsBanner'
 import { matchService } from '../../services/matchService'
 import { unwrapData } from '../../utils/apiData'
 import { formatDateTime } from '../../utils/formatters'

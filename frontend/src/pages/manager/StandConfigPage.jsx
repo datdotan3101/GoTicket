@@ -2,15 +2,13 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Save, Eye, ShieldCheck, Loader2, Download, Upload } from 'lucide-react'
-import { STAND_NAMES } from '../../constants/standRatios'
+import { ArrowLeft, ShieldCheck, Loader2, Download, Upload } from 'lucide-react'
 import { matchService } from '../../services/matchService'
-import { generateStandsPreview } from '../../utils/standGenerator'
 import StadiumMap from '../../components/seat/StadiumMap'
 import { unwrapData } from '../../utils/apiData'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { redistributeStadiumSeats } from '../../utils/seatDistribution'
-import { downloadCSV, downloadExcel } from '../../utils/excelUtils'
+import { downloadExcel } from '../../utils/excelUtils'
 import * as XLSX from 'xlsx'
 
 const STADIUM_COLUMNS = [
@@ -33,7 +31,6 @@ const STADIUM_COLUMNS = [
 export default function StandConfigPage() {
   const { matchId } = useParams()
   const navigate = useNavigate()
-  const [serverPreview, setServerPreview] = useState([])
   
   const [columnConfigs, setColumnConfigs] = useState(
     STADIUM_COLUMNS.reduce((acc, col) => {

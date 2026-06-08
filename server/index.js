@@ -10,7 +10,7 @@ const server = createServer(app);
 initSocket(server);
 startJobs();
 
-// Kiểm tra kết nối Redis
+// Check connection redis
 checkRedisConnection();
 
 server.listen(port, () => {
