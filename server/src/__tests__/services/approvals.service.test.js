@@ -14,25 +14,25 @@ vi.mock("../../../src/config/db.js", () => ({
   })
 }));
 
-vi.mock("../../../src/modules/notifications/notifications.service.js", () => ({
-  notificationsService: {
-    createNotification: vi.fn()
+vi.mock("../../../src/modules/messages/messages.service.js", () => ({
+  messagesService: {
+    sendMessage: vi.fn()
   }
 }));
 
 const { query, withTransaction } = await import("../../../src/config/db.js");
-const { notificationsService } = await import("../../../src/modules/notifications/notifications.service.js");
+const { messagesService } = await import("../../../src/modules/messages/messages.service.js");
 const { approvalsService } = await import("../../../src/modules/approvals/approvals.service.js");
 
 const APPROVAL_RESOURCE_MAP = {
   match: { table: "matches", approvedStatus: "approved", rejectedStatus: "rejected", approvedTitle: "Approved", rejectedTitle: "Rejected" },
-  news: { table: "news", approvedStatus: "approved", rejectedStatus: "rejected", approvedTitle: "Approved", rejectedTitle: "Rejected" },
+
   user_account: { table: "users", approvedStatus: true, rejectedStatus: false, approvedTitle: "Approved", rejectedTitle: "Rejected" }
 };
 
 const makeApproval = (overrides = {}) => ({
   id: 1,
-  resource_type: "news",
+  resource_type: "match",
   resource_id: 42,
   submitted_by: 99,
   status: "pending",
@@ -43,7 +43,7 @@ const makeApproval = (overrides = {}) => ({
 describe("approvalsService.processApproval", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    notificationsService.createNotification.mockResolvedValue({});
+    messagesService.sendMessage.mockResolvedValue({ rows: [{}] });
   });
 
   it("throws error if approval does not exist", async () => {
@@ -65,48 +65,7 @@ describe("approvalsService.processApproval", () => {
     ).rejects.toThrow("has already been processed");
   });
 
-  it("news without schedule → publish immediately (status=published)", async () => {
-    const approval = makeApproval({ resource_type: "news", scheduled_publish_at: null });
-    query.mockResolvedValueOnce({ rowCount: 1, rows: [approval] });
 
-    const txQuery = vi.fn().mockResolvedValue({ rowCount: 1 });
-    withTransaction.mockImplementationOnce(async (handler) => {
-      return handler({ query: txQuery });
-    });
-
-    const result = await approvalsService.processApproval({
-      approvalId: 1,
-      action: "approve",
-      adminId: 1
-    });
-
-    expect(result.resourceStatus).toBe("published");
-
-    // Check UPDATE news SET status = 'published'
-    const newsUpdateCall = txQuery.mock.calls.find((call) =>
-      call[0]?.includes("UPDATE news") && call[1]?.includes("published")
-    );
-    expect(newsUpdateCall).toBeDefined();
-  });
-
-  it("news with schedule → status=approved (cron will publish later)", async () => {
-    const approval = makeApproval({
-      resource_type: "news",
-      scheduled_publish_at: new Date(Date.now() + 3600000).toISOString()
-    });
-    query.mockResolvedValueOnce({ rowCount: 1, rows: [approval] });
-
-    const txQuery = vi.fn().mockResolvedValue({ rowCount: 1 });
-    withTransaction.mockImplementationOnce(async (handler) => handler({ query: txQuery }));
-
-    const result = await approvalsService.processApproval({
-      approvalId: 1,
-      action: "approve",
-      adminId: 1
-    });
-
-    expect(result.resourceStatus).toBe("approved");
-  });
 
   it("user_account approve → resourceStatus = true (is_approved=true)", async () => {
     const approval = makeApproval({ resource_type: "user_account", resource_id: 10 });
@@ -146,6 +105,6 @@ describe("approvalsService.processApproval", () => {
 
     expect(result.status).toBe("rejected");
     expect(result.resourceStatus).toBe("rejected");
-    expect(notificationsService.createNotification).toHaveBeenCalledOnce();
+    expect(messagesService.sendMessage).toHaveBeenCalledOnce();
   });
 });

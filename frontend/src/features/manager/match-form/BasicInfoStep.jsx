@@ -40,6 +40,7 @@ export default function BasicInfoStep({
               <DatePicker
                 selected={form.matchDate ? new Date(form.matchDate) : null}
                 onChange={(date) => setForm(p => ({...p, matchDate: date ? date.toISOString() : ''}))}
+                minDate={new Date()}
                 showTimeSelect timeFormat="HH:mm" timeIntervals={15} dateFormat="dd/MM/yyyy HH:mm"
                 className="mc-nice-input w-full" wrapperClassName="w-full !block" placeholderText="dd/mm/yyyy --:--"
               />
@@ -49,6 +50,8 @@ export default function BasicInfoStep({
               <DatePicker
                 selected={form.ticketSaleOpenAt ? new Date(form.ticketSaleOpenAt) : null}
                 onChange={(date) => setForm(p => ({...p, ticketSaleOpenAt: date ? date.toISOString() : ''}))}
+                minDate={new Date()}
+                maxDate={form.matchDate ? new Date(form.matchDate) : null}
                 showTimeSelect timeFormat="HH:mm" timeIntervals={15} dateFormat="dd/MM/yyyy HH:mm"
                 className="mc-nice-input w-full" wrapperClassName="w-full !block" placeholderText="dd/mm/yyyy --:--"
               />

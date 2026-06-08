@@ -5,6 +5,14 @@ export const getMatchBasicInfoSchema = (form, isEditMode, hasPreviewBanner) => {
     homeTeam: { required: 'Home Team' },
     awayTeam: { required: 'Away Team', custom: val => val === form.homeTeam ? 'Home and Away must be different' : null },
     matchDate: { required: 'Date & Time', custom: val => new Date(val) < new Date() ? 'Date cannot be in the past' : null },
+    ticketSaleOpenAt: {
+      custom: val => {
+        if (form.matchDate && new Date(val) >= new Date(form.matchDate)) {
+          return 'Ticket sale open time must be before match date';
+        }
+        return null;
+      }
+    },
     description: { required: 'Description' }
   };
   

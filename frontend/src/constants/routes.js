@@ -9,8 +9,7 @@ export const APP_ROUTES = {
   FORBIDDEN: '/forbidden',
   SPORTS: '/sports/:sportId',
   MATCH_DETAIL: '/matches/:matchId',
-  NEWS: '/news',
-  NEWS_DETAIL: '/news/:slug',
+
   SEAT_SELECT: '/audience/matches/:matchId/seats',
   CHECKOUT: '/audience/checkout',
   PAYMENT_SUCCESS: '/audience/payment-success',

@@ -17,7 +17,7 @@ import clubsRoutes from "./modules/clubs/clubs.routes.js";
 import leaguesRoutes from "./modules/leagues/leagues.routes.js";
 import stadiumsRoutes from "./modules/stadiums/stadiums.routes.js";
 import usersRoutes from "./modules/users/users.routes.js";
-import newsRoutes from "./modules/news/news.routes.js";
+
 import aiRoutes from "./modules/ai/ai.routes.js";
 import uploadRoutes from "./modules/upload/upload.routes.js";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
@@ -61,7 +61,7 @@ app.use("/api", (req, res, next) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/sports", sportsRoutes);
-app.use("/api/news", newsRoutes);
+
 app.use("/api/clubs", clubsRoutes);
 app.use("/api/leagues", leaguesRoutes);
 app.use("/api/stadiums", stadiumsRoutes);

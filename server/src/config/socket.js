@@ -74,7 +74,7 @@ export const initSocket = (httpServer) => {
   return ioInstance;
 };
 
-export const getIo = () => ioInstance;
+
 
 export const emitToMatch = (matchId, eventName, payload) => {
   if (!ioInstance || !matchId) return;

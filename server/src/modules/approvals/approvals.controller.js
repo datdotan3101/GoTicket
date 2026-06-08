@@ -3,7 +3,7 @@ import { asyncHandler } from "../../middlewares/asyncHandler.js";
 import { sendError, sendSuccess } from "../../utils/response.js";
 import { approvalsService } from "./approvals.service.js";
 
-/** GET /api/approvals/pending — All pending approvals (?type=match|news|user_account) */
+/** GET /api/approvals/pending — All pending approvals (?type=match|user_account) */
 export const pendingApprovals = asyncHandler(async (req, res) => {
   const data = await approvalsService.getPendingApprovals(req.query);
   return sendSuccess(res, data);

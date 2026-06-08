@@ -14,10 +14,3 @@ export class AppError extends Error {
   }
 }
 
-/**
- * Factory function for AppError — alternative syntax.
- * @example
- *   throw createHttpError("Not found.", 404);
- */
-export const createHttpError = (message, statusCode = 500) =>
-  new AppError(message, statusCode);

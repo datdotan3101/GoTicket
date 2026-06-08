@@ -5,7 +5,7 @@ import { sendError } from "../utils/response.js";
 /**
  * Factory for creating a Redis-based Rate Limiter middleware
  */
-export const createRateLimiter = ({
+const createRateLimiter = ({
   windowMs = 60000, // Default: 1 minute
   max = 100, // Request limit
   keyPrefix = "rl",

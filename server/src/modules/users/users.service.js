@@ -222,7 +222,7 @@ export const usersService = {
       await client.query(`UPDATE matches SET created_by = NULL WHERE created_by = $1`, [id]);
       await client.query(`UPDATE approvals SET submitted_by = NULL WHERE submitted_by = $1`, [id]);
       await client.query(`UPDATE approvals SET reviewed_by = NULL WHERE reviewed_by = $1`, [id]);
-      await client.query(`UPDATE news SET author_id = NULL WHERE author_id = $1`, [id]);
+
       // 3. Delete user
       const result = await client.query(`DELETE FROM users WHERE id = $1 RETURNING id`, [id]);
       return result.rows[0] || null;

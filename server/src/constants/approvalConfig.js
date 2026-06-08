@@ -18,13 +18,7 @@ export const APPROVAL_RESOURCE_MAP = {
     approvedTitle: "Your match has been approved",
     rejectedTitle: "Your match has been rejected"
   },
-  news: {
-    table: "news",
-    approvedStatus: "approved",
-    rejectedStatus: "rejected",
-    approvedTitle: "Your article has been approved",
-    rejectedTitle: "Your article has been rejected"
-  },
+
   user_account: {
     table: "users",
     approvedStatus: true,   // is_approved = true

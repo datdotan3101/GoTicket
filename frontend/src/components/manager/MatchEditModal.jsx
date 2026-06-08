@@ -102,6 +102,7 @@ export default function MatchEditModal({
                 <DatePicker
                   selected={form.matchDate}
                   onChange={date => setForm(p => ({ ...p, matchDate: date }))}
+                  minDate={new Date()}
                   showTimeSelect
                   dateFormat="Pp"
                   className="mc-nice-input"
@@ -113,6 +114,8 @@ export default function MatchEditModal({
                 <DatePicker
                   selected={form.ticketSaleOpenAt}
                   onChange={date => setForm(p => ({ ...p, ticketSaleOpenAt: date }))}
+                  minDate={new Date()}
+                  maxDate={form.matchDate}
                   showTimeSelect
                   dateFormat="Pp"
                   className="mc-nice-input"

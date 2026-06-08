@@ -39,7 +39,7 @@ export default function Navbar() {
           {user?.role === ROLES.MANAGER && (
             <>
               <NavLink to={APP_ROUTES.MANAGER_DASHBOARD} className={linkClassName} end>Dashboard</NavLink>
-              <NavLink to={APP_ROUTES.MANAGER_MATCHES} className={linkClassName}>My Matches</NavLink>
+              <NavLink to={APP_ROUTES.MANAGER_MATCHES} className={linkClassName}>Matches</NavLink>
               <NavLink to={APP_ROUTES.MANAGER_MAILBOX} className={linkClassName}>Mailbox</NavLink>
             </>
           )}

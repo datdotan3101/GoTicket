@@ -6,7 +6,7 @@ import { invalidateCache } from "../../utils/cache.js";
 export const approvalsService = {
   /**
    * Get list of pending approvals.
-   * Can filter by resource_type: 'match' | 'news' | 'user_account'
+   * Can filter by resource_type: 'match' | 'user_account'
    */
   async getPendingApprovals(queryParams = {}) {
     const { type, status = 'pending' } = queryParams;
@@ -75,7 +75,7 @@ export const approvalsService = {
     const config = APPROVAL_RESOURCE_MAP[approval.resource_type];
     if (!config) return approval;
 
-    // Fetch additional info for the resource (match or news)
+    // Fetch additional info for the resource (match)
     if (approval.resource_type !== "user_account") {
       const resourceResult = await query(
         `SELECT * FROM ${config.table} WHERE id = $1 LIMIT 1`,
@@ -97,8 +97,8 @@ export const approvalsService = {
    * Process an approval decision (approve or reject).
    *
    * Logic for scheduled_publish_at:
-   * - match/news approved + has scheduled_publish_at → status = 'approved' (cron will publish at the scheduled time)
-   * - match/news approved + NO scheduled_publish_at → status = 'published' immediately
+   * - match approved + has scheduled_publish_at → status = 'approved' (cron will publish at the scheduled time)
+   * - match approved + NO scheduled_publish_at → status = 'published' immediately
    * - user_account approved → is_approved = true
    */
   async processApproval({ approvalId, action, reason, adminId }) {
@@ -127,7 +127,7 @@ export const approvalsService = {
         // user_account: set is_approved = true (no status field)
         resourceStatus = config.approvedStatus; // true
       } else {
-        // match/news: if has scheduled_publish_at → approved (cron publishes), otherwise → published immediately
+        // match: if has scheduled_publish_at → approved (cron publishes), otherwise → published immediately
         const hasSchedule = !!approval.scheduled_publish_at;
         resourceStatus = hasSchedule ? config.approvedStatus : "published";
       }
@@ -152,7 +152,7 @@ export const approvalsService = {
           approval.resource_id
         ]);
       } else {
-        // Update status of match/news
+        // Update status of match
         const updateFields = [`status = $1`];
         const updateValues = [resourceStatus, approval.resource_id];
         let fieldIdx = 3;
