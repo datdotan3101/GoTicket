@@ -284,7 +284,7 @@ export default function TicketDetailPage() {
             </div>
 
             <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '8px', color: 'var(--color-slate-900)' }}>
-              Gift this Ticket 🎁
+              Gift this Ticket
             </h2>
             <p style={{ color: 'var(--color-slate-500)', lineHeight: 1.5, marginBottom: '24px', fontSize: '0.95rem' }}>
               We'll send the QR code and match details directly to your friend's email.

@@ -18,7 +18,7 @@ export const clubsService = {
     }
     
     if (leagueId) {
-      conditions.push(`c.league_id = $${idx++}`);
+      conditions.push(`c.league_id = $${idx}`);
       values.push(Number(leagueId));
     }
 

@@ -148,7 +148,7 @@ export const authService = {
         user: getPublicUser(user)
       };
     } catch (error) {
-      throw new Error(error.message || "Google authentication failed.");
+      throw new Error(error.message || "Google authentication failed.", { cause: error });
     }
   },
 
@@ -254,7 +254,7 @@ export const authService = {
 
     try {
       await query("DELETE FROM users WHERE id = $1", [userId]);
-    } catch (error) {
+    } catch {
       // Fallback: Soft delete by setting is_active = false and obfuscating email and google_id
       // to allow the user to potentially register again with the same email/google account if they wanted.
       await query(

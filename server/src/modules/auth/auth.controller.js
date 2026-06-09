@@ -1,4 +1,3 @@
-import { validationResult } from "express-validator";
 import { HTTP_STATUS } from "../../constants/httpStatus.js";
 import { asyncHandler } from "../../middlewares/asyncHandler.js";
 import { sendError, sendSuccess } from "../../utils/response.js";

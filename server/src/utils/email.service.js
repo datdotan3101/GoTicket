@@ -1,4 +1,4 @@
-import QRCode from "qrcode";
+
 import { getMailer } from "../config/nodemailer.js";
 import { query } from "../config/db.js";
 import { logger } from "./logger.js";

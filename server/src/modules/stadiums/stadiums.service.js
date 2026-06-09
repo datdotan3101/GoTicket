@@ -15,7 +15,6 @@ export const stadiumsService = {
     if (search) {
       conditions.push(`(s.name ILIKE $${idx} OR s.city ILIKE $${idx})`);
       values.push(`%${search}%`);
-      idx++;
     }
 
     const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";

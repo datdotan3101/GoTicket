@@ -2,18 +2,6 @@ import { query, withTransaction } from "../../config/db.js";
 import { emitToMatch } from "../../config/socket.js";
 import { TICKET_STATUS } from "../../constants/ticketStatus.js";
 import { sendGiftTicketEmail } from "../../utils/email.service.js";
-import { validateSeatSelection } from "../../utils/seatValidation.js";
-
-const getSeatRowsForBooking = async (runner, matchId, seatIds) => {
-  const result = await runner(
-    `SELECT s.id, s.row_number, s.seat_number, s.status
-     FROM seats s
-     WHERE s.match_id = $1 AND s.id = ANY($2::bigint[])
-     FOR UPDATE`,
-    [matchId, seatIds]
-  );
-  return result.rows;
-};
 
 const generateTicketCode = () => {
   // Generate 5 random digits, e.g.: 47382

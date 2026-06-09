@@ -179,7 +179,6 @@ const executeAction = async (action, userId) => {
         let activeMatches = await getActiveMatchesContext("");
         activeMatches = activeMatches.filter(m => !m.ticket_sale_open_at || new Date(m.ticket_sale_open_at) <= new Date());
         
-        const lines = activeMatches.map(m => `- [ID:${m.id}] ${m.home_team} vs ${m.away_team} | Available: ${m.total_seats - m.sold_count} tickets`);
         
         return {
           actionType: "show_matches",
@@ -376,7 +375,7 @@ export const aiService = {
 
     // 2. OFFLINE FALLBACK (Rule-based)
     if (!aiResponse) {
-      aiResponse = await this._offlineFallback(messages, userId);
+      aiResponse = await this._offlineFallback(messages);
     }
 
     // Parse action if AI returned an action (or fallback already set one)
@@ -407,7 +406,7 @@ export const aiService = {
               `Action result: ${actionResult.contextForAI}\n\nRespond to the user based on this result. Do NOT return another action. Do NOT display IDs.`
             );
             finalReply = result2.response.text() || finalReply;
-          } catch { }
+          } catch { /* ignore error */ }
 
           return {
             message: stripInternalMarkers(finalReply),
@@ -440,7 +439,7 @@ export const aiService = {
   /**
    * Offline fallback — rule-based when no AI provider is available.
    */
-  async _offlineFallback(messages, userId) {
+  async _offlineFallback(messages) {
     const lastMsg = messages[messages.length - 1]?.content || "";
     const lowerMsg = lastMsg.toLowerCase();
 

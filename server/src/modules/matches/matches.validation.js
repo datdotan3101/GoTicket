@@ -1,5 +1,5 @@
 import { body } from "express-validator";
-import { TICKET_RULES } from "../../constants/ticketRules.js";
+
 
 export const createMatchRules = [
   body("homeTeam")

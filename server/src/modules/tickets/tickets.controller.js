@@ -59,7 +59,7 @@ export const generateQrImage = asyncHandler(async (req, res) => {
     try {
       const payload = jwt.decode(token);
       if (payload) ticketCode = payload.ticketCode;
-    } catch (e) {
+    } catch {
       // Ignore decoding errors — raw token will be used as QR data
     }
   }

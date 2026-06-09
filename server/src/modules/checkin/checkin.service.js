@@ -11,11 +11,11 @@ export const checkinService = {
       if (parsed && parsed.token) {
         tokenStr = parsed.token;
       }
-    } catch (e) {
+    } catch {
       // Not JSON, keep original token as-is
     }
 
-    let ticketCode = null;
+    let ticketCode;
     let ticketId = null;
 
     if (tokenStr.startsWith("ticket-group-")) {

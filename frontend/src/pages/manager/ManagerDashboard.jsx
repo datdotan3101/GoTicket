@@ -30,14 +30,7 @@ import {
   Line
 } from 'recharts'
 
-const MOCK_DATA = {
-  summary: {
-    total_revenue: 0,
-    total_tickets: 0,
-    total_matches: 0
-  },
-  byMatch: []
-}
+
 
 export default function ManagerDashboard() {
   const [data, setData] = useState(null)
@@ -65,11 +58,14 @@ export default function ManagerDashboard() {
       const response = await dashboardService.getManagerRevenue()
       const payload = unwrapData(response)
       setData({
-        summary: payload?.summary || MOCK_DATA.summary,
-        byMatch: payload?.byMatch || MOCK_DATA.byMatch
+        summary: payload?.summary || { total_revenue: 0, total_tickets: 0, total_matches: 0 },
+        byMatch: payload?.byMatch || []
       })
     } catch {
-      setData(MOCK_DATA)
+      setData({
+        summary: { total_revenue: 0, total_tickets: 0, total_matches: 0 },
+        byMatch: []
+      })
     } finally {
       setLoading(false)
     }

@@ -13,10 +13,8 @@ export const approvalsService = {
 
     const conditions = ["a.status = $1"];
     const values = [status];
-    let idx = 2;
-
     if (type) {
-      conditions.push(`a.resource_type = $${idx++}`);
+      conditions.push(`a.resource_type = $2`);
       values.push(type);
     }
 
@@ -155,7 +153,6 @@ export const approvalsService = {
         // Update status of match
         const updateFields = [`status = $1`];
         const updateValues = [resourceStatus, approval.resource_id];
-        let fieldIdx = 3;
 
         // If published immediately (no schedule) → set published_at = NOW()
         if (isApprove && !approval.scheduled_publish_at) {

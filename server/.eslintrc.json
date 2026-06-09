@@ -1,0 +1,1 @@
+{"env":{"node":true,"es2024":true},"parserOptions":{"sourceType":"module"},"rules":{"no-unused-vars":"error"}}
