@@ -85,7 +85,10 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
   useEffect(() => { window.totalAmount = totalAmount; }, [totalAmount]);
 
   const createPendingTickets = useCallback(async () => {
+    if (bookingInitiated.current) return;
+
     if (checkoutData?._fromChatbot && checkoutData?._ticketIds && checkoutData?._clientSecret) {
+      bookingInitiated.current = true;
       setTicketIds(checkoutData._ticketIds);
       setClientSecret(checkoutData._clientSecret);
       setIsInitializing(false);
@@ -93,7 +96,6 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
       return;
     }
 
-    if (bookingInitiated.current) return;
     bookingInitiated.current = true;
 
     const sessionStr = sessionStorage.getItem('checkoutSession');
@@ -114,7 +116,7 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
         } else {
           sessionStorage.removeItem('checkoutSession');
         }
-      } catch (e) {
+      } catch {
         sessionStorage.removeItem('checkoutSession');
       }
     }

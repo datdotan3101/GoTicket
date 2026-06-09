@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useChatStore } from '../../store/chatStore'
 import { aiService } from '../../services/aiService'
 import { unwrapData } from '../../utils/apiData'
+import { useCountdown } from '../../hooks/useCountdown'
 
 const formatVND = (amount = 0) => {
   const formatted = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(amount) || 0)
@@ -15,6 +16,10 @@ const formatDate = (dateStr) => {
     weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit', 
     hour: '2-digit', minute: '2-digit' 
   })
+}
+
+const formatTime = (cd) => {
+  return `${cd.minutes.toString().padStart(2, '0')}:${cd.seconds.toString().padStart(2, '0')}`
 }
 
 /* ─── MATCH CARD ─── */
@@ -124,6 +129,10 @@ function StandListCard({ data, onSelectStand }) {
 
 /* ─── BOOKING SUCCESS CARD ─── */
 function BookingCard({ data, onCheckout }) {
+  const [targetDate] = useState(() => Date.now() + 10 * 60 * 1000)
+  const countdown = useCountdown(targetDate)
+  const isExpired = countdown.isExpired
+
   if (!data) return null
   return (
     <div className="ai-booking-card">
@@ -161,10 +170,15 @@ function BookingCard({ data, onCheckout }) {
         type="button"
         className="ai-booking-checkout-btn"
         onClick={() => onCheckout(data)}
+        disabled={isExpired}
       >
-        💳 Pay Now
+        {isExpired ? 'Booking Expired' : 'Pay Now'}
       </button>
-      <p className="ai-booking-note">Tickets are being held temporarily. Please pay to complete.</p>
+      <p className="ai-booking-note">
+        {isExpired 
+          ? 'Your booking has expired.' 
+          : <span>Please complete payment in <strong>{formatTime(countdown)}</strong>. After this, your booking will be cancelled.</span>}
+      </p>
     </div>
   )
 }
