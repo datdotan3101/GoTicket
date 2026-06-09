@@ -7,15 +7,7 @@
   "scripts": {
     "dev": "node --watch index.js",
     "start": "node index.js",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "seed:admin": "node database/seeds/seed_admin.js",
-    "seed:sports": "node database/seeds/seed_sports.js",
-    "db:create": "node database/create-db.js",
-    "db:migrate": "node database/migrate-db.js",
-    "seed": "npm run db:create && npm run db:migrate && npm run seed:admin && npm run seed:sports",
-    "lint": "node -e \"console.log('No linter configured yet')\""
+    "lint": "eslint ."
   },
   "engines": {
     "node": ">=20"
@@ -43,6 +35,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "vitest": "^2.1.9"
+    "eslint": "^10.0.0"
   }
 }
