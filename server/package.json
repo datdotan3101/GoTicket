@@ -12,7 +12,6 @@
     "test:coverage": "vitest run --coverage",
     "seed:admin": "node database/seeds/seed_admin.js",
     "seed:sports": "node database/seeds/seed_sports.js",
-    "seed:demo": "node database/seeds/seed_demo_match.js",
     "db:create": "node database/create-db.js",
     "db:migrate": "node database/migrate-db.js",
     "seed": "npm run db:create && npm run db:migrate && npm run seed:admin && npm run seed:sports",
