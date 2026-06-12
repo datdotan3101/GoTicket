@@ -1,19 +1,13 @@
 import { Router } from "express";
 import multer from "multer";
 import path from "node:path";
-import fs from "node:fs";
-import crypto from "node:crypto";
+import stream from "node:stream";
 import { sendSuccess, sendError } from "../../utils/response.js";
+import cloudinary from "../../config/cloudinary.js";
 
 const router = Router();
 
-// Ensure upload directory exists
-const uploadDir = "public/uploads";
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Use memory storage so we can hash the file buffer before saving
+// Use memory storage so we can upload the file buffer directly to Cloudinary
 const storage = multer.memoryStorage();
 
 const upload = multer({ 
@@ -35,27 +29,26 @@ router.post("/", upload.single("file"), (req, res) => {
     return sendError(res, "No file uploaded.");
   }
   
-  // Calculate MD5 hash of the file content
   const fileBuffer = req.file.buffer;
-  const hash = crypto.createHash('md5').update(fileBuffer).digest('hex');
-  const ext = path.extname(req.file.originalname).toLowerCase();
-  
-  // Create a unique filename based purely on file content
-  const filename = `${hash}${ext}`;
-  const filePath = path.join(uploadDir, filename);
 
-  // Only save the file if it doesn't already exist on the server (Deduplication)
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, fileBuffer);
-  }
-  
-  // Return the path that can be served statically
-  const fileUrl = `${process.env.API_URL || "http://localhost:5000"}/uploads/${filename}`;
-  
-  return sendSuccess(res, { 
-    url: fileUrl,
-    filename: filename
-  });
+  const uploadStream = cloudinary.uploader.upload_stream(
+    { folder: "goticket_uploads" },
+    (error, result) => {
+      if (error) {
+        console.error("Cloudinary upload failed:", error);
+        return sendError(res, "Image upload to Cloudinary failed.");
+      }
+      
+      // Return the secure URL from Cloudinary
+      return sendSuccess(res, { 
+        url: result.secure_url,
+        filename: result.public_id
+      });
+    }
+  );
+
+  // Pipe the buffer to Cloudinary
+  stream.Readable.from(fileBuffer).pipe(uploadStream);
 });
 
 export default router;

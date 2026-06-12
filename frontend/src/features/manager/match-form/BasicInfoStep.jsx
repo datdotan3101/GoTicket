@@ -93,7 +93,7 @@ export default function BasicInfoStep({
                 <img src={previewBannerUrl} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 <button 
                   onClick={(e) => { e.preventDefault(); setPreviewBannerUrl(null); setSelectedBannerFile(null); }}
-                  style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(239, 68, 68, 0.9)', color: 'var(--color-white)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer' }}
+                  style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(239, 68, 68, 0.9)', color: 'var(--color-white)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
                 >×</button>
               </div>
             ) : (
