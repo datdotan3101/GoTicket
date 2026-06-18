@@ -24,17 +24,12 @@ export default function CheckoutForm({ clientSecret, onProcessing, onSuccess }) 
   const elements = useElements();
   const [isPaying, setIsPaying] = useState(false);
   const isPayingRef = useRef(false);
-  const [cardholderName, setCardholderName] = useState('');
   const [cardBrand, setCardBrand] = useState('visa');
 
   const handleConfirmPayment = async (event) => {
     event.preventDefault();
     if (isPayingRef.current) return;
     if (!stripe || !elements) return;
-    if (!cardholderName.trim()) {
-      notifyError('Please enter the cardholder name');
-      return;
-    }
 
     isPayingRef.current = true;
     setIsPaying(true);
@@ -44,7 +39,6 @@ export default function CheckoutForm({ clientSecret, onProcessing, onSuccess }) 
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: elements.getElement(CardNumberElement),
-          billing_details: { name: cardholderName },
         },
       });
 
@@ -90,10 +84,6 @@ export default function CheckoutForm({ clientSecret, onProcessing, onSuccess }) 
         <div className="card-chip" />
         <div className="card-number-display">•••• •••• •••• ••••</div>
         <div className="card-bottom">
-          <div className="card-holder">
-            <div className="card-label">CARDHOLDER</div>
-            <div className="card-value">{cardholderName || 'YOUR NAME HERE'}</div>
-          </div>
           <div className="card-expiry">
             <div className="card-label">EXPIRY</div>
             <div className="card-value">MM/YY</div>
@@ -109,16 +99,6 @@ export default function CheckoutForm({ clientSecret, onProcessing, onSuccess }) 
       </div>
 
       <div className="payment-inputs">
-        <div className="input-group">
-          <label><User size={14} /> Cardholder Name</label>
-          <input 
-            type="text" placeholder="NGUYEN VAN A" className="custom-input"
-            value={cardholderName}
-            onChange={(e) => setCardholderName(e.target.value.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/Đ/g, 'D'))}
-            required
-          />
-        </div>
-
         <div className="input-group">
           <label><CreditCard size={14} /> Card Number ({cardBrand.charAt(0).toUpperCase() + cardBrand.slice(1)})</label>
           <div className="stripe-input-wrapper">

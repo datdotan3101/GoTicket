@@ -1,5 +1,9 @@
 /**
  * Reusable Form Modal for admin management pages (Clubs, Sports, Leagues, etc.)
+ */
+import { X } from 'lucide-react'
+
+/**
  * 
  * Props:
  *  - isOpen: boolean — controls visibility
@@ -66,7 +70,7 @@ export default function FormModal({
               fontSize: '1rem'
             }}
           >
-            ✕
+            <X size={20} />
           </button>
         </div>
 

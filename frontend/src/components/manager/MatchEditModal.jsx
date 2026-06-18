@@ -20,6 +20,7 @@ export default function MatchEditModal({
     stadiumId: '',
     description: ''
   })
+  const [timeView, setTimeView] = useState({ matchDate: false, ticketSaleOpenAt: false })
 
   useEffect(() => {
     if (match) {
@@ -70,7 +71,7 @@ export default function MatchEditModal({
         <div className="modal-header">
           <h2 className="modal-title">Edit Match Campaign</h2>
           <button className="modal-close" onClick={onClose}>
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
         <form onSubmit={handleSubmit}>
@@ -101,25 +102,60 @@ export default function MatchEditModal({
                 <label>MATCH DATE & TIME</label>
                 <DatePicker
                   selected={form.matchDate}
-                  onChange={date => setForm(p => ({ ...p, matchDate: date }))}
+                  onCalendarOpen={() => setTimeView(p => ({...p, matchDate: false}))}
+                  onChange={date => {
+                    setTimeView(p => ({...p, matchDate: true}));
+                    setForm(p => ({ ...p, matchDate: date }));
+                  }}
                   minDate={new Date()}
-                  showTimeSelect
+                  shouldCloseOnSelect={false}
+                  calendarClassName={timeView.matchDate ? "hide-calendar" : ""}
+                  showTimeInput={timeView.matchDate}
+                  timeInputLabel="Time:"
                   dateFormat="Pp"
                   className="mc-nice-input"
                   required
-                />
+                >
+                  {timeView.matchDate ? (
+                    <div style={{ padding: '12px 16px', textAlign: 'center', borderTop: '1px solid var(--color-slate-100)', fontSize: '0.8rem', color: 'var(--color-slate-500)', fontWeight: '600', display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
+                      <button type="button" className="btn-solid dark" onClick={(e) => { e.preventDefault(); setTimeView(p => ({...p, matchDate: false})); }} style={{ padding: '6px 12px', fontSize: '0.75rem', margin: 0 }}>Back to Date</button>
+                      <div>Click outside to finish</div>
+                    </div>
+                  ) : (
+                    <div style={{ padding: '10px', textAlign: 'center', borderTop: '1px solid var(--color-slate-100)', fontSize: '0.8rem', color: 'var(--color-slate-500)', fontWeight: '600' }}>
+                      Select a date to continue
+                    </div>
+                  )}
+                </DatePicker>
               </div>
               <div className="mc-input-group">
                 <label>TICKET SALE START</label>
                 <DatePicker
                   selected={form.ticketSaleOpenAt}
-                  onChange={date => setForm(p => ({ ...p, ticketSaleOpenAt: date }))}
+                  onCalendarOpen={() => setTimeView(p => ({...p, ticketSaleOpenAt: false}))}
+                  onChange={date => {
+                    setTimeView(p => ({...p, ticketSaleOpenAt: true}));
+                    setForm(p => ({ ...p, ticketSaleOpenAt: date }));
+                  }}
                   minDate={new Date()}
-                  maxDate={form.matchDate}
-                  showTimeSelect
+                  shouldCloseOnSelect={false}
+                  calendarClassName={timeView.ticketSaleOpenAt ? "hide-calendar" : ""}
+                  showTimeInput={timeView.ticketSaleOpenAt}
+                  timeInputLabel="Time:"
                   dateFormat="Pp"
                   className="mc-nice-input"
-                />
+                >
+                  {timeView.ticketSaleOpenAt ? (
+                    <div style={{ padding: '12px 16px', textAlign: 'center', borderTop: '1px solid var(--color-slate-100)', fontSize: '0.8rem', color: 'var(--color-slate-500)', fontWeight: '600', display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
+                      <button type="button" className="btn-solid dark" onClick={(e) => { e.preventDefault(); setTimeView(p => ({...p, ticketSaleOpenAt: false})); }} style={{ padding: '6px 12px', fontSize: '0.75rem', margin: 0 }}>Back to Date</button>
+                      <div>Click outside to finish</div>
+                    </div>
+                  ) : (
+                    <div style={{ padding: '10px', textAlign: 'center', borderTop: '1px solid var(--color-slate-100)', fontSize: '0.8rem', color: 'var(--color-slate-500)', fontWeight: '600' }}>
+                      Select a date to continue
+                    </div>
+                  )}
+                </DatePicker>
               </div>
             </div>
 

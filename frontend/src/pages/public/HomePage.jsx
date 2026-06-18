@@ -8,6 +8,8 @@ import { unwrapData } from '../../utils/apiData'
 import { usePagination } from '../../hooks/usePagination'
 import { useStadiums } from '../../hooks/useStadiums'
 import { useMatchSearch } from '../../hooks/useMatchSearch'
+import LeagueAutocomplete from '../../components/ui/LeagueAutocomplete'
+import { useLeagues } from '../../hooks/useLeagues'
 
 export default function HomePage() {
   const [matches, setMatches] = useState([])
@@ -15,12 +17,14 @@ export default function HomePage() {
 
   // Search state
   const [heroQuery, setHeroQuery] = useState('')
+  const [heroLeague, setHeroLeague] = useState('')
   const [heroLocation, setHeroLocation] = useState('')
   const [heroDate, setHeroDate] = useState('')
   const debounceRef = useRef(null)
 
   // Shared hooks
   const stadiums = useStadiums()
+  const leagues = useLeagues()
   const {
     searchMatches,
     clearResults,
@@ -28,7 +32,7 @@ export default function HomePage() {
     isLoading: isSearching,
   } = useMatchSearch()
 
-  const isSearchActive = heroQuery.trim().length > 0 || heroLocation.trim().length > 0 || heroDate.trim().length > 0
+  const isSearchActive = heroQuery.trim().length > 0 || heroLeague.trim().length > 0 || heroLocation.trim().length > 0 || heroDate.trim().length > 0
 
   // Load all published matches on mount
   useEffect(() => {
@@ -61,16 +65,18 @@ export default function HomePage() {
     debounceRef.current = setTimeout(async () => {
       const params = { limit: 50, status: 'published' }
       if (heroQuery.trim()) params.q = heroQuery.trim()
+      if (heroLeague.trim()) params.league = heroLeague.trim()
       if (heroLocation.trim()) params.stadium = heroLocation.trim()
       if (heroDate) params.date = heroDate
       searchMatches(params)
     }, 400)
 
     return () => clearTimeout(debounceRef.current)
-  }, [heroQuery, heroLocation, heroDate, isSearchActive, searchMatches, clearResults])
+  }, [heroQuery, heroLeague, heroLocation, heroDate, isSearchActive, searchMatches, clearResults])
 
   const clearSearch = () => {
     setHeroQuery('')
+    setHeroLeague('')
     setHeroLocation('')
     setHeroDate('')
     clearResults()
@@ -123,7 +129,7 @@ export default function HomePage() {
     totalPages: endedTotalPages
   } = usePagination(endedMatches, 6)
 
-  const searchLabel = [heroQuery, heroLocation].filter(Boolean).join(' · ')
+  const searchLabel = [heroQuery, heroLeague, heroLocation].filter(Boolean).join(' · ')
 
   return (
     <div className="home-wrapper">
@@ -141,7 +147,7 @@ export default function HomePage() {
                 <Search size={16} color="var(--color-slate-400)" style={{ flexShrink: 0 }} />
                 <input
                   type="text"
-                  placeholder="Search by team, league..."
+                  placeholder="Search by team..."
                   value={heroQuery}
                   onChange={e => setHeroQuery(e.target.value)}
                   id="hero-search-input"
@@ -158,6 +164,17 @@ export default function HomePage() {
                   </button>
                 )}
               </div>
+
+              {/* League dropdown */}
+              <LeagueAutocomplete
+                value={heroLeague}
+                onChange={setHeroLeague}
+                leagues={leagues}
+                id="hero-league-input"
+                className="hs-input-wrap hs-border-r"
+                iconSize={16}
+                placeholder="League"
+              />
 
               {/* Location input — now uses shared component */}
               <StadiumAutocomplete
