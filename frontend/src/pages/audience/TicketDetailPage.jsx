@@ -2,14 +2,14 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import QRCodeLib from 'react-qr-code'
-import { toPng, toBlob } from 'html-to-image'
+import { toPng } from 'html-to-image'
 import { ticketService } from '../../services/ticketService'
 import { unwrapData } from '../../utils/apiData'
 import { formatDateTime } from '../../utils/formatters'
 import { formatVND } from '../../utils/formatters'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import { APP_ROUTES } from '../../constants/routes'
-import { ArrowLeft, Download, MapPin, Building2, Gift, X, Share2 } from 'lucide-react'
+import { ArrowLeft, Download, MapPin, Building2, Gift, X } from 'lucide-react'
 import { toast } from 'react-toastify'
 
 const QRCodeComponent = typeof QRCodeLib === 'object' && QRCodeLib.default ? QRCodeLib.default : (QRCodeLib.QRCode || QRCodeLib);
@@ -42,46 +42,6 @@ export default function TicketDetailPage() {
 
     fetchTicketDetail()
   }, [ticketId])
-
-  const handleShareTicket = async () => {
-    if (!ticketRef.current) return
-    
-    try {
-      const el = ticketRef.current
-      toast.info('Preparing image for sharing...', { autoClose: 1500 })
-      const blob = await toBlob(el, {
-        cacheBust: true,
-        backgroundColor: 'var(--color-slate-100)',
-        pixelRatio: 2,
-        width: el.offsetWidth,
-        height: el.offsetHeight,
-        style: { margin: '0', transform: 'none' }
-      })
-
-      if (!blob) throw new Error('Could not generate image')
-
-      const file = new File([blob], `GoTicket_${ticket.ticket_code}.png`, { type: 'image/png' })
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: 'My GoTicket',
-          text: 'Here is my ticket!',
-        })
-      } else if (navigator.clipboard && window.ClipboardItem) {
-        await navigator.clipboard.write([
-          new window.ClipboardItem({ 'image/png': blob })
-        ])
-        toast.success('Ticket copied to clipboard! You can now paste it in Zalo or Facebook.')
-      } else {
-        toast.error('Sharing is not supported on this browser. Please use "Save as Image" instead.')
-      }
-    } catch (err) {
-      if (err.name !== 'AbortError') {
-        toast.error('Failed to share ticket. Please try again.')
-      }
-    }
-  }
 
   const handleDownloadImage = async () => {
     if (!ticketRef.current) return
@@ -174,14 +134,6 @@ export default function TicketDetailPage() {
               <span>{ticket.is_gifted ? 'Already Gifted' : 'Gift Ticket'}</span>
             </button>
           )}
-          <button 
-            onClick={handleShareTicket} 
-            className="save-image-btn"
-            style={{ background: 'var(--color-slate-100)', color: 'var(--color-slate-700)', borderColor: 'var(--color-slate-300)' }}
-          >
-            <Share2 size={18} />
-            <span>Share</span>
-          </button>
           <button 
             onClick={handleDownloadImage} 
             className="save-image-btn"
