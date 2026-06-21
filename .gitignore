@@ -1,8 +1,5 @@
 .vscode/ 
-CLEANCODE.md 
-GoTicket.md 
-GoTicket_Backend.md 
-GoTicket_Frontend.md 
+*.md
 server/node_modules/ 
 server/.env
 server/query_clubs.js
@@ -11,5 +8,12 @@ server/scratch.js
 server/stripe.exe
 server/test-ai.js
 server/test_api.js
-PROJECT_CONTEXT.md
-DOCUMENTATION.md
+
+# Mockup data
+*mockup*
+*mockData*
+*mock_data*
+*.mock.json
+
+# Agent skills directory
+.agent/
