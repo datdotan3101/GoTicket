@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { CardNumberElement, CardExpiryElement, CardCvcElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { CreditCard, ShieldCheck, Loader2, User, CheckCircle2 } from 'lucide-react';
 import { paymentService } from '../../services/paymentService';
-import { notifySuccess, notifyError } from '../../utils/toastUtils';
+import { notifyError } from '../../utils/toastUtils';
 import visaLogo from '../../assets/visa-logo.png';
 import mastercardLogo from '../../assets/Mastercard-logo.svg.png';
 
@@ -48,18 +48,19 @@ export default function CheckoutForm({ clientSecret, onProcessing, onSuccess }) 
         try {
           await paymentService.confirmLocalPayment(result.paymentIntent.id);
           onSuccess();
-        } catch (confirmError) {
+        } catch {
           notifyError('Transaction successful but status update failed. Please contact support.');
         }
       }
-    } catch (err) {
+    } catch {
       notifyError('An error occurred. Please try again.');
     } finally {
-      if (!isPayingRef.current || document.hidden) return; // if successful, we just leave it loading or close.
-      // Wait, we need to reset if error
-      isPayingRef.current = false;
-      setIsPaying(false);
-      onProcessing(false);
+      if (isPayingRef.current && !document.hidden) {
+        // Wait, we need to reset if error
+        isPayingRef.current = false;
+        setIsPaying(false);
+        onProcessing(false);
+      }
     }
   };
 

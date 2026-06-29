@@ -33,7 +33,7 @@ export default function SeatSelectPage() {
           return 2;
         }
       }
-    } catch (e) {}
+    } catch { /* ignore */ }
     return 1;
   });
 

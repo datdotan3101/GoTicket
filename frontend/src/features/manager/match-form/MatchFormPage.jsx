@@ -102,7 +102,7 @@ export default function MatchFormPage() {
       activeBlocks.forEach(block => {
         configs[block.blockId] = { price: Number(columnConfigs[block.colId].price) || 0, capacity: seatDistribution[block.blockId] || 0, active: true };
       });
-    } catch (e) {}
+    } catch { /* ignore error during redistribution calculation */ }
     STADIUM_COLUMNS.forEach(col => col.tiers.forEach(tier => {
       const blockId = `${col.id}-${tier}`;
       if (!configs[blockId]) configs[blockId] = { price: Number(columnConfigs[col.id].price) || 0, capacity: 0, active: false };
@@ -152,7 +152,7 @@ export default function MatchFormPage() {
           await matchService.configureStands(newMatchId, { totalCapacity: Number(totalCapacity), blockConfigs });
           await matchService.submit(newMatchId);
         } catch (stepError) {
-          try { await matchService.delete(newMatchId); } catch {}
+          try { await matchService.delete(newMatchId); } catch { /* rollback failure */ }
           throw stepError;
         }
         notifySuccess('Match created and sent for approval!');

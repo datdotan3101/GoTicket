@@ -43,7 +43,7 @@ export default function StadiumConfigStep({
 
         setColumnConfigs(newConfigs);
         notifySuccess(`Successfully updated ${updatedCount} blocks`);
-      } catch (error) {
+      } catch {
         notifyError("Failed to parse Excel file");
       }
       if (fileInputRef.current) fileInputRef.current.value = '';

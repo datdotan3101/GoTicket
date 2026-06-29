@@ -11,13 +11,7 @@ const getAvatarInitial = (fullName) => {
   return words[words.length - 1].charAt(0).toUpperCase()
 }
 
-const ROLE_COLORS = {
-  admin:    'var(--color-warning)',
-  manager:  '#8b5cf6',
-  editor:   'var(--color-primary)',
-  checker:  'var(--color-success)',
-  audience: 'var(--color-primary)',
-}
+
 
 /** Tab button — active/inactive styles computed here */
 function TabButton({ tab, isActive, onClick }) {
@@ -60,7 +54,6 @@ export default function ProfileSidebar({
   fileInputRef,
   onAvatarChange,
 }) {
-  const roleBg = ROLE_COLORS[user?.role] ?? 'var(--color-primary)'
 
   const tabs = [
     { id: 'profile',  label: 'Personal Info',   icon: <User size={18} /> },

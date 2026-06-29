@@ -22,7 +22,7 @@ export const usePolling = (fetcher, eventsToListen = [], intervalMs = 30000) => 
         if (isMounted && fetcherRef.current) {
           await fetcherRef.current();
         }
-      } catch (err) {
+      } catch {
         // ignore error
       }
     };

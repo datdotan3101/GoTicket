@@ -20,7 +20,9 @@ export default function GoogleAuthButton() {
   // Store the latest callback values in a ref so the GSI callback always has
   // a fresh closure WITHOUT needing to re-initialize GSI on every render.
   const authHandlerRef = useRef(null)
-  authHandlerRef.current = { login, navigate, locationState: location.state }
+  useEffect(() => {
+    authHandlerRef.current = { login, navigate, locationState: location.state }
+  })
 
   const handleCredentialResponse = useCallback(async (response) => {
     const { login: _login, navigate: _navigate, locationState } = authHandlerRef.current

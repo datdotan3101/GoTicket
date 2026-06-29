@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell, Legend
+  PieChart, Pie, Cell, Legend
 } from 'recharts'
 import { Trophy, Medal, Download } from 'lucide-react'
-import { APP_ROUTES } from '../../constants/routes'
 import { dashboardService } from '../../services/dashboardService'
 import { unwrapData } from '../../utils/apiData'
 import { formatDateTime, formatVND } from '../../utils/formatters'
-import { downloadCSV } from '../../utils/excelUtils'
 
 const COLORS = ['var(--color-primary-700)', 'var(--color-success)', 'var(--color-warning)', 'var(--color-danger)', 'var(--color-primary)'];
 

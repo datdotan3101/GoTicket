@@ -104,22 +104,25 @@ export default function MatchEditModal({
                   selected={form.matchDate}
                   onCalendarOpen={() => setTimeView(p => ({...p, matchDate: false}))}
                   onChange={date => {
-                    setTimeView(p => ({...p, matchDate: true}));
+                    if (!timeView.matchDate) {
+                      setTimeView(p => ({...p, matchDate: true}));
+                    }
                     setForm(p => ({ ...p, matchDate: date }));
                   }}
                   minDate={new Date()}
-                  shouldCloseOnSelect={false}
-                  calendarClassName={timeView.matchDate ? "hide-calendar" : ""}
-                  showTimeInput={timeView.matchDate}
-                  timeInputLabel="Time:"
-                  dateFormat="Pp"
+                  shouldCloseOnSelect={timeView.matchDate}
+                  showTimeSelect={timeView.matchDate}
+                  showTimeSelectOnly={timeView.matchDate}
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  timeCaption="Time"
+                  dateFormat="dd/MM/yyyy HH:mm"
                   className="mc-nice-input"
                   required
                 >
                   {timeView.matchDate ? (
                     <div style={{ padding: '12px 16px', textAlign: 'center', borderTop: '1px solid var(--color-slate-100)', fontSize: '0.8rem', color: 'var(--color-slate-500)', fontWeight: '600', display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
                       <button type="button" className="btn-solid dark" onClick={(e) => { e.preventDefault(); setTimeView(p => ({...p, matchDate: false})); }} style={{ padding: '6px 12px', fontSize: '0.75rem', margin: 0 }}>Back to Date</button>
-                      <div>Click outside to finish</div>
                     </div>
                   ) : (
                     <div style={{ padding: '10px', textAlign: 'center', borderTop: '1px solid var(--color-slate-100)', fontSize: '0.8rem', color: 'var(--color-slate-500)', fontWeight: '600' }}>
@@ -134,21 +137,24 @@ export default function MatchEditModal({
                   selected={form.ticketSaleOpenAt}
                   onCalendarOpen={() => setTimeView(p => ({...p, ticketSaleOpenAt: false}))}
                   onChange={date => {
-                    setTimeView(p => ({...p, ticketSaleOpenAt: true}));
+                    if (!timeView.ticketSaleOpenAt) {
+                      setTimeView(p => ({...p, ticketSaleOpenAt: true}));
+                    }
                     setForm(p => ({ ...p, ticketSaleOpenAt: date }));
                   }}
                   minDate={new Date()}
-                  shouldCloseOnSelect={false}
-                  calendarClassName={timeView.ticketSaleOpenAt ? "hide-calendar" : ""}
-                  showTimeInput={timeView.ticketSaleOpenAt}
-                  timeInputLabel="Time:"
-                  dateFormat="Pp"
+                  shouldCloseOnSelect={timeView.ticketSaleOpenAt}
+                  showTimeSelect={timeView.ticketSaleOpenAt}
+                  showTimeSelectOnly={timeView.ticketSaleOpenAt}
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  timeCaption="Time"
+                  dateFormat="dd/MM/yyyy HH:mm"
                   className="mc-nice-input"
                 >
                   {timeView.ticketSaleOpenAt ? (
                     <div style={{ padding: '12px 16px', textAlign: 'center', borderTop: '1px solid var(--color-slate-100)', fontSize: '0.8rem', color: 'var(--color-slate-500)', fontWeight: '600', display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
                       <button type="button" className="btn-solid dark" onClick={(e) => { e.preventDefault(); setTimeView(p => ({...p, ticketSaleOpenAt: false})); }} style={{ padding: '6px 12px', fontSize: '0.75rem', margin: 0 }}>Back to Date</button>
-                      <div>Click outside to finish</div>
                     </div>
                   ) : (
                     <div style={{ padding: '10px', textAlign: 'center', borderTop: '1px solid var(--color-slate-100)', fontSize: '0.8rem', color: 'var(--color-slate-500)', fontWeight: '600' }}>

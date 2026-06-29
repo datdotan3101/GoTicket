@@ -53,6 +53,7 @@ export default function MailboxPage() {
     setSelectedIds([]);
     setFilter('all');
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const fetchData = async () => {
@@ -77,7 +78,7 @@ export default function MailboxPage() {
         const res = await messageService.getRecipients();
         setRecipients(unwrapData(res) || []);
       }
-    } catch (err) {
+    } catch {
       notifyError('Failed to load data');
     } finally {
       setLoading(false);
@@ -94,7 +95,7 @@ export default function MailboxPage() {
       setForm({ receiverId: '', subject: '', body: '' });
       if (!isDraft) window.dispatchEvent(new Event('message-sent'));
       setActiveTab(isDraft ? 'drafts' : 'sent');
-    } catch (err) {
+    } catch {
       notifyError('Failed to send message');
     }
   };
@@ -207,7 +208,7 @@ export default function MailboxPage() {
       setReplyBody('');
       window.dispatchEvent(new Event('message-sent'));
       fetchData();
-    } catch (err) {
+    } catch {
       notifyError('Failed to send reply');
     }
   };
@@ -238,7 +239,7 @@ export default function MailboxPage() {
       window.dispatchEvent(new Event('message-read'));
       fetchData();
       notifySuccess('Selected marked as read');
-    } catch (err) {
+    } catch {
       notifyError('Action failed');
     }
   };
@@ -250,7 +251,7 @@ export default function MailboxPage() {
       window.dispatchEvent(new Event('message-read'));
       fetchData();
       notifySuccess('All messages marked as read');
-    } catch (err) {
+    } catch {
       notifyError('Failed to mark all as read');
     }
   };
@@ -270,7 +271,7 @@ export default function MailboxPage() {
       setSelectedIds([]);
       fetchData();
       notifySuccess('Mail has been deleted');
-    } catch (err) {
+    } catch {
       notifyError('Failed to delete items');
     }
   };
@@ -292,7 +293,7 @@ export default function MailboxPage() {
         }
       }
       fetchData();
-    } catch (err) {
+    } catch {
       notifyError('Failed to toggle star');
     }
   };

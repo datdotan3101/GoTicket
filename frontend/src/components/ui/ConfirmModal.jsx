@@ -21,8 +21,10 @@ export default function ConfirmModal({
   title = 'Confirm Action',
   message = 'Are you sure? This action cannot be undone.',
   confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
   variant = 'danger',
-  isLoading = false
+  isLoading = false,
+  children
 }) {
   if (!isOpen) return null
 
@@ -75,9 +77,14 @@ export default function ConfirmModal({
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '12px', color: 'var(--color-slate-900)' }}>
           {title}
         </h2>
-        <div style={{ color: 'var(--color-slate-500)', lineHeight: 1.5, marginBottom: '28px', fontSize: '0.95rem' }}>
+        <div style={{ color: 'var(--color-slate-500)', lineHeight: 1.5, marginBottom: children ? '16px' : '28px', fontSize: '0.95rem' }}>
           {message}
         </div>
+        {children && (
+          <div style={{ marginBottom: '28px', textAlign: 'left' }}>
+            {children}
+          </div>
+        )}
         <div style={{ display: 'flex', gap: '12px' }}>
           <button
             onClick={onClose}
@@ -94,7 +101,7 @@ export default function ConfirmModal({
               opacity: isLoading ? 0.6 : 1
             }}
           >
-            Cancel
+            {cancelLabel}
           </button>
           <button
             onClick={onConfirm}

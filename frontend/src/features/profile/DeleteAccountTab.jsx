@@ -9,8 +9,6 @@ export default function DeleteAccountTab({
   showDeleteModal,
   setShowDeleteModal,
   deleteLoading,
-  deleteConfirmText,
-  setDeleteConfirmText,
   onConfirm,
 }) {
   return (

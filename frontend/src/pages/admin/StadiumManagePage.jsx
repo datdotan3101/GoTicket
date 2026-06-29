@@ -20,10 +20,6 @@ export default function StadiumManagePage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
 
-  useEffect(() => {
-    fetchStadiums()
-  }, [])
-
   const fetchStadiums = async () => {
     try {
       const res = await stadiumService.getAll()
@@ -33,6 +29,11 @@ export default function StadiumManagePage() {
       setStadiums([])
     }
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchStadiums()
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()

@@ -117,7 +117,7 @@ export default function ForgotPasswordPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [email])
+  }, [email, setResendCountdown])
 
   const handleRequestOTP = async (e) => {
     e.preventDefault()

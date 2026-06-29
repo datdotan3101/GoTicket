@@ -9,7 +9,7 @@ import { toast } from 'react-toastify'
 import { Eye, MapPin, Calendar, Clock, X, Check, XCircle, Users, ShoppingCart } from 'lucide-react'
 import { usePagination } from '../../hooks/usePagination'
 import Pagination from '../../components/ui/Pagination'
-
+import ConfirmModal from '../../components/ui/ConfirmModal'
 export default function MatchManagePage() {
   const [activeTab, setActiveTab] = useState('pending') // pending, approved, rejected
   const [matches, setMatches] = useState([])
@@ -362,32 +362,24 @@ export default function MatchManagePage() {
       )}
 
       {/* Reject Modal */}
-      {rejectingId && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.7)', zIndex: 1050, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(4px)' }}>
-          <div style={{ background: 'var(--color-white)', borderRadius: '24px', width: '100%', maxWidth: '500px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', padding: '30px' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--color-slate-800)', marginBottom: '12px' }}>Reject Match</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-slate-500)', marginBottom: '20px', lineHeight: 1.5 }}>
-              Please provide a reason for rejecting this match.
-            </p>
-            <textarea
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="E.g., Match date conflicts..."
-              rows={4}
-              style={{ width: '100%', padding: '16px', borderRadius: '12px', border: '1px solid var(--color-slate-300)', fontSize: '0.9rem', color: 'var(--color-slate-800)', marginBottom: '24px', resize: 'vertical', background: 'var(--color-slate-50)', outline: 'none' }}
-              autoFocus
-            />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              <button type="button" className="mc-btn mc-btn-ghost" onClick={() => setRejectingId(null)}>
-                Cancel
-              </button>
-              <button type="button" className="mc-btn" style={{ background: 'var(--color-danger)', color: 'var(--color-white)', borderColor: 'var(--color-danger)' }} onClick={submitReject}>
-                Confirm Reject
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={!!rejectingId}
+        onClose={() => setRejectingId(null)}
+        onConfirm={submitReject}
+        title="Reject Match"
+        message="Please provide a reason for rejecting this match."
+        confirmLabel="Confirm Reject"
+        variant="danger"
+      >
+        <textarea
+          value={rejectReason}
+          onChange={(e) => setRejectReason(e.target.value)}
+          placeholder="E.g., Match date conflicts..."
+          rows={4}
+          style={{ width: '100%', padding: '16px', borderRadius: '12px', border: '1px solid var(--color-slate-300)', fontSize: '0.9rem', color: 'var(--color-slate-800)', resize: 'vertical', background: 'var(--color-slate-50)', outline: 'none' }}
+          autoFocus
+        />
+      </ConfirmModal>
     </section>
   )
 }
