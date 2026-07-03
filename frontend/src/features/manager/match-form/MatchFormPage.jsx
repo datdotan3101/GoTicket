@@ -63,7 +63,10 @@ export default function MatchFormPage() {
         setClubs(unwrapData(clubsRes)?.data || unwrapData(clubsRes) || []);
 
         if (isEditMode) {
-          const matchRes = await matchService.getById(matchId);
+          const [matchRes, standsRes] = await Promise.all([
+            matchService.getById(matchId),
+            matchService.getAvailability(matchId).catch(() => null)
+          ]);
           const match = unwrapData(matchRes);
           setForm({
             leagueId: match.league_id, homeTeam: match.home_team || '', awayTeam: match.away_team || '',
@@ -72,6 +75,28 @@ export default function MatchFormPage() {
             stadiumId: match.stadium_id || '', description: match.description || '',
           });
           if (match.thumbnail_url) setPreviewBannerUrl(match.thumbnail_url);
+
+          const existingStands = standsRes ? (unwrapData(standsRes) || []) : [];
+          if (existingStands.length > 0) {
+            setColumnConfigs(prev => {
+              const newConfigs = { ...prev };
+              // Clear active tiers first
+              STADIUM_COLUMNS.forEach(col => {
+                newConfigs[col.id] = { ...newConfigs[col.id], activeTiers: [] };
+              });
+              
+              existingStands.forEach(stand => {
+                const [colId, tier] = stand.name.split('-');
+                if (newConfigs[colId]) {
+                  newConfigs[colId].price = String(Math.floor(stand.price));
+                  if (!newConfigs[colId].activeTiers.includes(tier)) {
+                    newConfigs[colId].activeTiers.push(tier);
+                  }
+                }
+              });
+              return newConfigs;
+            });
+          }
         }
       } catch {
         notifyError('Failed to load data');
@@ -143,6 +168,9 @@ export default function MatchFormPage() {
 
       if (isEditMode) {
         await matchService.update(matchId, basicPayload);
+        if (step >= 2) {
+          await matchService.configureStands(matchId, { totalCapacity: Number(totalCapacity), blockConfigs });
+        }
         await matchService.submit(matchId);
         notifySuccess('Match updated and submitted!');
       } else {
@@ -169,21 +197,19 @@ export default function MatchFormPage() {
     <section className="manager-create-page" style={{ padding: '60px 20px' }}>
       <div style={{ width: '100%', maxWidth: '1100px', margin: '0 auto 40px auto', textAlign: 'center' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#1e1b4b', marginBottom: '12px' }}>{isEditMode ? 'Update Match' : 'Create New Match'}</h1>
-        <p style={{ fontSize: '1.1rem', color: 'var(--color-slate-500)' }}>Configure your tournament event details {isEditMode ? '' : 'and stadium seating'}.</p>
+        <p style={{ fontSize: '1.1rem', color: 'var(--color-slate-500)' }}>Configure your tournament event details and stadium seating.</p>
         
-        {!isEditMode && (
-          <div className="mc-stepper" style={{ maxWidth: '800px', margin: '20px auto 0' }}>
-            <div className={`mc-step ${step >= 1 ? 'active' : ''}`}><div className="mc-step-meta"><span className="mc-step-label">STEP 01</span><div className="mc-step-bar"></div></div><div className="mc-step-title">Basic Information</div></div>
-            <div className={`mc-step ${step >= 2 ? 'active' : ''}`}><div className="mc-step-meta"><span className="mc-step-label">STEP 02</span><div className="mc-step-bar"></div></div><div className="mc-step-title">Configuration</div></div>
-          </div>
-        )}
+        <div className="mc-stepper" style={{ maxWidth: '800px', margin: '20px auto 0' }}>
+          <div className={`mc-step ${step >= 1 ? 'active' : ''}`}><div className="mc-step-meta"><span className="mc-step-label">STEP 01</span><div className="mc-step-bar"></div></div><div className="mc-step-title">Basic Information</div></div>
+          <div className={`mc-step ${step >= 2 ? 'active' : ''}`}><div className="mc-step-meta"><span className="mc-step-label">STEP 02</span><div className="mc-step-bar"></div></div><div className="mc-step-title">Configuration</div></div>
+        </div>
       </div>
 
       <div className="mc-step-content" style={{ padding: '40px 0' }}>
         {step === 1 && (
           <BasicInfoStep form={form} setForm={setForm} leagues={leagues} stadiums={stadiums} clubOptions={clubOptions} previewBannerUrl={previewBannerUrl} setPreviewBannerUrl={setPreviewBannerUrl} setSelectedBannerFile={setSelectedBannerFile} />
         )}
-        {step === 2 && !isEditMode && (
+        {step === 2 && (
           <StadiumConfigStep totalCapacity={totalCapacity} columnConfigs={columnConfigs} setColumnConfigs={setColumnConfigs} STADIUM_COLUMNS={STADIUM_COLUMNS} />
         )}
       </div>
@@ -192,15 +218,14 @@ export default function MatchFormPage() {
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', width: '100%' }}>
           <button className="mc-btn mc-btn-ghost" onClick={() => navigate(-1)}>Cancel</button>
           <div className="mc-footer-right">
-            {step === 2 && !isEditMode && <button className="mc-btn mc-btn-secondary" onClick={() => setStep(1)}>Back</button>}
-            {step === 1 && !isEditMode && <button className="mc-btn mc-btn-primary" onClick={() => validateStep(1) && setStep(2)}>Configure Stadium <ArrowRight size={18} /></button>}
-            {step === 1 && isEditMode && <button className="mc-btn mc-btn-primary" onClick={() => validateStep(1) && handleSave()} disabled={isSubmitting}>Save Changes <CheckCircle size={18} /></button>}
-            {step === 2 && !isEditMode && <button className="mc-btn mc-btn-primary" onClick={() => validateStep(2) && setShowConfirmPopup(true)}>Review & Publish <CheckCircle size={18} /></button>}
+            {step === 2 && <button className="mc-btn mc-btn-secondary" onClick={() => setStep(1)}>Back</button>}
+            {step === 1 && <button className="mc-btn mc-btn-primary" onClick={() => validateStep(1) && setStep(2)}>Configure Stadium <ArrowRight size={18} /></button>}
+            {step === 2 && <button className="mc-btn mc-btn-primary" onClick={() => validateStep(2) && setShowConfirmPopup(true)}>Review & Publish <CheckCircle size={18} /></button>}
           </div>
         </div>
       </div>
 
-      {showConfirmPopup && !isEditMode && (
+      {showConfirmPopup && (
         <div className="modal-overlay" onClick={() => setShowConfirmPopup(false)}>
           <div className="modal-content" style={{ maxWidth: '700px', padding: '40px' }} onClick={e => e.stopPropagation()}>
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>

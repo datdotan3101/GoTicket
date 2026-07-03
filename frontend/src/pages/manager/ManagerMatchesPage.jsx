@@ -1,5 +1,5 @@
 import { useEffect, useState, Suspense, lazy } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Pagination from '../../components/ui/Pagination'
 const ManagerMatchCard = lazy(() => import('../../components/manager/ManagerMatchCard'))
 import { usePagination } from '../../hooks/usePagination'
@@ -14,27 +14,23 @@ import ConfirmModal from '../../components/ui/ConfirmModal'
 import { APP_ROUTES } from '../../constants/routes'
 import { dashboardService } from '../../services/dashboardService'
 import { matchService } from '../../services/matchService'
-import { stadiumService } from '../../services/stadiumService'
-import MatchEditModal from '../../components/manager/MatchEditModal'
+
 import { unwrapData } from '../../utils/apiData'
 
 export default function ManagerMatchesPage() {
+  const navigate = useNavigate()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
-  const [stadiums, setStadiums] = useState([])
+
   
   // Tab state
   const [activeTab, setActiveTab] = useState('pending') // 'pending', 'approved', 'ended'
-
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [editingMatch, setEditingMatch] = useState(null)
 
   // Delete modal state
   const [matchToDelete, setMatchToDelete] = useState(null)
 
   useEffect(() => {
     fetchAll()
-    fetchStadiums()
   }, [])
 
   const fetchAll = async () => {
@@ -54,40 +50,10 @@ export default function ManagerMatchesPage() {
     }
   }
 
-  const fetchStadiums = async () => {
-    try {
-      const res = await stadiumService.getAll()
-      setStadiums(unwrapData(res) || [])
-    } catch (err) {
-      console.error(err)
-    }
-  }
+
 
   const handleOpenEdit = (match) => {
-    setEditingMatch(match)
-    setIsEditModalOpen(true)
-  }
-
-  const handleUpdateMatch = async (payload) => {
-    try {
-      await matchService.update(editingMatch.match_id, payload)
-      toast.success('Match updated successfully')
-      setIsEditModalOpen(false)
-      fetchAll()
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Update failed')
-    }
-  }
-
-  const handleSubmitForReview = async () => {
-    try {
-      await matchService.submit(editingMatch.match_id)
-      toast.success('Submitted for approval')
-      setIsEditModalOpen(false)
-      fetchAll()
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Submit failed')
-    }
+    navigate(`/manager/matches/${match.match_id}/edit`)
   }
 
   const handleDeleteMatch = async () => {
@@ -106,7 +72,8 @@ export default function ManagerMatchesPage() {
   const filteredMatches = data.filter(match => {
     const isEnded = new Date(match.match_date) < new Date()
     if (activeTab === 'ended') return isEnded
-    if (activeTab === 'pending') return !isEnded && ['draft', 'pending_review', 'rejected'].includes(match.status)
+    if (activeTab === 'pending') return !isEnded && ['draft', 'pending_review'].includes(match.status)
+    if (activeTab === 'rejected') return !isEnded && match.status === 'rejected'
     if (activeTab === 'approved') return !isEnded && ['approved', 'published'].includes(match.status)
     return false
   })
@@ -145,6 +112,7 @@ export default function ManagerMatchesPage() {
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--color-slate-200)', paddingBottom: '16px' }}>
         {[
           { id: 'pending', label: 'Pending match' },
+          { id: 'rejected', label: 'Rejected match' },
           { id: 'approved', label: 'Published match' },
           { id: 'ended', label: 'Ended match' }
         ].map(tab => (
@@ -211,16 +179,6 @@ export default function ManagerMatchesPage() {
           onPageChange={setCurrentPage}
         />
       )}
-
-      {/* Edit Match Modal */}
-      <MatchEditModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        match={editingMatch}
-        stadiums={stadiums}
-        onUpdate={handleUpdateMatch}
-        onSubmitForReview={handleSubmitForReview}
-      />
     </div>
   )
 }

@@ -13,18 +13,18 @@ export default function ManagerMatchCard({ match, onOpenEdit, onDelete }) {
   const isDeletable = ['draft', 'pending_review', 'rejected'].includes(match.status);
 
   const menuItems = [];
-  if (isEditable) {
+  if (!isEditable) { // meaning approved or published
     menuItems.push({
       label: 'Stands',
       icon: <Settings size={16} />,
       to: `/manager/matches/${match.match_id}/stand-config`
     });
+    menuItems.push({
+      label: 'Analytics',
+      icon: <BarChart2 size={16} />,
+      to: `/manager/matches/${match.match_id}/analytics`
+    });
   }
-  menuItems.push({
-    label: 'Analytics',
-    icon: <BarChart2 size={16} />,
-    to: `/manager/matches/${match.match_id}/analytics`
-  });
 
   return (
     <article className="match-card manager-match-card-override" style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -49,6 +49,30 @@ export default function ManagerMatchCard({ match, onOpenEdit, onDelete }) {
           boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
         }}>
           Pending
+        </span>
+      ) : match.status === 'rejected' ? (
+        <span className="status-badge" style={{ 
+          position: 'absolute', 
+          top: '12px', 
+          left: '12px', 
+          zIndex: 20,
+          background: 'var(--color-danger)',
+          color: 'var(--color-white)',
+          boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+        }}>
+          Rejected
+        </span>
+      ) : match.status === 'draft' ? (
+        <span className="status-badge" style={{ 
+          position: 'absolute', 
+          top: '12px', 
+          left: '12px', 
+          zIndex: 20,
+          background: 'var(--color-slate-500)',
+          color: 'var(--color-white)',
+          boxShadow: '0 4px 12px rgba(100, 116, 139, 0.3)'
+        }}>
+          Draft
         </span>
       ) : (
         <span className="status-badge approved" style={{ 
@@ -133,6 +157,13 @@ export default function ManagerMatchCard({ match, onOpenEdit, onDelete }) {
           </span>
         </div>
       </div>
+      
+      {match.status === 'rejected' && match.rejection_reason && (
+        <div style={{ padding: '16px 20px', background: 'var(--color-danger-light)', borderTop: '1px solid #fca5a5', fontSize: '0.85rem', color: '#b91c1c', borderBottomLeftRadius: '24px', borderBottomRightRadius: '24px' }}>
+          <strong>Reason for Rejection:</strong>
+          <p style={{ margin: '4px 0 0 0' }}>{match.rejection_reason}</p>
+        </div>
+      )}
     </article>
   )
 }
