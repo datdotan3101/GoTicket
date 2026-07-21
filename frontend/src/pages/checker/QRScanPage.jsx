@@ -1,19 +1,15 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState } from 'react'
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
-import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import {
-  ChevronLeft,
-  Keyboard,
-  CheckCircle2,
-  AlertCircle,
-  Camera,
-  Search
-} from 'lucide-react'
 import { checkinService } from '../../services/checkinService'
 import { matchService } from '../../services/matchService'
 import { unwrapData } from '../../utils/apiData'
+
+import ScannerHeader from './components/ScannerHeader'
+import ScannerCard from './components/ScannerCard'
+import CheckinStats from './components/CheckinStats'
+import ScanHistoryTable from './components/ScanHistoryTable'
 
 const VIEWPORT_ID = 'qr-reader-viewport'
 
@@ -257,248 +253,35 @@ export default function QRScanPage() {
   }, [mode, scanResult])
 
   const currentMatch = matches.find(m => String(m.id) === selectedMatchId)
-  const checkinPercentage = stats.total_tickets > 0 ? Math.round((stats.checked_in_tickets / stats.total_tickets) * 100) : 0
-  const radius = 70
-  const circumference = 2 * Math.PI * radius
-  const strokeDashoffset = circumference - (checkinPercentage / 100) * circumference
 
   return (
     <div className="checker-console-layout bg-slate-50 min-h-screen">
       <div className="container max-w-6xl py-8">
-        {/* Header */}
-        <header className="console-header mb-8 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex justify-between items-center">
-          <div className="console-title-wrap">
-            <Link to="/checker" className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 mb-2 transition-colors font-semibold">
-              <ChevronLeft size={18} />
-              <span className="text-sm uppercase tracking-wider">Back to Dashboard</span>
-            </Link>
-
-          </div>
-          
-          <div className="console-match-info text-right bg-slate-50 px-4 py-3 rounded-xl border border-slate-100">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Active Event</span>
-            <div className="text-sm font-bold text-slate-800">
-              {currentMatch ? `${currentMatch.home_team} vs ${currentMatch.away_team}` : 'No Match Selected'}
-            </div>
-          </div>
-        </header>
+        <ScannerHeader currentMatch={currentMatch} />
 
         {/* Main Grid: Scanner Left, Stats Right */}
         <div className="grid lg:grid-cols-[1fr_320px] gap-6 mb-8">
-          
-          {/* SCANNER CARD (PRIMARY) */}
-          <div className="bg-slate-900 rounded-3xl overflow-hidden relative shadow-lg flex flex-col h-[400px] lg:h-[450px]">
-            
-            {/* Header overlay */}
-            <div className="absolute top-0 left-0 right-0 p-6 flex flex-col md:flex-row justify-between items-start md:items-center z-20 bg-linear-to-b from-slate-900/80 to-transparent gap-4">
-              <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${cameraStatus === 'active' ? 'bg-green-500 shadow-[0_0_10px_var(--color-success-alt)]' : 'bg-red-500 animate-pulse'}`}></div>
-                <span className="text-white font-bold text-sm tracking-wide uppercase">
-                  {mode === 'scan' ? (cameraStatus === 'active' ? 'Camera Active' : 'Initializing...') : 'Manual Mode'}
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-3 w-full md:w-auto">
-                {mode === 'scan' && cameras.length > 0 && (
-                  <select 
-                    value={selectedCameraId} 
-                    onChange={handleCameraChange}
-                    className="bg-black/50 text-white border border-white/20 rounded-lg px-3 py-2 text-sm w-full md:w-auto max-w-full md:max-w-[200px] outline-none focus:border-indigo-500 truncate"
-                  >
-                    {cameras.map(c => (
-                      <option key={c.id} value={c.id}>{c.label || `Camera ${c.id.substring(0,5)}`}</option>
-                    ))}
-                  </select>
-                )}
-                <button
-                  onClick={() => setMode(mode === 'scan' ? 'manual' : 'scan')}
-                  className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all border border-white/10 whitespace-nowrap"
-                >
-                  {mode === 'scan' ? <><Keyboard size={16} /> Manual</> : <><Camera size={16} /> Camera</>}
-                </button>
-              </div>
-            </div>
+          <ScannerCard 
+            mode={mode}
+            setMode={setMode}
+            cameraStatus={cameraStatus}
+            cameras={cameras}
+            selectedCameraId={selectedCameraId}
+            onCameraChange={handleCameraChange}
+            viewportId={VIEWPORT_ID}
+            showSuccess={showSuccess}
+            scanResult={scanResult}
+            ticketCode={ticketCode}
+            setTicketCode={setTicketCode}
+            onSubmit={onSubmit}
+            isSubmitting={isSubmitting}
+            inputRef={inputRef}
+          />
 
-            {/* Viewport Area */}
-            <div className="flex-1 relative flex items-center justify-center bg-black/50">
-              {mode === 'scan' ? (
-                <>
-                  <div id={VIEWPORT_ID} className="w-full h-full object-cover"></div>
-                  {/* Camera frame decorations */}
-                  {cameraStatus === 'active' && !showSuccess && (
-                    <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
-                      <div 
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] rounded-4xl border border-white/20 transition-all duration-300" 
-                        style={{ boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)' }}
-                      >
-                        {/* Corners */}
-                        <div className="absolute -top-0.5 -left-0.5 w-10 h-10 border-t-4 border-l-4 border-indigo-500 rounded-tl-4xl"></div>
-                        <div className="absolute -top-0.5 -right-0.5 w-10 h-10 border-t-4 border-r-4 border-indigo-500 rounded-tr-4xl"></div>
-                        <div className="absolute -bottom-0.5 -left-0.5 w-10 h-10 border-b-4 border-l-4 border-indigo-500 rounded-bl-4xl"></div>
-                        <div className="absolute -bottom-0.5 -right-0.5 w-10 h-10 border-b-4 border-r-4 border-indigo-500 rounded-br-4xl"></div>
-                        
-                        {/* Scan line */}
-                        <div className="absolute left-2 right-2 h-0.5 bg-indigo-500/80 animate-scan-line shadow-[0_0_15px_var(--color-primary)]"></div>
-                        
-                        {/* Target reticles */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 opacity-20">
-                          <div className="absolute top-1/2 left-0 right-0 h-px bg-white"></div>
-                          <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white"></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="w-full max-w-sm px-6 flex flex-col gap-6 z-10">
-                  <div className="text-center text-white">
-                    <h2 className="text-2xl font-bold mb-2">Manual Ticket Entry</h2>
-                    <p className="text-slate-400 text-sm">Enter the ticket code manually if the QR code is unreadable or damaged.</p>
-                  </div>
-                  <form onSubmit={onSubmit} className="flex flex-col gap-4 w-full">
-                    <input
-                      ref={inputRef}
-                      autoFocus
-                      placeholder="e.g. GT-ABC123XYZ"
-                      className="w-full bg-slate-800/80 border-2 border-slate-700 focus:border-indigo-500 rounded-xl px-6 py-4 text-white text-lg font-mono text-center outline-none transition-colors shadow-inner"
-                      value={ticketCode}
-                      onChange={(e) => setTicketCode(e.target.value.toUpperCase())}
-                      disabled={isSubmitting}
-                    />
-                    <button 
-                      type="submit" 
-                      disabled={isSubmitting || !ticketCode.trim()} 
-                      className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-400 text-white font-bold text-lg py-4 rounded-xl transition-all shadow-[0_4px_14px_rgba(79,70,229,0.4)] disabled:shadow-none"
-                    >
-                      {isSubmitting ? 'Verifying...' : 'Verify Ticket'}
-                    </button>
-                  </form>
-                </div>
-              )}
-
-              {/* Success Overlay */}
-              {showSuccess && scanResult && (
-                <div className="absolute inset-0 bg-green-600/95 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-white animate-fadeIn">
-                  <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mb-6">
-                    <CheckCircle2 size={48} className="text-white" />
-                  </div>
-                  <h2 className="text-3xl font-black mb-2 tracking-tight">ACCESS GRANTED</h2>
-                  <div className="text-center mb-8">
-                    <p className="text-xl font-bold text-green-100 mb-1">{scanResult.fullName}</p>
-                    <p className="font-mono text-green-200">{scanResult.ticketCode}</p>
-                  </div>
-                  <div className="bg-black/20 px-6 py-3 rounded-full font-bold text-sm">
-                    {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                  </div>
-                </div>
-              )}
-
-
-            </div>
-          </div>
-
-          {/* PROGRESS CARD (SECONDARY) */}
-          <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col items-center justify-center">
-            <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-8">Check-in Status</h2>
-            
-            <div className="relative w-48 h-48 mb-8 flex items-center justify-center">
-              <svg width="100%" height="100%" viewBox="0 0 160 160" className="-rotate-90">
-                <circle cx="80" cy="80" r={radius} fill="none" stroke="var(--color-slate-100)" strokeWidth="12" />
-                <circle 
-                  cx="80" cy="80" r={radius} 
-                  fill="none" 
-                  stroke="var(--color-primary-600)" 
-                  strokeWidth="12" 
-                  strokeLinecap="round"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
-                  className="transition-all duration-1000 ease-out"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-4xl font-black text-slate-900">{checkinPercentage}%</span>
-                <span className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wide">Filled</span>
-              </div>
-            </div>
-
-            <div className="w-full grid grid-cols-2 gap-4">
-              <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 text-center">
-                <span className="block text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">Checked In</span>
-                <span className="text-xl font-black text-indigo-700">{stats.checked_in_tickets.toLocaleString()}</span>
-              </div>
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-center">
-                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Remaining</span>
-                <span className="text-xl font-black text-slate-700">{stats.not_checked_in_tickets.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
+          <CheckinStats stats={stats} />
         </div>
 
-        {/* ENTRY HISTORY */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-black text-slate-900 flex items-center gap-3">
-              <div className="w-2 h-6 bg-indigo-500 rounded-full"></div>
-              Recent Scans
-            </h2>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[600px]">
-              <thead>
-                <tr>
-                  <th className="py-4 px-4 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">Time</th>
-                  <th className="py-4 px-4 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">Customer</th>
-                  <th className="py-4 px-4 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">Ticket Code</th>
-                  <th className="py-4 px-4 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">Ticket Info</th>
-                  <th className="py-4 px-4 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">Total Tickets</th>
-                  <th className="py-4 px-4 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.length > 0 ? history.map((item, i) => {
-                  // Simplify seats like "A4-T2-1-1, A4-T2-1-2" to unique blocks like "A4-T2"
-                  const blocks = item.class !== 'Standard' && item.class ? Array.from(new Set(item.class.split(',').map(s => {
-                    const parts = s.trim().split('-');
-                    return parts.length >= 2 ? `${parts[0]}-${parts[1]}` : s.trim();
-                  }))).join(', ') : item.class;
-
-                  return (
-                    <tr key={i} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-4 px-4 border-b border-slate-50 text-sm font-semibold text-slate-500">{item.time}</td>
-                      <td className="py-4 px-4 border-b border-slate-50">
-                        <div className="font-bold text-slate-900">{item.customer}</div>
-                      </td>
-                      <td className="py-4 px-4 border-b border-slate-50 font-mono text-sm font-medium text-slate-600">
-                        {item.ticketCode}
-                      </td>
-                      <td className="py-4 px-4 border-b border-slate-50">
-                        <span className={`inline-block w-fit px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-600`}>
-                          {blocks}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 border-b border-slate-50 text-center">
-                        <span className="font-black text-slate-700 bg-slate-100 px-3 py-1 rounded-full">{item.totalTickets}</span>
-                      </td>
-                      <td className="py-4 px-4 border-b border-slate-50">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${item.status === 'ENTERED' || item.status === 'VALID' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                          {item.status === 'ENTERED' || item.status === 'VALID' ? <CheckCircle2 size={12} strokeWidth={3} /> : <AlertCircle size={12} strokeWidth={3} />}
-                          {item.status}
-                        </span>
-                      </td>
-                    </tr>
-                  )
-                }) : (
-                  <tr>
-                    <td colSpan="6" className="text-center py-12 text-slate-400 font-medium bg-slate-50 rounded-xl border border-dashed border-slate-200 mt-4">
-                      No tickets scanned in this session yet.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <ScanHistoryTable history={history} />
       </div>
       
       <style dangerouslySetInnerHTML={{ __html: `
