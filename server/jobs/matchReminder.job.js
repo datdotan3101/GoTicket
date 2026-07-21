@@ -93,7 +93,7 @@ export const startMatchReminderJob = () => {
 
       logger.info(`[matchReminder] Sending ${candidates.length} reminder email(s).`);
 
-      // Batch: không gửi quá 10 email cùng lúc
+      // Batch: do not send more than 10 emails at once
       const BATCH_SIZE = 10;
       for (let i = 0; i < candidates.length; i += BATCH_SIZE) {
         const batch = candidates.slice(i, i + BATCH_SIZE);

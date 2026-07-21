@@ -14,7 +14,6 @@ const publishMatches = async () => {
   );
   if (result.rowCount > 0) {
     logger.info(`[scheduledPublish] Published ${result.rowCount} match(es).`);
-    // Emit ticket:sale:open cho các trận vừa được publish
     for (const match of result.rows) {
       emitToMatch(match.id, "ticket:sale:open", {
         matchId: match.id,
