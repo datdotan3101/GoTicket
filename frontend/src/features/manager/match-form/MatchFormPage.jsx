@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { matchService } from '../../../services/matchService';
 import { stadiumService } from '../../../services/stadiumService';
@@ -50,7 +50,12 @@ export default function MatchFormPage() {
   const [previewBannerUrl, setPreviewBannerUrl] = useState(null);
   const [selectedBannerFile, setSelectedBannerFile] = useState(null);
 
-  const clubOptions = useMemo(() => clubs.filter(c => form.leagueId ? String(c.league_id) === String(form.leagueId) : false).map(c => ({ value: c.name, label: c.name })), [clubs, form.leagueId]);
+  const clubOptions = useMemo(() => {
+    return clubs
+      .filter((c) => (form.leagueId ? String(c.league_id) === String(form.leagueId) : false))
+      .map((c) => ({ value: c.name, label: c.name }));
+  }, [clubs, form.leagueId]);
+
 
   useEffect(() => {
     const load = async () => {
@@ -118,20 +123,48 @@ export default function MatchFormPage() {
     const configs = {};
     const total = Number(totalCapacity) || 0;
     const activeBlocks = [];
-    STADIUM_COLUMNS.forEach(col => col.tiers.forEach(tier => {
-      if (columnConfigs[col.id].activeTiers.includes(tier)) activeBlocks.push({ colId: col.id, stand: col.stand, tier, blockId: `${col.id}-${tier}` });
-    }));
-    try {
-      const standTotals = { A: Math.floor(total * STAND_RATIOS.A), B: Math.floor(total * STAND_RATIOS.B), C: Math.floor(total * STAND_RATIOS.C), D: Math.floor(total * STAND_RATIOS.D) };
-      const seatDistribution = redistributeStadiumSeats(total, activeBlocks, standTotals);
-      activeBlocks.forEach(block => {
-        configs[block.blockId] = { price: Number(columnConfigs[block.colId].price) || 0, capacity: seatDistribution[block.blockId] || 0, active: true };
+    
+    STADIUM_COLUMNS.forEach((col) => {
+      col.tiers.forEach((tier) => {
+        if (columnConfigs[col.id].activeTiers.includes(tier)) {
+          activeBlocks.push({ colId: col.id, stand: col.stand, tier, blockId: `${col.id}-${tier}` });
+        }
       });
-    } catch { /* ignore error during redistribution calculation */ }
-    STADIUM_COLUMNS.forEach(col => col.tiers.forEach(tier => {
-      const blockId = `${col.id}-${tier}`;
-      if (!configs[blockId]) configs[blockId] = { price: Number(columnConfigs[col.id].price) || 0, capacity: 0, active: false };
-    }));
+    });
+
+    try {
+      const standTotals = {
+        A: Math.floor(total * STAND_RATIOS.A),
+        B: Math.floor(total * STAND_RATIOS.B),
+        C: Math.floor(total * STAND_RATIOS.C),
+        D: Math.floor(total * STAND_RATIOS.D),
+      };
+      const seatDistribution = redistributeStadiumSeats(total, activeBlocks, standTotals);
+      
+      activeBlocks.forEach((block) => {
+        configs[block.blockId] = { 
+          price: Number(columnConfigs[block.colId].price) || 0, 
+          capacity: seatDistribution[block.blockId] || 0, 
+          active: true 
+        };
+      });
+    } catch { 
+      // ignore error during redistribution calculation
+    }
+    
+    STADIUM_COLUMNS.forEach((col) => {
+      col.tiers.forEach((tier) => {
+        const blockId = `${col.id}-${tier}`;
+        if (!configs[blockId]) {
+          configs[blockId] = { 
+            price: Number(columnConfigs[col.id].price) || 0, 
+            capacity: 0, 
+            active: false 
+          };
+        }
+      });
+    });
+    
     return configs;
   }, [columnConfigs, totalCapacity]);
 
@@ -141,9 +174,20 @@ export default function MatchFormPage() {
       return validateForm(form, schema);
     }
     if (currentStep === 2) {
-      if (!totalCapacity || Number(totalCapacity) <= 0) return notifyError('Invalid capacity'), false;
-      for (const col of STADIUM_COLUMNS) if (!columnConfigs[col.id].price || Number(columnConfigs[col.id].price) < 0) return notifyError('Invalid price for Block ' + col.id), false;
-      if (!Object.keys(blockConfigs).some(k => blockConfigs[k].active)) return notifyError('Enable at least one stand'), false;
+      if (!totalCapacity || Number(totalCapacity) <= 0) {
+        notifyError('Invalid capacity');
+        return false;
+      }
+      for (const col of STADIUM_COLUMNS) {
+        if (!columnConfigs[col.id].price || Number(columnConfigs[col.id].price) < 0) {
+          notifyError('Invalid price for Block ' + col.id);
+          return false;
+        }
+      }
+      if (!Object.keys(blockConfigs).some((k) => blockConfigs[k].active)) {
+        notifyError('Enable at least one stand');
+        return false;
+      }
       return true;
     }
     return true;

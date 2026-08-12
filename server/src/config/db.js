@@ -8,7 +8,7 @@ if (!connectionString) {
 
 const sslEnabled = connectionString?.includes("supabase.co");
 
-export const db = new Pool({
+const db = new Pool({
   connectionString,
   ssl: sslEnabled ? { rejectUnauthorized: false } : false
 });

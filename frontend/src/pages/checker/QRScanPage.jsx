@@ -17,7 +17,18 @@ export default function QRScanPage() {
   const [matches, setMatches] = useState([])
   const [selectedMatchId, setSelectedMatchId] = useState(() => localStorage.getItem('checker_selected_match_id') || '')
   const [stats, setStats] = useState({ total_tickets: 0, checked_in_tickets: 0, not_checked_in_tickets: 0 })
-  const [history, setHistory] = useState([])
+  const [history, setHistory] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('scanner_history')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
+
+  useEffect(() => {
+    sessionStorage.setItem('scanner_history', JSON.stringify(history))
+  }, [history])
 
   const [mode, setMode] = useState('scan') // 'scan' | 'manual'
   const [ticketCode, setTicketCode] = useState('')
@@ -246,11 +257,40 @@ export default function QRScanPage() {
     handleCheckinRef.current(ticketCode.trim(), 'manual')
   }
 
+  const [showSearchInfo, setShowSearchInfo] = useState(false)
+
+  const onSearch = async (e) => {
+    e?.preventDefault()
+    if (!ticketCode.trim()) {
+      toast.error('Please enter a ticket code.')
+      return
+    }
+    
+    setIsSubmitting(true)
+    try {
+      const response = await checkinService.checkinByCode(ticketCode.trim())
+      const data = unwrapData(response)
+      
+      setScanResult(data)
+      setShowSearchInfo(true)
+    } catch (error) {
+      toast.error(error.response?.data?.message ?? 'Search failed. Ticket not found.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const closeSearchInfo = () => {
+    setShowSearchInfo(false)
+    setTicketCode('')
+    setScanResult(null)
+  }
+
   useEffect(() => {
     if (mode === 'manual' && inputRef.current) {
       inputRef.current.focus()
     }
-  }, [mode, scanResult])
+  }, [mode, scanResult, showSearchInfo])
 
   const currentMatch = matches.find(m => String(m.id) === selectedMatchId)
 
@@ -276,6 +316,9 @@ export default function QRScanPage() {
             onSubmit={onSubmit}
             isSubmitting={isSubmitting}
             inputRef={inputRef}
+            onSearch={onSearch}
+            showSearchInfo={showSearchInfo}
+            closeSearchInfo={closeSearchInfo}
           />
 
           <CheckinStats stats={stats} />

@@ -14,7 +14,10 @@ export default function ScannerCard({
   setTicketCode,
   onSubmit,
   isSubmitting,
-  inputRef
+  inputRef,
+  onSearch,
+  showSearchInfo,
+  closeSearchInfo
 }) {
   return (
     <div className="bg-slate-900 rounded-3xl overflow-hidden relative shadow-lg flex flex-col h-[400px] lg:h-[450px]">
@@ -95,14 +98,63 @@ export default function ScannerCard({
                 onChange={(e) => setTicketCode(e.target.value.toUpperCase())}
                 disabled={isSubmitting}
               />
-              <button 
-                type="submit" 
-                disabled={isSubmitting || !ticketCode.trim()} 
-                className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-400 text-white font-bold text-lg py-4 rounded-xl transition-all shadow-[0_4px_14px_rgba(79,70,229,0.4)] disabled:shadow-none"
-              >
-                {isSubmitting ? 'Verifying...' : 'Verify Ticket'}
-              </button>
+              <div className="flex gap-3">
+                <button 
+                  type="button" 
+                  onClick={onSearch}
+                  disabled={isSubmitting || !ticketCode.trim()} 
+                  className="flex-1 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-[0_4px_14px_rgba(0,0,0,0.2)] disabled:shadow-none"
+                >
+                  Search Info
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting || !ticketCode.trim()} 
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-400 text-white font-bold py-3.5 rounded-xl transition-all shadow-[0_4px_14px_rgba(79,70,229,0.4)] disabled:shadow-none"
+                >
+                  {isSubmitting ? 'Verifying...' : 'Check In'}
+                </button>
+              </div>
             </form>
+          </div>
+        )}
+
+        {/* Search Info Overlay */}
+        {showSearchInfo && scanResult && (
+          <div className="absolute inset-0 bg-slate-900/95 backdrop-blur-md z-40 flex flex-col items-center justify-center text-white animate-fadeIn p-6">
+            <h2 className="text-2xl font-black mb-6 tracking-tight text-indigo-400 uppercase">TICKET INFORMATION</h2>
+            <div className="w-full max-w-sm bg-white/5 rounded-2xl p-6 border border-white/10 mb-6">
+              <div className="mb-4">
+                <p className="text-sm text-slate-400 uppercase tracking-wider mb-1">Customer</p>
+                <p className="text-xl font-bold">{scanResult.fullName}</p>
+              </div>
+              <div className="mb-4">
+                <p className="text-sm text-slate-400 uppercase tracking-wider mb-1">Ticket Code</p>
+                <p className="font-mono text-lg text-indigo-300">{scanResult.ticketCode}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-sm text-slate-400 uppercase tracking-wider mb-1">Class</p>
+                  <p className="font-bold">{scanResult.seatLabels || 'Standard'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-400 uppercase tracking-wider mb-1">Quantity</p>
+                  <p className="font-bold">{scanResult.count || 1} tickets</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-slate-400 uppercase tracking-wider mb-2">Status</p>
+                <span className={`inline-block px-3 py-1 rounded-full font-bold text-sm ${scanResult.alreadyCheckedIn ? 'bg-red-500/20 text-red-400 border border-red-500/50' : 'bg-green-500/20 text-green-400 border border-green-500/50'}`}>
+                  {scanResult.alreadyCheckedIn ? 'USED' : 'VALID'}
+                </span>
+              </div>
+            </div>
+            <button 
+              onClick={closeSearchInfo}
+              className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full font-bold transition-colors"
+            >
+              Close
+            </button>
           </div>
         )}
 

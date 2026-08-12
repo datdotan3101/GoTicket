@@ -6,10 +6,7 @@ import {
   CheckCircle2, 
   XCircle, 
   BarChart3, 
-  Activity,
   ChevronRight,
-  Search,
-  LayoutGrid
 } from 'lucide-react'
 import { useSocket } from '../../hooks/useSocket'
 import { checkinService } from '../../services/checkinService'

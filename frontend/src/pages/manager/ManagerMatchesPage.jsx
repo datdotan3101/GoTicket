@@ -4,7 +4,6 @@ import Pagination from '../../components/ui/Pagination'
 const ManagerMatchCard = lazy(() => import('../../components/manager/ManagerMatchCard'))
 import { usePagination } from '../../hooks/usePagination'
 import { toast } from 'react-toastify'
-import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import { 
   Plus, 
