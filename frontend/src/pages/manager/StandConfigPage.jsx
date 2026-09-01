@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { useParams, Link, useNavigate } from 'react-router-dom'

@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import { sportService } from '../../services/sportService'

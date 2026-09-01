@@ -7,8 +7,7 @@ import StadiumMap from '../../components/seat/StadiumMap'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { matchService } from '../../services/matchService'
 import { unwrapData } from '../../utils/apiData'
-import { formatVND } from '../../utils/formatters'
-import { formatDateTime } from '../../utils/formatters'
+import { formatVND, formatDateTime } from '../../utils/formatters'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import ErrorState from '../../components/ui/ErrorState'
 import EmptyState from '../../components/ui/EmptyState'
@@ -96,13 +95,6 @@ export default function SeatSelectPage() {
     })
   }
 
-  const handleListSelectStand = (stand) => {
-    if (!stand || stand.available_seats === 0) return
-    const blockId = stand.name
-    const tierName = blockId.endsWith('T2') ? 'Floor 2' : 'Floor 1'
-    handleSelectBlock({ stand, blockId, tierName })
-  }
-
   const continueCheckout = () => {
     if (selections.length === 0) {
       toast.error('Please select at least one seating area')
@@ -157,7 +149,6 @@ export default function SeatSelectPage() {
   )
 
   const totalPrice = selections.reduce((acc, sel) => acc + sel.stand.price * sel.quantity, 0)
-  const totalQuantity = selections.reduce((acc, sel) => acc + sel.quantity, 0)
 
   return (
     <section style={{ background: 'var(--color-slate-50)', minHeight: '100vh', paddingBottom: '80px' }}>

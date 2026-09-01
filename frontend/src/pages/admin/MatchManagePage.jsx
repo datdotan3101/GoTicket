@@ -1,12 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable no-unused-vars */
 import { useEffect, useState } from 'react'
 import { matchService } from '../../services/matchService'
 import { approvalsService } from '../../services/approvalsService'
 import { unwrapData } from '../../utils/apiData'
 import { formatDateTime, formatVND } from '../../utils/formatters'
 import { toast } from 'react-toastify'
-import { Eye, MapPin, Calendar, Clock, X, Check, XCircle, Users, ShoppingCart } from 'lucide-react'
+import { Eye, MapPin, Calendar, X, Check, XCircle, Users, ShoppingCart } from 'lucide-react'
 import { usePagination } from '../../hooks/usePagination'
 import Pagination from '../../components/ui/Pagination'
 import ConfirmModal from '../../components/ui/ConfirmModal'

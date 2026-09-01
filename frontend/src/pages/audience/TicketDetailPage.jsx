@@ -1,16 +1,14 @@
-/* eslint-disable no-unused-vars */
 import { useEffect, useState, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import QRCodeLib from 'react-qr-code'
 import { toPng } from 'html-to-image'
 import { ticketService } from '../../services/ticketService'
 import { unwrapData } from '../../utils/apiData'
-import { formatDateTime } from '../../utils/formatters'
-import { formatVND } from '../../utils/formatters'
+import { formatDateTime, formatVND } from '../../utils/formatters'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { APP_ROUTES } from '../../constants/routes'
-import { ArrowLeft, Download, MapPin, Building2, Gift, X } from 'lucide-react'
+import { ArrowLeft, Download, MapPin, Building2, Gift } from 'lucide-react'
 import { toast } from 'react-toastify'
 
 const QRCodeComponent = typeof QRCodeLib === 'object' && QRCodeLib.default ? QRCodeLib.default : (QRCodeLib.QRCode || QRCodeLib);

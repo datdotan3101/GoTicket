@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import DatePicker from 'react-datepicker'
@@ -6,8 +5,6 @@ import "react-datepicker/dist/react-datepicker.css"
 import { 
   Plus, 
   Search, 
-  Edit2, 
-  Trash2, 
   Calendar, 
   Trophy, 
   Activity

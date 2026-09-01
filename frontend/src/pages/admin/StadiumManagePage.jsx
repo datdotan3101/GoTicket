@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { MoreVertical, Edit2, Trash2, MapPin, Users } from 'lucide-react'
+import { MapPin, Users } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { stadiumService } from '../../services/stadiumService'
 import { unwrapData } from '../../utils/apiData'
