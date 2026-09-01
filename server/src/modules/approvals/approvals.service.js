@@ -18,7 +18,12 @@ export const approvalsService = {
       values.push(type);
     }
 
-    const where = `WHERE ${conditions.join(" AND ")} AND (a.resource_type != 'match' OR m.id IS NOT NULL)`;
+    let where = `WHERE ${conditions.join(" AND ")} AND (a.resource_type != 'match' OR m.id IS NOT NULL)`;
+    if (status === 'rejected') {
+      where += ` AND (a.resource_type != 'match' OR m.status = 'rejected')`;
+    } else if (status === 'pending') {
+      where += ` AND (a.resource_type != 'match' OR m.status = 'pending_review')`;
+    }
 
     const result = await query(
       `SELECT a.*,
