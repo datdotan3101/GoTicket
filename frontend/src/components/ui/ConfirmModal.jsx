@@ -34,7 +34,7 @@ export default function ConfirmModal({
     primary: { bg: 'var(--color-primary-100)', icon: 'var(--color-primary-600)', btn: 'var(--color-primary-600)' },
     success: { bg: '#dcfce7', icon: 'var(--color-success-alt)', btn: 'var(--color-success-alt)' },
     default: { bg: 'var(--color-slate-100)', icon: 'var(--color-slate-500)', btn: 'var(--color-slate-900)' }
-  }x``
+  }
 
   const colors = variantColors[variant] || variantColors.danger
 
