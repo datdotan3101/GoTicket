@@ -45,6 +45,13 @@ export const giftTicket = asyncHandler(async (req, res) => {
   return sendSuccess(res, data);
 });
 
+/** POST /api/tickets/:ticketCode/refund — Refund a paid ticket (auth) */
+export const refundTicket = asyncHandler(async (req, res) => {
+  const { ticketCode } = req.params;
+  const data = await ticketsService.refundTicket({ userId: req.user.id, ticketCode });
+  return sendSuccess(res, data);
+});
+
 /** GET /api/tickets/qr/:token — Generate QR code image from token (public) */
 export const generateQrImage = asyncHandler(async (req, res) => {
   const { token } = req.params;

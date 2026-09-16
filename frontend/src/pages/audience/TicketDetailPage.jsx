@@ -8,8 +8,9 @@ import { formatDateTime, formatVND } from '../../utils/formatters'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { APP_ROUTES } from '../../constants/routes'
-import { ArrowLeft, Download, MapPin, Building2, Gift } from 'lucide-react'
+import { ArrowLeft, Download, MapPin, Building2, Gift, XCircle } from 'lucide-react'
 import { toast } from 'react-toastify'
+import { useSocket } from '../../hooks/useSocket'
 
 const QRCodeComponent = typeof QRCodeLib === 'object' && QRCodeLib.default ? QRCodeLib.default : (QRCodeLib.QRCode || QRCodeLib);
 
@@ -23,6 +24,28 @@ export default function TicketDetailPage() {
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false)
   const [giftEmail, setGiftEmail] = useState('')
   const [isGifting, setIsGifting] = useState(false)
+
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
+  const [isCancelling, setIsCancelling] = useState(false)
+
+  const socketRef = useSocket({ enabled: true })
+
+  useEffect(() => {
+    const socket = socketRef?.current
+    if (!socket) return
+
+    const onRefunded = (data) => {
+      if (String(data.ticketCode) === String(ticketId)) {
+        setTicket(prev => prev ? { ...prev, status: 'cancelled' } : prev)
+        toast.success("Refund process completed successfully!")
+      }
+    }
+
+    socket.on('ticket:refunded', onRefunded)
+    return () => {
+      socket.off('ticket:refunded', onRefunded)
+    }
+  }, [socketRef, ticketId])
 
   useEffect(() => {
     const fetchTicketDetail = async () => {
@@ -91,6 +114,20 @@ export default function TicketDetailPage() {
     }
   }
 
+  const handleRefundTicket = async () => {
+    try {
+      setIsCancelling(true)
+      await ticketService.refundTicket(ticket.ticket_code)
+      setTicket(prev => ({ ...prev, status: 'refunding' }))
+      toast.info("Ticket is being refunded. Please wait...")
+      setIsCancelModalOpen(false)
+    } catch (err) {
+      toast.error(err.response?.data?.message || "An error occurred while refunding.")
+    } finally {
+      setIsCancelling(false)
+    }
+  }
+
   if (isLoading) return <LoadingSpinner text="Loading ticket details..." />
 
   if (!ticket) {
@@ -118,20 +155,38 @@ export default function TicketDetailPage() {
         </Link>
         <div style={{ display: 'flex', gap: '12px' }}>
           {ticket.status === 'paid' && (
-            <button 
-              onClick={() => setIsGiftModalOpen(true)} 
-              className="save-image-btn"
-              disabled={ticket.is_gifted}
-              style={{ 
-                background: ticket.is_gifted ? 'var(--color-slate-300)' : 'var(--color-primary)', 
-                color: 'var(--color-white)', 
-                borderColor: ticket.is_gifted ? 'var(--color-slate-300)' : 'var(--color-primary)',
-                cursor: ticket.is_gifted ? 'not-allowed' : 'pointer'
-              }}
-            >
-              <Gift size={18} />
-              <span>{ticket.is_gifted ? 'Already Gifted' : 'Gift Ticket'}</span>
-            </button>
+            <>
+              <button 
+                onClick={() => setIsCancelModalOpen(true)} 
+                className="save-image-btn"
+                disabled={ticket.is_gifted}
+                style={{ 
+                  background: ticket.is_gifted ? 'var(--color-slate-300)' : 'var(--color-white)', 
+                  color: ticket.is_gifted ? 'var(--color-white)' : 'var(--color-red-600)', 
+                  borderColor: ticket.is_gifted ? 'var(--color-slate-300)' : 'var(--color-red-600)',
+                  cursor: ticket.is_gifted ? 'not-allowed' : 'pointer',
+                  borderWidth: '1px',
+                  borderStyle: 'solid'
+                }}
+              >
+                <XCircle size={18} />
+                <span>Cancel Ticket</span>
+              </button>
+              <button 
+                onClick={() => setIsGiftModalOpen(true)} 
+                className="save-image-btn"
+                disabled={ticket.is_gifted}
+                style={{ 
+                  background: ticket.is_gifted ? 'var(--color-slate-300)' : 'var(--color-primary)', 
+                  color: 'var(--color-white)', 
+                  borderColor: ticket.is_gifted ? 'var(--color-slate-300)' : 'var(--color-primary)',
+                  cursor: ticket.is_gifted ? 'not-allowed' : 'pointer'
+                }}
+              >
+                <Gift size={18} />
+                <span>{ticket.is_gifted ? 'Already Gifted' : 'Gift Ticket'}</span>
+              </button>
+            </>
           )}
           <button 
             onClick={handleDownloadImage} 
@@ -243,7 +298,9 @@ export default function TicketDetailPage() {
                   <span className={`d-value status-badge ${ticket.status}`}>
                     {ticket.status === 'paid' ? 'UNUSED' : 
                      ticket.status === 'checked_in' ? 'USED' : 
-                     ticket.status === 'pending' ? 'UNUSED' : 'CANCELLED'}
+                     ticket.status === 'pending' ? 'UNUSED' : 
+                     ticket.status === 'refunding' ? 'REFUNDING...' :
+                     ticket.status === 'cancelled' ? 'REFUNDED' : 'CANCELLED'}
                   </span>
                 </div>
                 <div className="ticket-disclaimer">
@@ -288,6 +345,18 @@ export default function TicketDetailPage() {
           />
         </div>
       </ConfirmModal>
+
+      {/* Cancel Ticket Modal */}
+      <ConfirmModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirm={handleRefundTicket}
+        title="Cancel Ticket"
+        message="Are you sure you want to cancel this ticket? This action will initiate a refund process that takes about 30 seconds."
+        confirmLabel="Yes, Cancel Ticket"
+        variant="danger"
+        isLoading={isCancelling}
+      />
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {

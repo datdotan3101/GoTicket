@@ -1,5 +1,5 @@
 import { query, withTransaction } from "../../config/db.js";
-import { emitToMatch } from "../../config/socket.js";
+import { emitToMatch, emitToUser } from "../../config/socket.js";
 import { TICKET_STATUS } from "../../constants/ticketStatus.js";
 import { sendGiftTicketEmail } from "../../utils/email.service.js";
 
@@ -115,7 +115,7 @@ export const ticketsService = {
            FROM tickets t2
            JOIN seats s2 ON s2.id = t2.seat_id
          ) t
-         WHERE t.user_id = $1 AND t.status IN ('paid', 'checked_in') AND t.is_gifted = false
+         WHERE t.user_id = $1 AND t.status IN ('paid', 'checked_in', 'refunding', 'cancelled') AND t.is_gifted = false
          GROUP BY t.ticket_code, t.match_id, t.stand_id
        ) sub
        JOIN stands st ON st.id = sub.stand_id
@@ -197,5 +197,79 @@ export const ticketsService = {
     );
 
     return { success: true, message: "Gift ticket sent successfully" };
+  },
+
+  async refundTicket({ userId, ticketCode }) {
+    // Check that the ticket exists, belongs to the user, and is 'paid' and not gifted
+    const result = await query(
+      `SELECT id, match_id, seat_id, is_gifted, status FROM tickets WHERE ticket_code = $1 AND user_id = $2`,
+      [ticketCode, userId]
+    );
+
+    if (result.rowCount === 0) {
+      throw new Error("Ticket not found.");
+    }
+
+    const firstTicket = result.rows[0];
+    if (firstTicket.status !== TICKET_STATUS.PAID) {
+      throw new Error("Only paid tickets can be refunded.");
+    }
+    if (firstTicket.is_gifted) {
+      throw new Error("Gifted tickets cannot be refunded.");
+    }
+
+    const ticketIds = result.rows.map(t => t.id);
+
+    // Update status to 'refunding'
+    await query(
+      `UPDATE tickets SET status = $1 WHERE id = ANY($2::bigint[])`,
+      [TICKET_STATUS.REFUNDING, ticketIds]
+    );
+
+    // Run the refund simulation async
+    setTimeout(async () => {
+      try {
+        await withTransaction(async (tx) => {
+          const run = (text, params) => tx.query(text, params);
+          
+          // Update tickets to 'cancelled'
+          await run(
+            `UPDATE tickets SET status = $1 WHERE id = ANY($2::bigint[])`,
+            [TICKET_STATUS.CANCELLED, ticketIds]
+          );
+
+          // Update payments to 'refunded'
+          await run(
+            `UPDATE payments SET status = 'refunded' WHERE ticket_id = ANY($1::bigint[])`,
+            [ticketIds]
+          );
+
+          // Free up seats
+          const seatIds = result.rows.map(t => t.seat_id);
+          await run(
+            `UPDATE seats SET status = 'available' WHERE id = ANY($1::bigint[])`,
+            [seatIds]
+          );
+        });
+
+        // Emit real-time events after transaction commits
+        for (const ticket of result.rows) {
+          emitToMatch(ticket.match_id, "seat:booked", {
+            matchId: ticket.match_id,
+            seatId: ticket.seat_id,
+            ticketId: ticket.id,
+            status: "available"
+          });
+        }
+
+        // Emit to user that refund is complete
+        emitToUser(userId, "ticket:refunded", { ticketCode });
+        
+      } catch (err) {
+        console.error("Refund simulation failed:", err);
+      }
+    }, 30000); // 30 seconds delay
+
+    return { success: true, message: "Ticket is being refunded.", status: TICKET_STATUS.REFUNDING };
   }
 };
