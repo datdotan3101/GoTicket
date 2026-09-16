@@ -15,6 +15,7 @@ export const APP_ROUTES = {
   PAYMENT_SUCCESS: '/audience/payment-success',
   MY_TICKETS: '/audience/my-tickets',
   TICKET_DETAIL: '/audience/tickets/:ticketId',
+  TICKET_REFUND: '/audience/tickets/:ticketId/refund',
   CHECKER_DASHBOARD: '/checker',
   CHECKER_SCAN: '/checker/scan',
   CHECKER_LIVE_SEATS: '/checker/matches/:matchId/live-seats',

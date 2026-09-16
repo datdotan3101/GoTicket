@@ -268,7 +268,7 @@ export const ticketsService = {
       } catch (err) {
         console.error("Refund simulation failed:", err);
       }
-    }, 30000); // 30 seconds delay
+    }, 5000); // 5 seconds delay
 
     return { success: true, message: "Ticket is being refunded.", status: TICKET_STATUS.REFUNDING };
   }

@@ -118,12 +118,10 @@ export default function TicketDetailPage() {
     try {
       setIsCancelling(true)
       await ticketService.refundTicket(ticket.ticket_code)
-      setTicket(prev => ({ ...prev, status: 'refunding' }))
-      toast.info("Ticket is being refunded. Please wait...")
       setIsCancelModalOpen(false)
+      navigate(`/audience/tickets/${ticket.ticket_code}/refund`)
     } catch (err) {
       toast.error(err.response?.data?.message || "An error occurred while refunding.")
-    } finally {
       setIsCancelling(false)
     }
   }
@@ -352,7 +350,7 @@ export default function TicketDetailPage() {
         onClose={() => setIsCancelModalOpen(false)}
         onConfirm={handleRefundTicket}
         title="Cancel Ticket"
-        message="Are you sure you want to cancel this ticket? This action will initiate a refund process that takes about 30 seconds."
+        message="Are you sure you want to cancel this ticket? This action will initiate a refund process that takes about 5 seconds."
         confirmLabel="Yes, Cancel Ticket"
         variant="danger"
         isLoading={isCancelling}

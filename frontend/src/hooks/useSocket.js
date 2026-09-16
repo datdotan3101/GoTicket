@@ -1,25 +1,30 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { io } from 'socket.io-client'
 import { useAuthStore } from '../store/authStore'
 
 export const useSocket = ({ enabled = true } = {}) => {
-  const socketRef = useRef(null)
+  const [socket, setSocket] = useState(null)
 
   useEffect(() => {
-    if (!enabled || !import.meta.env.VITE_SOCKET_URL) return undefined
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000')
+    if (!enabled || !socketUrl) return undefined
 
     const token = useAuthStore.getState().token
-    socketRef.current = io(import.meta.env.VITE_SOCKET_URL, {
+    const newSocket = io(socketUrl, {
       transports: ['websocket'],
       withCredentials: true,
       auth: token ? { token: `Bearer ${token}` } : undefined,
     })
 
+    setSocket(newSocket)
+
     return () => {
-      socketRef.current?.disconnect()
-      socketRef.current = null
+      newSocket.disconnect()
+      setSocket(null)
     }
   }, [enabled])
 
-  return socketRef
+  // Return an object that mimics a ref, but changes identity when socket connects
+  // to trigger effects in consumer components.
+  return useMemo(() => ({ current: socket }), [socket])
 }

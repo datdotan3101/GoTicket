@@ -3,7 +3,7 @@ import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import { Clock, CreditCard } from 'lucide-react';
+import { Clock, CreditCard, ArrowLeft } from 'lucide-react';
 import { paymentService } from '../../services/paymentService';
 import { ticketService } from '../../services/ticketService';
 import { notifyError } from '../../utils/toastUtils';
@@ -176,6 +176,37 @@ export default function CheckoutPage({ checkoutDataProp, onBackProp }) {
   return (
     <section className="checkout-page">
       <div className="container">
+        
+        <button 
+          onClick={handleBack} 
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px', 
+            width: 'fit-content', 
+            marginBottom: '24px',
+            background: 'transparent',
+            color: 'var(--color-slate-600)',
+            border: '1.5px solid var(--color-slate-300)',
+            borderRadius: '8px',
+            padding: '8px 16px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--color-slate-100)';
+            e.currentTarget.style.color = 'var(--color-slate-900)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.color = 'var(--color-slate-600)';
+          }}
+        >
+          <ArrowLeft size={18} />
+          <span>Back to Seat Selection</span>
+        </button>
+
         <div className="countdown-banner">
           <Clock size={18} />
           <span>

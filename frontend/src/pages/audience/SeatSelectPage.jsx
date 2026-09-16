@@ -156,28 +156,36 @@ export default function SeatSelectPage() {
       <div style={{ background: 'var(--color-white)', borderBottom: '1px solid var(--color-slate-200)', padding: '20px 0', marginBottom: '40px', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
         <div className="container" style={{ display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 700 }}>
           <span 
-            style={{ 
-              color: step === 1 ? 'var(--color-primary)' : 'var(--color-slate-500)', 
-              cursor: 'pointer', 
-              fontSize: '1.25rem',
-              fontWeight: 900,
-              transition: 'color 0.2s'
-            }} 
+            style={{ color: 'var(--color-slate-500)', cursor: 'pointer', fontSize: '1.25rem', fontWeight: 900, transition: 'color 0.2s' }} 
             onClick={() => navigate('/')}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-primary)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-slate-500)'}
           >
-            Home page
+            Home
           </span>
           <span style={{ color: 'var(--color-slate-300)', fontSize: '1.2rem' }}>›</span>
           <span 
             style={{ 
-              color: step === 2 ? 'var(--color-primary)' : 'var(--color-slate-500)', 
+              color: step === 1 ? 'var(--color-primary)' : 'var(--color-slate-500)', 
+              cursor: step === 2 ? 'pointer' : 'default', 
               fontSize: '1.25rem', 
               fontWeight: 900,
               transition: 'color 0.2s'
             }}
+            onClick={() => step === 2 && setStep(1)}
+            onMouseEnter={e => step === 2 && (e.currentTarget.style.color = 'var(--color-primary)')}
+            onMouseLeave={e => step === 2 && (e.currentTarget.style.color = 'var(--color-slate-500)')}
           >
-            Payment
+            Seat Selection
           </span>
+          {step === 2 && (
+            <>
+              <span style={{ color: 'var(--color-slate-300)', fontSize: '1.2rem' }}>›</span>
+              <span style={{ color: 'var(--color-primary)', fontSize: '1.25rem', fontWeight: 900 }}>
+                Payment
+              </span>
+            </>
+          )}
         </div>
       </div>
 
