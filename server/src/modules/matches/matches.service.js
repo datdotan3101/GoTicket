@@ -100,6 +100,15 @@ export const matchesService = {
   },
 
   async create(payload, user) {
+    if (payload.leagueId) {
+      const leagueCheck = await query(`SELECT end_date FROM leagues WHERE id = $1`, [payload.leagueId]);
+      if (leagueCheck.rows.length > 0 && leagueCheck.rows[0].end_date) {
+        if (new Date(leagueCheck.rows[0].end_date) < new Date()) {
+          throw new Error("The selected league has already ended. You cannot create new matches for it.");
+        }
+      }
+    }
+
     const result = await query(
       `INSERT INTO matches (home_team, away_team, match_date, stadium_id, league_id, club_id, status, ticket_sale_open_at, description, created_by, thumbnail_url)
        VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10)

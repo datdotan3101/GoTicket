@@ -446,54 +446,54 @@ export default function SeatSelectPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {(() => {
                   const groupedStands = stands.reduce((acc, stand) => {
-                    const [mainStand, tier] = stand.name.split('-')
-                    if (!acc[mainStand]) {
-                      acc[mainStand] = { price: stand.price, tiers: [], totalAvailable: 0 }
+                    const standLetter = stand.name.charAt(0)
+                    if (!acc[standLetter]) {
+                      acc[standLetter] = { price: stand.price, blocks: [], totalAvailable: 0 }
                     }
-                    acc[mainStand].tiers.push({ ...stand, tierName: tier })
-                    acc[mainStand].totalAvailable += stand.available_seats
+                    acc[standLetter].blocks.push(stand)
+                    acc[standLetter].totalAvailable += stand.available_seats
                     return acc
                   }, {})
 
-                  return Object.keys(groupedStands).sort().map(mainStand => {
-                    const group = groupedStands[mainStand]
+                  return Object.keys(groupedStands).sort().map(standLetter => {
+                    const group = groupedStands[standLetter]
                     return (
-                      <div key={mainStand} style={{ background: 'var(--color-white)', borderRadius: '16px', border: '1px solid var(--color-slate-200)', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                      <div key={standLetter} style={{ background: 'var(--color-white)', borderRadius: '16px', border: '1px solid var(--color-slate-200)', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                         <div style={{ padding: '16px 20px', background: 'var(--color-slate-50)', borderBottom: '1px solid var(--color-slate-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
-                            <div style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--color-slate-800)' }}>Stand {mainStand}</div>
+                            <div style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--color-slate-800)' }}>Stand {standLetter}</div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--color-slate-500)', marginTop: '2px', fontWeight: 600 }}>{group.totalAvailable > 0 ? `${group.totalAvailable} tickets left` : 'Sold Out'}</div>
                           </div>
                           <div style={{ color: 'var(--color-danger)', fontWeight: 800, fontSize: '1.1rem' }}>{formatVND(group.price)}</div>
                         </div>
                         
                         <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {group.tiers.sort((a, b) => a.tierName.localeCompare(b.tierName)).map(tier => (
+                          {group.blocks.sort((a, b) => a.name.localeCompare(b.name)).map(block => (
                             <div 
-                              key={tier.id}
-                              onClick={() => handleSelectBlock({ stand: tier, blockId: tier.name, tierName: tier.tierName })}
+                              key={block.id}
+                              onClick={() => handleSelectBlock({ stand: block, blockId: block.name, tierName: block.name.split('-')[1] || '' })}
                               style={{
                                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                                 padding: '12px 16px', borderRadius: '10px',
-                                border: selections.find(s => s.stand.id === tier.id) ? '2px solid var(--color-danger)' : '1px solid transparent',
-                                cursor: tier.available_seats > 0 ? 'pointer' : 'not-allowed',
-                                background: tier.available_seats > 0 ? (selections.find(s => s.stand.id === tier.id) ? '#fef2f2' : 'var(--color-slate-50)') : 'var(--color-slate-100)',
-                                opacity: tier.available_seats > 0 ? 1 : 0.6,
+                                border: selections.find(s => s.stand.id === block.id) ? '2px solid var(--color-danger)' : '1px solid transparent',
+                                cursor: block.available_seats > 0 ? 'pointer' : 'not-allowed',
+                                background: block.available_seats > 0 ? (selections.find(s => s.stand.id === block.id) ? '#fef2f2' : 'var(--color-slate-50)') : 'var(--color-slate-100)',
+                                opacity: block.available_seats > 0 ? 1 : 0.6,
                                 transition: 'all 0.2s'
                               }}
                             >
                               <div>
-                                <div style={{ fontWeight: 800, color: 'var(--color-slate-700)', fontSize: '0.95rem' }}>Floor {tier.tierName.replace('T', '')}</div>
+                                <div style={{ fontWeight: 800, color: 'var(--color-slate-700)', fontSize: '0.95rem' }}>Block {block.name}</div>
                               </div>
-                              {tier.available_seats > 0 ? (
+                              {block.available_seats > 0 ? (
                                 <button 
                                   onClick={(e) => { 
                                     e.stopPropagation()
-                                    handleSelectBlock({ stand: tier, blockId: tier.name, tierName: tier.tierName })
+                                    handleSelectBlock({ stand: block, blockId: block.name, tierName: block.name.split('-')[1] || '' })
                                   }}
                                   style={{ 
-                                    padding: '6px 16px', background: selections.find(s => s.stand.id === tier.id) ? 'var(--color-danger)' : 'var(--color-white)', 
-                                    color: selections.find(s => s.stand.id === tier.id) ? 'var(--color-white)' : 'var(--color-danger)', 
+                                    padding: '6px 16px', background: selections.find(s => s.stand.id === block.id) ? 'var(--color-danger)' : 'var(--color-white)', 
+                                    color: selections.find(s => s.stand.id === block.id) ? 'var(--color-white)' : 'var(--color-danger)', 
                                     border: '1px solid var(--color-danger)', borderRadius: '8px', fontWeight: 800, cursor: 'pointer',
                                     fontSize: '0.85rem', transition: 'all 0.2s'
                                   }}

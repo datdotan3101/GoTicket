@@ -24,7 +24,14 @@ export default function BasicInfoStep({
               <label>LEAGUE NAME</label>
               <select className="mc-nice-input" value={form.leagueId} onChange={e => setForm(p => ({...p, leagueId: e.target.value}))}>
                 <option value="" disabled>Select league</option>
-                {leagues.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                {leagues.map(l => {
+                  const isEnded = l.end_date ? new Date(l.end_date) < new Date() : false;
+                  return (
+                    <option key={l.id} value={l.id} disabled={isEnded}>
+                      {l.name} {isEnded ? '(Ended)' : ''}
+                    </option>
+                  );
+                })}
               </select>
             </div>
             <div className="mc-input-group">
