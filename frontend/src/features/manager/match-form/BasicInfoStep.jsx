@@ -21,10 +21,10 @@ export default function BasicInfoStep({
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
             <div className="mc-input-group">
-              <label>LEAGUE NAME</label>
+              <label>LEAGUE NAME</label> 
               <select className="mc-nice-input" value={form.leagueId} onChange={e => setForm(p => ({...p, leagueId: e.target.value}))}>
                 <option value="" disabled>Select league</option>
-                {leagues.map(l => {
+                {leagues.sort((a, b) => a.id - b.id).map(l => {
                   const isEnded = l.end_date ? new Date(l.end_date) < new Date() : false;
                   return (
                     <option key={l.id} value={l.id} disabled={isEnded}>
