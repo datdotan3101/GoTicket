@@ -129,6 +129,7 @@ export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelec
                   standName: block.stand,
                   price: standData.price,
                   available: standData.available_seats,
+                  totalCapacity: standData.total_seats,
                   soldOut,
                   active: isActive
                 })
@@ -216,7 +217,7 @@ export default function StadiumMap({ stands = [], selectedBlockIds = [], onSelec
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
             <span style={{ color: 'var(--color-slate-300)' }}>Status:</span>
             <span style={{ fontWeight: 800, color: hoverInfo.soldOut ? 'var(--color-danger)' : 'var(--color-success-alt)' }}>
-              {!hoverInfo.active ? 'Not for Sale' : hoverInfo.soldOut ? 'Sold Out' : `${hoverInfo.available} seats`}
+              {!hoverInfo.active ? 'Not for Sale' : hoverInfo.soldOut ? 'Sold Out' : `${hoverInfo.available} / ${hoverInfo.totalCapacity} seats`}
             </span>
           </div>
         </div>

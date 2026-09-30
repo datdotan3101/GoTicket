@@ -448,10 +448,11 @@ export default function SeatSelectPage() {
                   const groupedStands = stands.reduce((acc, stand) => {
                     const standLetter = stand.name.charAt(0)
                     if (!acc[standLetter]) {
-                      acc[standLetter] = { price: stand.price, blocks: [], totalAvailable: 0 }
+                      acc[standLetter] = { price: stand.price, blocks: [], totalAvailable: 0, totalCapacity: 0 }
                     }
                     acc[standLetter].blocks.push(stand)
                     acc[standLetter].totalAvailable += stand.available_seats
+                    acc[standLetter].totalCapacity += stand.total_seats
                     return acc
                   }, {})
 
@@ -462,7 +463,7 @@ export default function SeatSelectPage() {
                         <div style={{ padding: '16px 20px', background: 'var(--color-slate-50)', borderBottom: '1px solid var(--color-slate-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
                             <div style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--color-slate-800)' }}>Stand {standLetter}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--color-slate-500)', marginTop: '2px', fontWeight: 600 }}>{group.totalAvailable > 0 ? `${group.totalAvailable} tickets left` : 'Sold Out'}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-slate-500)', marginTop: '2px', fontWeight: 600 }}>{group.totalAvailable > 0 ? `${group.totalAvailable} / ${group.totalCapacity} tickets left` : 'Sold Out'}</div>
                           </div>
                           <div style={{ color: 'var(--color-danger)', fontWeight: 800, fontSize: '1.1rem' }}>{formatVND(group.price)}</div>
                         </div>
