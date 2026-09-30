@@ -17,8 +17,6 @@ export const getRedirectPath = (user, defaultPath = APP_ROUTES.HOME) => {
       return APP_ROUTES.ADMIN_DASHBOARD
     case ROLES.MANAGER:
       return APP_ROUTES.MANAGER_DASHBOARD
-    case ROLES.EDITOR:
-      return APP_ROUTES.EDITOR_DASHBOARD
     case ROLES.CHECKER:
       return APP_ROUTES.CHECKER_DASHBOARD
     default:

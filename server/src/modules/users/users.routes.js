@@ -133,7 +133,7 @@ router.get("/:id", auth, requireRoles(ROLES.ADMIN), getUserById);
  *             properties:
  *               role:
  *                 type: string
- *                 enum: [admin, manager, editor, audience, checker]
+ *                 enum: [admin, manager, audience, checker]
  *               clubId:
  *                 type: integer
  *                 description: "Required when role = manager"

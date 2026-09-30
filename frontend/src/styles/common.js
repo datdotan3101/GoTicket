@@ -225,13 +225,12 @@ const badgeBase = {
 
 /**
  * Generate a role-specific color badge.
- * @param {'admin'|'manager'|'editor'|'checker'|'audience'} role
+ * @param {'admin'|'manager'|'checker'|'audience'} role
  */
 export const badgeForRole = (role) => {
   const map = {
     admin: { background: '#fef3c7', color: '#92400e' },
     manager: { background: '#ede9fe', color: '#6d28d9' },
-    editor: { background: '#dbeafe', color: '#1e3a8a' },
     checker: { background: '#d1fae5', color: '#065f46' },
     audience: { background: 'var(--color-primary-100)', color: 'var(--color-primary-600)' },
   }

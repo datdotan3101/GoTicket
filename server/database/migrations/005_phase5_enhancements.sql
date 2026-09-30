@@ -6,7 +6,7 @@ ALTER TABLE stadiums
   ADD COLUMN IF NOT EXISTS image_url TEXT;
 
 -- 2. Thêm scheduled_publish_at vào approvals
---    Dùng để lưu lịch publish khi editor/manager submit
+--    Dùng để lưu lịch publish khi admin/manager submit
 --    Approval service sẽ đọc field này khi duyệt để quyết định publish ngay hay chờ cron
 ALTER TABLE approvals
   ADD COLUMN IF NOT EXISTS scheduled_publish_at TIMESTAMPTZ;

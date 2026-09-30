@@ -28,7 +28,7 @@ export default function Sidebar({ menuSections }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {section.items.map((item, itemIdx) => {
-              const isActuallyActive = ['/manager', '/admin', '/editor', '/checker', '/dashboard'].includes(item.path)
+              const isActuallyActive = ['/manager', '/admin', '/checker', '/dashboard'].includes(item.path)
                 ? location.pathname === item.path 
                 : location.pathname.startsWith(item.path)
 
